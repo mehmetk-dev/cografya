@@ -197,11 +197,14 @@ select:focus-visible,
 .map-list {
   display: flex;
   max-height: 245px;
+  flex: 0 1 auto;
   flex-direction: column;
   gap: 7px;
   min-height: 0;
   padding: 2px 2px 8px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
 }
 
@@ -217,6 +220,7 @@ select:focus-visible,
 
 .ready-library__heading {
   display: flex;
+  flex: 0 0 auto;
   align-items: flex-end;
   justify-content: space-between;
   padding: 0 6px 9px;
@@ -247,12 +251,16 @@ select:focus-visible,
   gap: 5px;
   padding: 0 2px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
 }
 
 .ready-library__list > button {
   display: grid;
   width: 100%;
+  min-height: 49px;
+  flex: 0 0 auto;
   grid-template-columns: 31px minmax(0, 1fr) auto;
   align-items: center;
   gap: 9px;
@@ -297,6 +305,7 @@ select:focus-visible,
 }
 
 .map-card {
+  flex: 0 0 auto;
   overflow: hidden;
   border: 1px solid transparent;
   border-radius: 13px;
@@ -313,6 +322,7 @@ select:focus-visible,
 .map-card__main {
   display: flex;
   width: 100%;
+  min-height: 57px;
   align-items: center;
   gap: 10px;
   padding: 11px 10px;
@@ -392,6 +402,8 @@ select:focus-visible,
 .new-map-button {
   display: flex;
   width: calc(100% - 4px);
+  min-height: 43px;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -408,6 +420,23 @@ select:focus-visible,
 .new-map-button:hover {
   border-color: rgba(239, 182, 93, 0.62);
   background: rgba(239, 182, 93, 0.08);
+}
+
+.map-list::-webkit-scrollbar,
+.ready-library__list::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.map-list::-webkit-scrollbar-thumb,
+.ready-library__list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.map-list::-webkit-scrollbar-track,
+.ready-library__list::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .create-map-card {
