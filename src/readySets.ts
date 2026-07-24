@@ -208,7 +208,19 @@ const rivers: ReadySetItem[] = [
   item("firat", "Fırat", 23, "river", "river-persian-gulf", "Türkiye'nin su toplama havzası en geniş akarsuyudur; Suriye ve Irak üzerinden Basra Körfezi'ne ulaşır.", { branches: ["Karasu", "Murat", "Peri Suyu", "Tohma Çayı"] }),
   item("dicle", "Dicle", 21, "river", "river-persian-gulf", "Güneydoğu Toroslardan doğar; Irak'ta Fırat'la birleşerek Şattülarap'ı oluşturur.", { branches: ["Batman Çayı", "Botan Çayı", "Büyük Zap"] }),
   item("aras", "Aras", 4, "river", "river-caspian", "Erzurum çevresinden doğar; Türkiye-Ermenistan sınırının bir bölümünü izleyip Kura'ya katılır.", { branches: ["Arpaçay", "Zengmar Çayı"] }),
-];
+].map((entry) => ({
+  ...entry,
+  topic:
+    entry.subtype === "river-black-sea"
+      ? "Karadeniz Havzası"
+      : entry.subtype === "river-aegean"
+        ? "Ege Denizi Havzası"
+        : entry.subtype === "river-mediterranean"
+          ? "Akdeniz Havzası"
+          : entry.subtype === "river-persian-gulf"
+            ? "Basra Körfezi Havzası"
+            : "Hazar Havzası",
+}));
 
 const agriculture: ReadySetItem[] = [
   ...mebAgricultureItems("Nohut", "agriculture-chickpea", "Kuraklığa dayanıklı ve bakımı kolay baklagildir.", [
@@ -657,7 +669,7 @@ export const READY_STUDY_SETS: ReadyStudySet[] = [
     title: "Türkiye'nin Akarsuları",
     shortTitle: "Akarsular",
     subject: "Havzalar ve kollar",
-    description: "Başlıca akarsu sistemleri; döküldükleri havza, önemli kolları ve sınavlık özellikleriyle.",
+    description: "Başlıca akarsu sistemleri; ana yatakları kalın, önemli kolları ince çizgilerle şematik olarak gösterilir. Havza, akış yönü ve kol bağlantıları birlikte çalışılabilir.",
     color: "#397ca8",
     icon: "spline",
     quizLabel: "Akarsuyun geçtiği başlangıç ilini bul",

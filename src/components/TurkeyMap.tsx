@@ -1,5 +1,6 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
+  ChevronDown,
   Circle,
   Eraser,
   Minus,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import { cities as mapCities } from "turkey-map-react/lib/data";
 import { getMarkerVisual } from "../markerKinds";
+import { RIVER_ROUTES } from "../riverRoutes";
 import { CatalogIcon } from "./CatalogIcon";
 import type {
   City,
@@ -64,6 +66,14 @@ type LabelLayout = {
   anchorY: number;
 };
 
+type PanGesture = {
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startPan: Point;
+  moved: boolean;
+};
+
 const BASE_VIEWBOX = {
   x: 0,
   y: 80,
@@ -95,6 +105,41 @@ function overlapArea(
   return Math.max(0, width) * Math.max(0, height);
 }
 
+function smoothPath(points: MapPoint[]) {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+
+  let path = `M ${points[0].x} ${points[0].y}`;
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const previous = points[Math.max(0, index - 1)];
+    const current = points[index];
+    const next = points[index + 1];
+    const following = points[Math.min(points.length - 1, index + 2)];
+    const controlOne = {
+      x: current.x + (next.x - previous.x) / 6,
+      y: current.y + (next.y - previous.y) / 6,
+    };
+    const controlTwo = {
+      x: next.x - (following.x - current.x) / 6,
+      y: next.y - (following.y - current.y) / 6,
+    };
+    path += ` C ${controlOne.x} ${controlOne.y}, ${controlTwo.x} ${controlTwo.y}, ${next.x} ${next.y}`;
+  }
+  return path;
+}
+
+function clampPan(point: Point, zoom: number): Point {
+  const visibleWidth = BASE_VIEWBOX.width / zoom;
+  const visibleHeight = BASE_VIEWBOX.height / zoom;
+  const limitX = (BASE_VIEWBOX.width - visibleWidth) / 2;
+  const limitY = (BASE_VIEWBOX.height - visibleHeight) / 2;
+
+  return {
+    x: Math.max(-limitX, Math.min(limitX, point.x)),
+    y: Math.max(-limitY, Math.min(limitY, point.y)),
+  };
+}
+
 export function TurkeyMap({
   selectedCode,
   records,
@@ -119,12 +164,28 @@ export function TurkeyMap({
   exportMode = false,
 }: TurkeyMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const panGestureRef = useRef<PanGesture | null>(null);
+  const suppressMapClickRef = useRef(false);
   const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState<Point>({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
   const [centers, setCenters] = useState<Record<number, Point>>({});
   const [provinceSizes, setProvinceSizes] = useState<
     Record<number, { width: number; height: number }>
   >({});
   const [draftDrawing, setDraftDrawing] = useState<MapPoint[]>([]);
+  const [legendOpen, setLegendOpen] = useState(
+    () => !window.matchMedia("(max-width: 640px)").matches,
+  );
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 640px)");
+    const syncLegend = (event: MediaQueryListEvent) => {
+      setLegendOpen(!event.matches);
+    };
+    mobileQuery.addEventListener("change", syncLegend);
+    return () => mobileQuery.removeEventListener("change", syncLegend);
+  }, []);
 
   const recordsByCode = useMemo(
     () => new Map(records.map((record) => [record.provinceCode, record])),
@@ -152,6 +213,19 @@ export function TurkeyMap({
 
     return [...groups.values()];
   }, [markers]);
+  const routedRivers = useMemo(
+    () =>
+      markers.flatMap((marker) => {
+        if (marker.kind !== "river" || !marker.presetItemId) return [];
+        const route = RIVER_ROUTES[marker.presetItemId];
+        return route ? [{ marker, route }] : [];
+      }),
+    [markers],
+  );
+  const routedRiverMarkerIds = useMemo(
+    () => new Set(routedRivers.map(({ marker }) => marker.id)),
+    [routedRivers],
+  );
   const markerPositions = useMemo(() => {
     const offsets = [
       { x: 0, y: 0 },
@@ -166,6 +240,7 @@ export function TurkeyMap({
     const positions = new Map<string, Point>();
 
     markers.forEach((marker) => {
+      if (routedRiverMarkerIds.has(marker.id)) return;
       if (!marker.anchoredToProvince) {
         positions.set(marker.id, { x: marker.x, y: marker.y });
         return;
@@ -184,7 +259,7 @@ export function TurkeyMap({
     });
 
     return positions;
-  }, [markers, centers]);
+  }, [markers, centers, routedRiverMarkerIds]);
   const markerLabelLayouts = useMemo(() => {
     const layouts = new Map<string, LabelLayout>();
     const placed: Array<
@@ -339,8 +414,23 @@ export function TurkeyMap({
 
   const viewWidth = BASE_VIEWBOX.width / zoom;
   const viewHeight = BASE_VIEWBOX.height / zoom;
-  const viewX = BASE_VIEWBOX.x + (BASE_VIEWBOX.width - viewWidth) / 2;
-  const viewY = BASE_VIEWBOX.y + (BASE_VIEWBOX.height - viewHeight) / 2;
+  const viewX =
+    BASE_VIEWBOX.x + (BASE_VIEWBOX.width - viewWidth) / 2 + pan.x;
+  const viewY =
+    BASE_VIEWBOX.y + (BASE_VIEWBOX.height - viewHeight) / 2 + pan.y;
+
+  const changeZoom = (nextZoom: number) => {
+    const normalizedZoom = Math.max(1, Math.min(1.8, nextZoom));
+    setZoom(normalizedZoom);
+    setPan((current) => clampPan(current, normalizedZoom));
+  };
+
+  const resetViewport = () => {
+    panGestureRef.current = null;
+    setIsPanning(false);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
 
   const eventToPoint = (
     event: React.PointerEvent<SVGSVGElement> | React.MouseEvent<SVGGElement>,
@@ -477,39 +567,114 @@ export function TurkeyMap({
         )}
         <svg
           ref={svgRef}
-          className="turkey-map"
+          className={[
+            "turkey-map",
+            zoom > 1 && !drawingTool ? "turkey-map--pannable" : "",
+            isPanning ? "turkey-map--panning" : "",
+          ].join(" ")}
           viewBox={`${viewX} ${viewY} ${viewWidth} ${viewHeight}`}
           role="group"
           aria-label="81 ilden oluşan Türkiye haritası"
           onPointerDown={(event) => {
-            if (!drawingTool || exportMode) return;
-            const point = eventToPoint(event);
-            if (!point) return;
-            if (drawingTool === "text") {
-              const text = window.prompt("Haritaya yazılacak metin:");
-              if (text?.trim()) onAddDrawing?.("text", [point], text.trim());
+            if (exportMode) return;
+            if (drawingTool) {
+              const point = eventToPoint(event);
+              if (!point) return;
+              if (drawingTool === "text") {
+                const text = window.prompt("Haritaya yazılacak metin:");
+                if (text?.trim()) onAddDrawing?.("text", [point], text.trim());
+                return;
+              }
+              event.currentTarget.setPointerCapture(event.pointerId);
+              setDraftDrawing([point]);
+              return;
+            }
+
+            if (zoom <= 1 || (event.pointerType === "mouse" && event.button !== 0)) {
               return;
             }
             event.currentTarget.setPointerCapture(event.pointerId);
-            setDraftDrawing([point]);
+            panGestureRef.current = {
+              pointerId: event.pointerId,
+              startClientX: event.clientX,
+              startClientY: event.clientY,
+              startPan: pan,
+              moved: false,
+            };
+            setIsPanning(true);
           }}
           onPointerMove={(event) => {
-            if (!drawingTool || draftDrawing.length === 0) return;
-            const point = eventToPoint(event);
-            if (!point) return;
-            setDraftDrawing((current) =>
-              drawingTool === "pen"
-                ? [...current, point]
-                : [current[0], point],
+            if (drawingTool && draftDrawing.length > 0) {
+              const point = eventToPoint(event);
+              if (!point) return;
+              setDraftDrawing((current) =>
+                drawingTool === "pen"
+                  ? [...current, point]
+                  : [current[0], point],
+              );
+              return;
+            }
+
+            const gesture = panGestureRef.current;
+            const svg = svgRef.current;
+            if (!gesture || gesture.pointerId !== event.pointerId || !svg) return;
+            const deltaX = event.clientX - gesture.startClientX;
+            const deltaY = event.clientY - gesture.startClientY;
+            if (Math.hypot(deltaX, deltaY) > 4) gesture.moved = true;
+            if (!gesture.moved) return;
+
+            event.preventDefault();
+            setPan(
+              clampPan(
+                {
+                  x:
+                    gesture.startPan.x -
+                    deltaX * (viewWidth / Math.max(svg.clientWidth, 1)),
+                  y:
+                    gesture.startPan.y -
+                    deltaY * (viewHeight / Math.max(svg.clientHeight, 1)),
+                },
+                zoom,
+              ),
             );
           }}
           onPointerUp={(event) => {
-            if (!drawingTool || draftDrawing.length === 0) return;
-            event.currentTarget.releasePointerCapture(event.pointerId);
-            if (draftDrawing.length > 1) {
-              onAddDrawing?.(drawingTool, draftDrawing);
+            if (drawingTool && draftDrawing.length > 0) {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+              if (draftDrawing.length > 1) {
+                onAddDrawing?.(drawingTool, draftDrawing);
+              }
+              setDraftDrawing([]);
+              return;
+            }
+
+            const gesture = panGestureRef.current;
+            if (!gesture || gesture.pointerId !== event.pointerId) return;
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            }
+            suppressMapClickRef.current = gesture.moved;
+            panGestureRef.current = null;
+            setIsPanning(false);
+            window.setTimeout(() => {
+              suppressMapClickRef.current = false;
+            }, 0);
+          }}
+          onPointerCancel={(event) => {
+            if (
+              panGestureRef.current?.pointerId === event.pointerId
+            ) {
+              panGestureRef.current = null;
+              suppressMapClickRef.current = false;
+              setIsPanning(false);
             }
             setDraftDrawing([]);
+          }}
+          onClickCapture={(event) => {
+            if (!suppressMapClickRef.current) return;
+            event.preventDefault();
+            event.stopPropagation();
+            suppressMapClickRef.current = false;
           }}
         >
           <g className="province-layer">
@@ -555,6 +720,123 @@ export function TurkeyMap({
                     {record ? " · Not eklendi" : ""}
                   </title>
                   <path data-province-code={city.plateNumber} d={city.path} />
+                </g>
+              );
+            })}
+          </g>
+
+          <g className="river-route-layer">
+            {routedRivers.map(({ marker, route }) => {
+              const visual = getMarkerVisual(marker);
+              const last = route.points.at(-1);
+              const beforeLast = route.points.at(-2);
+              const angle =
+                last && beforeLast
+                  ? (Math.atan2(
+                      last.y - beforeLast.y,
+                      last.x - beforeLast.x,
+                    ) *
+                      180) /
+                    Math.PI
+                  : 0;
+              const routeLabel = shortMarkerLabel(marker.label);
+              const labelWidth = Math.max(56, routeLabel.length * 6.8 + 20);
+              const branchNames = route.branches
+                .map((branch) => branch.name)
+                .join(", ");
+              const selectRiver = () => {
+                if (drawingTool || placementProvinceCode) return;
+                const city = cities.find(
+                  (candidate) =>
+                    candidate.plateNumber === marker.provinceCode,
+                );
+                if (city) onSelect(city);
+              };
+
+              return (
+                <g
+                  key={marker.id}
+                  className={[
+                    "river-route",
+                    selectedCode === marker.provinceCode
+                      ? "river-route--selected"
+                      : "",
+                  ].join(" ")}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${marker.label}, ${visual.label}. Kolları: ${branchNames}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    selectRiver();
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      selectRiver();
+                    }
+                  }}
+                  style={
+                    {
+                      "--river-color": marker.color,
+                    } as React.CSSProperties
+                  }
+                >
+                  <title>
+                    {marker.label} · {visual.label} · Kolları: {branchNames}
+                  </title>
+                  <path
+                    className="river-route__hit"
+                    d={smoothPath(route.points)}
+                  />
+                  <path
+                    className="river-route__main"
+                    d={smoothPath(route.points)}
+                  />
+                  {route.branches.map((branch) => (
+                    <g key={branch.name}>
+                      <path
+                        className="river-route__branch"
+                        d={smoothPath(branch.points)}
+                      />
+                      {showLabels && branch.labelAt && (
+                        <text
+                          className="river-route__branch-label"
+                          x={branch.labelAt.x}
+                          y={branch.labelAt.y}
+                        >
+                          {branch.name}
+                        </text>
+                      )}
+                    </g>
+                  ))}
+                  <circle
+                    className="river-route__source"
+                    cx={route.points[0].x}
+                    cy={route.points[0].y}
+                    r="3.6"
+                  />
+                  {last && (
+                    <path
+                      className="river-route__arrow"
+                      d="M -9 -5 L 0 0 L -9 5"
+                      transform={`translate(${last.x} ${last.y}) rotate(${angle})`}
+                    />
+                  )}
+                  {showLabels && (
+                    <g
+                      className="river-route__label"
+                      transform={`translate(${route.labelAt.x} ${route.labelAt.y})`}
+                    >
+                      <rect
+                        x={-labelWidth / 2}
+                        y="-14"
+                        width={labelWidth}
+                        height="22"
+                        rx="7"
+                      />
+                      <text y="1">{routeLabel}</text>
+                    </g>
+                  )}
                 </g>
               );
             })}
@@ -638,6 +920,7 @@ export function TurkeyMap({
 
           <g className="marker-layer">
             {markers.map((marker) => {
+              if (routedRiverMarkerIds.has(marker.id)) return null;
               const position = markerPositions.get(marker.id);
               if (!position) return null;
               const labelLayout = markerLabelLayouts.get(marker.id);
@@ -760,23 +1043,46 @@ export function TurkeyMap({
         )}
 
         {markerLegend.length > 0 && (
-          <div className="marker-legend" aria-label="İşaret lejantı">
-            <strong>LEJANT</strong>
-            <div>
-              {markerLegend.map((group) => (
-                <span key={group.visual.id}>
-                  <i style={{ backgroundColor: group.color }}>
-                    <CatalogIcon
-                      name={group.visual.icon}
-                      size={11}
-                      color="#fff"
-                    />
-                  </i>
-                  {group.visual.label}
-                  <small>{group.count}</small>
-                </span>
-              ))}
-            </div>
+          <div
+            className={[
+              "marker-legend",
+              legendOpen || exportMode
+                ? "marker-legend--open"
+                : "marker-legend--collapsed",
+            ].join(" ")}
+            aria-label="İşaret lejantı"
+          >
+            <button
+              className="marker-legend__toggle"
+              type="button"
+              aria-expanded={legendOpen || exportMode}
+              onClick={() => setLegendOpen((current) => !current)}
+            >
+              <strong>LEJANT</strong>
+              {!exportMode && (
+                <ChevronDown
+                  className={legendOpen ? "is-open" : ""}
+                  size={14}
+                />
+              )}
+            </button>
+            {(legendOpen || exportMode) && (
+              <div>
+                {markerLegend.map((group) => (
+                  <span key={group.visual.id}>
+                    <i style={{ backgroundColor: group.color }}>
+                      <CatalogIcon
+                        name={group.visual.icon}
+                        size={11}
+                        color="#fff"
+                      />
+                    </i>
+                    {group.visual.label}
+                    <small>{group.count}</small>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -787,7 +1093,8 @@ export function TurkeyMap({
                 type="button"
                 title="Yakınlaştır"
                 aria-label="Yakınlaştır"
-                onClick={() => setZoom((current) => Math.min(1.8, current + 0.2))}
+                disabled={zoom >= 1.8}
+                onClick={() => changeZoom(zoom + 0.2)}
               >
                 <Plus size={17} />
               </button>
@@ -795,7 +1102,8 @@ export function TurkeyMap({
                 type="button"
                 title="Uzaklaştır"
                 aria-label="Uzaklaştır"
-                onClick={() => setZoom((current) => Math.max(1, current - 0.2))}
+                disabled={zoom <= 1}
+                onClick={() => changeZoom(zoom - 0.2)}
               >
                 <Minus size={17} />
               </button>
@@ -803,7 +1111,7 @@ export function TurkeyMap({
                 type="button"
                 title="Haritayı ekrana sığdır"
                 aria-label="Haritayı ekrana sığdır"
-                onClick={() => setZoom(1)}
+                onClick={resetViewport}
               >
                 <Scan size={17} />
               </button>
@@ -819,7 +1127,12 @@ export function TurkeyMap({
 
       {!exportMode && (
         <p className="map-hint">
-          Bir ile dokun veya klavyeyle seç; bilgilerini sağdaki alana yaz.
+          <span className="map-hint__desktop">
+            Bir ile dokun; yakınlaştırdığında haritayı fareyle sürükle.
+          </span>
+          <span className="map-hint__mobile">
+            Yakınlaştırdığında haritayı parmağınla sürükleyerek hareket ettir.
+          </span>
         </p>
       )}
     </section>
