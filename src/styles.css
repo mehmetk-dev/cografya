@@ -3822,7 +3822,22 @@ a.ready-source-badge:hover {
   }
 
   .workspace-actions {
+    display: grid;
     width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .workspace-actions .province-search {
+    width: 100%;
+    height: 42px;
+    grid-column: 1 / -1;
+  }
+
+  .workspace-actions .header-button {
+    width: 100%;
+    height: 42px;
+    justify-content: center;
   }
 
   .feature-bar {
@@ -3838,12 +3853,23 @@ a.ready-source-badge:hover {
   }
 
   .feature-bar__actions {
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .feature-bar__actions .layer-menu {
+    min-width: 0;
+  }
+
+  .feature-bar__actions .layer-menu > button {
+    width: 100%;
   }
 
   .feature-bar__actions > button,
   .layer-menu > button {
     width: auto;
+    height: 42px;
     flex: 1;
     padding-inline: 8px;
   }
@@ -3903,9 +3929,30 @@ a.ready-source-badge:hover {
     padding: 21px 16px;
   }
 
+  .ready-set-hero p,
+  .ready-city-item > p,
+  .ready-set-facts li {
+    font-size: 12px;
+  }
+
+  .ready-set-hero > button,
+  .ready-topic-picker > div:last-child > button,
+  .ready-topic-picker--detail select {
+    min-height: 42px;
+    font-size: 11px;
+  }
+
+  .ready-set-hero__stats span,
+  .ready-city-item header small,
+  .ready-source-badge {
+    font-size: 9px;
+  }
+
   .map-annotation text,
   .map-annotation rect,
-  .map-annotation line {
+  .map-annotation line,
+  .map-marker__label,
+  .map-marker__leader {
     display: none;
   }
 
@@ -3991,6 +4038,21 @@ a.ready-source-badge:hover {
     bottom: 12px;
     left: 12px;
     justify-content: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .ready-topic-picker > div:last-child {
+    max-height: none;
+    grid-template-columns: 1fr;
+  }
+
+  .quiz-choices {
+    margin-inline: 10px;
+  }
+
+  .quiz-feedback {
+    margin-inline: 10px;
   }
 }
 

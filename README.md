@@ -1,72 +1,227 @@
-# Coğrafya Atlasım
+<div align="center">
 
-Türkiye'nin 81 ilini seçerek farklı çalışma haritaları oluşturabileceğiniz
-yerel ve çevrimdışı çalışan bir coğrafya not uygulaması.
+# 🗺️ Coğrafya Atlasım
 
-## Özellikler
+### Türkiye haritası üzerinde çalış, işaretle, ezberle ve kendi atlasını oluştur.
 
-- Gerçek il sınırlarına sahip, 81 ili ayrı ayrı seçilebilen SVG harita
-- Dağlar, tarım ürünleri, akarsular gibi bağımsız çalışma haritaları
-- Soldan tek tıkla açılan 7 içerik dolu hazır set: dağlar, göller, akarsular,
-  tarım, maden ve enerji, ticaret, sanayi ve fabrikalar
-- Hazır setlerde il adları, il seçildiğinde salt okunur ayrıntı paneli ve
-  MEB/KPSS hızlı notları
-- Hazır ders setini koruyan salt okunur yapı; kişisel not için tek tıkla
-  düzenlenebilir kopya oluşturma
-- Hazır akarsu sistemlerinde önemli kollar, döküldüğü havza ve sınav notları
-- Tarım, maden-enerji ve sanayi setlerinde konu seçici; aynı ürün veya kaynağın
-  bütün önemli ilçe/havza dağılışlarını ayrı işaretlerle gösterme
-- Madenin çıkarıldığı saha ile ilişkili rafineri, izabe, termik santral veya
-  fabrika bağlantısını birlikte çalışma
-- Dağ setinde kıvrım/kırık/volkanik grupları, lisanslı örnek fotoğraflar ve
-  doğrudan set içeriğinden üretilen quiz
-- Yedi hazır ders sayfasının tamamında toplam 56 açıklamalı KPSS/MEB bilgi
-  sorusu; her turda haritada yer bulma sorularıyla karışık quiz
-- Yanlış cevapta doğru seçeneği, kısa konu açıklamasını ve harita sorularında
-  ilgili bilgi kartını gösteren öğrenme geri bildirimi
-- Bir ile birden fazla kategorili bilgi maddesi ve ayrıntılı not ekleme
-- Harita üzerinde kısa bilgi etiketi ve il renklendirme
-- İl sınırları içinde tam koordinata dağ, tarım, akarsu, göl, maden,
-  turizm, yerleşim veya özel simge bırakma
-- Dağ işaretlerini kıvrım, kırık/horst ve volkanik; ova işaretlerini tektonik,
-  delta, karstik, kıyı ve iç bölge sınıflarına ayırma
-- Her KPSS yer şekli alt türü için ayrı simge, varsayılan renk ve oluşum özeti
-- Başlıca Türkiye tarım ürünlerini tahıl, baklagil, endüstri bitkisi, yağ
-  bitkisi, meyve, içecek bitkisi, yumru bitki ve sebze gruplarında seçme
-- Madenleri metalik, metalik olmayan ve taş; enerji kaynaklarını fosil ve
-  yenilenebilir alt türleriyle işaretleme
-- Gölleri oluşumuna, akarsuları döküldüğü havzaya, turizmi ve yerleşmeleri
-  kendi KPSS alt başlıklarına göre ayırma
-- Karakter işaretleri yerine Lucide tabanlı ve projeye özel gerçek SVG ikonlar
-- Kullanılan işaret türlerinden otomatik harita lejantı oluşturma
-- Dağ, tarım, akarsu ve diğer işaret katmanlarını ayrı ayrı açıp kapatma
-- Kalem, ok, daire ve metin araçlarıyla harita üzerine kalıcı çizim yapma
-- İl bulma test modu, doğru cevap oranı ve en iyi seri takibi
-- İl, not, kategori ve işaret açıklamalarında gelişmiş arama
-- Boş konu şablonlarıyla sıfırdan kişisel çalışma haritası oluşturma
-- Harita tamamlama oranı ve çalışma ilerlemesi ekranı
-- Tarayıcıda IndexedDB ile kalıcı kayıt
-- Haritayı bütün notlarıyla çoğaltma
-- JSON yedeği indirme ve geri yükleme
-- Haritayı bütün il notlarıyla birlikte yüksek çözünürlüklü PNG olarak indirme
-- A4 yatay yazdırma/PDF düzeni ve cihazın paylaşım menüsüyle harita gönderme
-- Mobil, tablet ve masaüstü uyumlu arayüz
+81 ili seçilebilir gerçek Türkiye haritası, MEB/KPSS odaklı hazır ders setleri,
+kişisel notlar, konum işaretleri ve açıklamalı quizler tek bir uygulamada.
 
-## Çalıştırma
+<p>
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white">
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white">
+  <img alt="IndexedDB" src="https://img.shields.io/badge/IndexedDB-Yerel%20kayıt-17443A">
+  <img alt="Responsive" src="https://img.shields.io/badge/Tasarım-Responsive-E9A23B">
+</p>
+
+**Sunucu gerektirmez · Üyelik gerektirmez · Çevrimdışı çalışabilir**
+
+</div>
+
+---
+
+## Proje hakkında
+
+Coğrafya Atlasım; Türkiye coğrafyasını yalnızca okuyarak değil, harita üzerinde
+görerek ve tekrar ederek çalışmak için geliştirilen etkileşimli bir çalışma
+uygulamasıdır.
+
+Hazır ders setlerini inceleyebilir, şehirlerin üzerine dokunarak sınavlık
+bilgilere ulaşabilir veya hazır seti kopyalayıp kendi notlarınla kişisel bir
+çalışma haritasına dönüştürebilirsin.
+
+| 81 il | 7 hazır set | 331 bilgi işareti | 56 açıklamalı soru |
+|:---:|:---:|:---:|:---:|
+| Seçilebilir gerçek sınırlar | MEB/KPSS odaklı içerik | İlçe, havza ve tesis ayrıntıları | Bilgi + harita quizi |
+
+## Hazır ders kütüphanesi
+
+| Ders seti | İşaret | İçerik |
+|---|---:|---|
+| ⛰️ Dağlar | 31 | Kıvrım, kırık/horst ve volkanik dağlar |
+| 🌊 Göller | 18 | Oluşum türleri, doğal göller ve baraj gölleri |
+| 🏞️ Akarsular | 17 | Havzalar, önemli kollar ve döküldükleri yerler |
+| 🌱 Tarım | 58 | Ürünler, başlıca üretim alanları ve mikroklima örnekleri |
+| ⛏️ Maden ve Enerji | 111 | Çıkarım sahaları, enerji kaynakları ve ilişkili tesisler |
+| 🚢 Ticaret | 12 | Limanlar, sınır kapıları ve hinterland ilişkileri |
+| 🏭 Sanayi | 84 | Fabrikalar, sanayi kolları ve kuruluş yeri nedenleri |
+
+Her hazır set salt okunur açılır. Böylece ders içeriği yanlışlıkla değişmez.
+Kişisel not eklemek için **“Kopyala ve kendi notlarını ekle”** seçeneği
+kullanılabilir.
+
+## Öne çıkan özellikler
+
+### Etkileşimli Türkiye haritası
+
+- Gerçek il sınırlarına sahip SVG Türkiye haritası
+- 81 ilin ayrı ayrı seçilebilmesi
+- Hazır setlerde şehir adlarının harita üzerinde gösterilmesi
+- İl, not, ürün ve işaret açıklamalarında arama
+- Yakınlaştırma ve haritayı ekrana sığdırma araçları
+- Kullanılan işaret türlerinden otomatik lejant oluşturma
+- Yoğun haritalarda çakışmayı azaltan etiket yerleşimi
+
+### Kişisel çalışma atlası
+
+- Birden fazla bağımsız çalışma haritası oluşturma
+- Bir şehre birden fazla bilgi maddesi ekleme
+- İl sınırı içinde seçilen noktaya özel işaret bırakma
+- Dağ, ova, tarım, göl, akarsu, maden, enerji ve özel simgeler
+- Kalem, ok, daire ve metin araçlarıyla harita üzerine çizim yapma
+- İşaret katmanlarını ayrı ayrı açıp kapatma
+- Haritaları bütün notlarıyla çoğaltma
+
+### Açıklamalı quiz sistemi
+
+- Yedi hazır setin tamamında 8’er bilgi sorusu
+- Bilgi soruları ile haritada il bulma sorularını karıştıran quizler
+- Her denemede değişen soru ve şık sırası
+- Yanlış cevapta doğru cevap ve kısa konu açıklaması
+- Doğru cevap oranı, toplam cevap ve en iyi seri takibi
+
+### Dışa aktarma ve yedekleme
+
+- Bütün notlarla birlikte yüksek çözünürlüklü PNG
+- A4 yatay PDF/yazdırma düzeni
+- Cihazın desteklediği paylaşım menüsü
+- JSON yedeği indirme ve yeniden içe aktarma
+
+### Mobil kullanım
+
+Arayüz masaüstü, tablet ve telefon ekranlarına uyumludur. Mobilde:
+
+- Ders ve harita kartları yatay kaydırılabilir.
+- Harita ile ayrıntı paneli alt alta yerleşir.
+- Araç düğmeleri dokunmatik kullanıma uygun boyuta geçer.
+- Quiz seçenekleri ve konu listeleri tek sütuna dönüşür.
+- Yoğun etiketler gizlenerek haritanın okunabilirliği korunur.
+
+## Nasıl çalışır?
+
+```mermaid
+flowchart LR
+    A["Hazır ders seti"] --> B["Haritada şehir veya işaret seç"]
+    B --> C["Konu bilgilerini incele"]
+    C --> D["Bilgi + harita quizini çöz"]
+    A --> E["Kişisel kopya oluştur"]
+    E --> F["Not, simge ve çizim ekle"]
+    F --> G["PNG, PDF veya JSON olarak dışa aktar"]
+    C --> H[("IndexedDB")]
+    D --> H
+    F --> H
+```
+
+Uygulama verileri harici bir sunucuya göndermek yerine tarayıcıdaki
+**IndexedDB** alanında saklar. Bu nedenle hızlıdır ve internet bağlantısı
+olmadan da kullanılabilir.
+
+> [!IMPORTANT]
+> Kayıtlar kullanılan tarayıcı ve cihaza özeldir. Tarayıcı verileri silinirse
+> notlar da silinebilir. Önemli haritaları düzenli olarak JSON biçiminde
+> yedeklemeniz önerilir.
+
+## Teknolojiler
+
+| Teknoloji | Kullanım amacı |
+|---|---|
+| React 19 | Kullanıcı arayüzü ve etkileşimler |
+| TypeScript | Tip güvenli uygulama geliştirme |
+| Vite 6 | Geliştirme sunucusu ve üretim derlemesi |
+| Dexie / IndexedDB | Tarayıcı içinde kalıcı yerel kayıt |
+| Lucide React | Arayüz ve harita simgeleri |
+| html-to-image | Haritayı yüksek çözünürlüklü görsele dönüştürme |
+| turkey-map-react | Türkiye il sınırı verileri |
+
+## Yerel kurulum
+
+Gereksinimler:
+
+- Node.js 20 veya üzeri
+- npm
 
 ```bash
-npm install --include=dev
+git clone <depo-adresi>
+cd cografya
+npm ci
 npm run dev
 ```
 
-Uygulama varsayılan olarak `http://localhost:5173` adresinde açılır.
+Uygulama geliştirme ortamında varsayılan olarak
+[`http://localhost:5173`](http://localhost:5173) adresinde açılır.
 
-## Üretim derlemesi
+## Kullanılabilir komutlar
+
+| Komut | Açıklama |
+|---|---|
+| `npm run dev` | Vite geliştirme sunucusunu başlatır |
+| `npm run build` | TypeScript kontrolüyle üretim derlemesi oluşturur |
+| `npm run preview` | Oluşturulan üretim paketini yerelde önizler |
+
+## Sunucuya yükleme
+
+Proje statik olarak yayınlanabilir; Node.js çalışan bir backend gerekmez.
 
 ```bash
+npm ci
 npm run build
-npm run preview
 ```
 
-Harita verisinin kaynağı ve lisansı için [ATTRIBUTIONS.md](./ATTRIBUTIONS.md)
-dosyasına bakın.
+Oluşan `dist/` klasörünün **içeriğini** cPanel `public_html`, Nginx web kökü,
+Netlify, Vercel veya benzeri bir statik barındırma servisine yükleyin.
+
+| Dağıtım ayarı | Değer |
+|---|---|
+| Build command | `npm ci && npm run build` |
+| Output directory | `dist` |
+| Node.js backend | Gerekli değil |
+
+> [!NOTE]
+> Mevcut üretim paketi alan adının kökünde (`site.com/`) çalışacak şekilde
+> hazırlanır. `site.com/cografya/` gibi bir alt klasörde yayınlamak için Vite
+> `base` ayarı ve görsel yolları alt dizine göre düzenlenmelidir. Kayıt ve
+> paylaşım özelliklerinin eksiksiz çalışması için HTTPS kullanılmalıdır.
+
+## Proje yapısı
+
+```text
+coğrafya/
+├── public/
+│   └── images/sets/       # Hazır ders görselleri
+├── src/
+│   ├── components/        # Harita, paneller, quiz ve dışa aktarma
+│   ├── App.tsx            # Ana uygulama akışı
+│   ├── db.ts              # IndexedDB / Dexie veri katmanı
+│   ├── markerKinds.ts     # İşaret türleri ve görsel sınıflandırmalar
+│   ├── quizBanks.ts       # Hazır setlerin soru bankaları
+│   ├── readySets.ts       # MEB/KPSS odaklı hazır ders içerikleri
+│   └── styles.css         # Masaüstü ve responsive tasarım
+├── ATTRIBUTIONS.md        # Veri, görsel ve paket atıfları
+├── package.json
+└── vite.config.ts
+```
+
+## İçerik ve kaynaklar
+
+Hazır çalışma içerikleri hazırlanırken MEBİ Coğrafya konu özetlerindeki
+sınıflandırmalar ve sınavda öne çıkan bilgiler esas alınmıştır:
+
+- [Türkiye’de ana yer şekilleri ve dağlar](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/tyt-cografya/files/basic-html/page76.html)
+- [Türkiye’de göller](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/tyt-cografya/files/basic-html/page81.html)
+- [Türkiye’de akarsular ve havzalar](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/tyt-cografya/files/basic-html/page83.html)
+- [Türkiye’de tarım ürünleri](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/ayt-cografya/files/basic-html/page28.html)
+- [Türkiye’de madencilik ve enerji kaynakları](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/ayt-cografya/files/basic-html/page34.html)
+- [Türkiye’de sanayi](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/ayt-cografya/files/basic-html/page37.html)
+- [Hizmet sektörü ve ulaşım](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/ayt-cografya/files/basic-html/page80.html)
+
+Harita verileri, paket lisansları ve kullanılan görsellerle ilgili ayrıntılar
+için [ATTRIBUTIONS.md](./ATTRIBUTIONS.md) dosyasını inceleyin.
+
+---
+
+<div align="center">
+
+**Haritada gör · Bağlantı kur · Tekrar et · Kalıcı öğren**
+
+</div>
