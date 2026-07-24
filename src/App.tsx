@@ -114,20 +114,48 @@ function buildReadySetMarkers(set: ReadyStudySet, mapId: string) {
   });
 }
 
+function readyMarkerSignature(marker: MapMarker) {
+  return JSON.stringify([
+    marker.presetItemId,
+    marker.provinceCode,
+    marker.label,
+    marker.description,
+    marker.kind,
+    marker.subtype,
+    marker.color,
+    marker.anchoredToProvince,
+    marker.x,
+    marker.y,
+    marker.image,
+    marker.topic,
+    marker.place,
+    marker.relation,
+    marker.sourceLabel,
+    marker.sourceUrl,
+  ]);
+}
+
 async function refreshReadySetContent(set: ReadyStudySet, mapId: string) {
   const currentMarkers = await db.mapMarkers
     .where("mapId")
     .equals(mapId)
     .toArray();
+  const expectedMarkers = buildReadySetMarkers(set, mapId);
   const presetMarkers = currentMarkers.filter(
-    (marker) => marker.anchoredToProvince,
+    (marker) => Boolean(marker.presetItemId),
   );
-  const currentIds = new Set(
-    presetMarkers.map((marker) => marker.presetItemId).filter(Boolean),
+  const currentByPresetId = new Map(
+    presetMarkers.map((marker) => [marker.presetItemId, marker]),
   );
   const needsRefresh =
     presetMarkers.length !== set.items.length ||
-    set.items.some((entry) => !currentIds.has(entry.id));
+    expectedMarkers.some((expected) => {
+      const current = currentByPresetId.get(expected.presetItemId);
+      return (
+        !current ||
+        readyMarkerSignature(current) !== readyMarkerSignature(expected)
+      );
+    });
   if (!needsRefresh) return false;
 
   await db.transaction("rw", db.studyMaps, db.mapMarkers, async () => {
@@ -136,7 +164,7 @@ async function refreshReadySetContent(set: ReadyStudySet, mapId: string) {
         presetMarkers.map((marker) => marker.id),
       );
     }
-    await db.mapMarkers.bulkAdd(buildReadySetMarkers(set, mapId));
+    await db.mapMarkers.bulkAdd(expectedMarkers);
     await db.studyMaps.update(mapId, {
       name: set.title,
       description: set.description,

@@ -240,8 +240,8 @@ export function ReadySetOverview({
           <div className="ready-set-section-title">
             <MapPin size={15} />
             <div>
-              <small>HARİTADA GÖSTERİLECEK KONU</small>
-              <strong>Ürün, kaynak veya sanayi kolu seç</strong>
+              <small>KONU / SINIFLANDIRMA</small>
+              <strong>Haritada görmek istediğin grubu seç</strong>
             </div>
           </div>
           <div>

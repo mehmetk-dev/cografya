@@ -159,7 +159,15 @@ const mountains: ReadySetItem[] = [
   item("aydin", "Aydın Dağları", 9, "mountain", "mountain-fault-block", "Küçük ve Büyük Menderes grabenleri arasında uzanan kırık dağlardır."),
   item("mentese", "Menteşe Dağları", 48, "mountain", "mountain-fault-block", "Güneybatı Anadolu'da faylanmayla belirginleşen dağlık kütledir."),
   item("amanos", "Amanos Dağları", 31, "mountain", "mountain-fault-block", "İskenderun Körfezi'nin doğusunda uzanan kırık dağlardır; Nur Dağları da denir."),
-];
+].map((entry) => ({
+  ...entry,
+  topic:
+    entry.subtype === "mountain-volcanic"
+      ? "Volkanik Dağlar"
+      : entry.subtype === "mountain-fault-block"
+        ? "Kırık Dağlar (Horst)"
+        : "Kıvrım Dağları",
+}));
 
 const lakes: ReadySetItem[] = [
   item("van", "Van Gölü", 65, "lake", "lake-tectonic-volcanic-set", "Türkiye'nin en büyük gölüdür; tektonik çanakta Nemrut volkanından çıkan lavların oluşturduğu set de etkili olmuştur."),
@@ -613,7 +621,7 @@ export const READY_STUDY_SETS: ReadyStudySet[] = [
     title: "Türkiye'nin Dağları",
     shortTitle: "Dağlar",
     subject: "Yeryüzü şekilleri",
-    description: "KPSS ve TYT için başlıca dağlar; kıvrım, kırık (horst) ve volkanik oluşumlarına göre ayrılmıştır.",
+    description: "KPSS ve TYT için başlıca dağlar; kıvrım, kırık (horst) ve volkanik grupları ayrı ayrı çalışılabilir. İşaretler dağın sınavlarda eşleştirilen başlıca ilini temsil eder; dağ sıraları birden fazla ile uzanabilir.",
     color: "#a85d42",
     icon: "mountain",
     quizLabel: "Dağın bulunduğu ili bul",

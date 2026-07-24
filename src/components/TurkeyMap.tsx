@@ -695,6 +695,14 @@ export function TurkeyMap({
                         height={labelLayout.height}
                         rx="6"
                       />
+                      <rect
+                        className="map-marker__label-accent"
+                        x={labelLayout.x - position.x + 2}
+                        y={labelLayout.y - position.y + 2}
+                        width="4"
+                        height={labelLayout.height - 4}
+                        rx="2"
+                      />
                       <text
                         x={
                           labelLayout.x -
