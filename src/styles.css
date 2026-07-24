@@ -3306,6 +3306,33 @@ a.ready-source-badge:hover {
   font-size: 10px;
 }
 
+.app-loading--error {
+  padding: 24px;
+  text-align: center;
+}
+
+.app-loading--error .loading-mark {
+  color: #b85b4d;
+  animation: none;
+}
+
+.app-loading--error span {
+  max-width: 460px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.app-loading--error button {
+  margin-top: 16px;
+  padding: 10px 16px;
+  color: #fffdf7;
+  font-size: 11px;
+  font-weight: 800;
+  border: 0;
+  border-radius: 9px;
+  background: #173f36;
+}
+
 .export-poster {
   position: fixed;
   z-index: -100;

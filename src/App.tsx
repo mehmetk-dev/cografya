@@ -26,6 +26,7 @@ import { FeatureBar } from "./components/FeatureBar";
 import { QuizModal } from "./components/QuizModal";
 import { StatsModal } from "./components/StatsModal";
 import { ReadySetOverview } from "./components/ReadySetOverview";
+import { createId } from "./id";
 import { getMarkerVisual } from "./markerKinds";
 import {
   getReadySet,
@@ -89,7 +90,7 @@ function buildReadySetMarkers(set: ReadyStudySet, mapId: string) {
       : "";
 
     return {
-      id: crypto.randomUUID(),
+      id: createId(),
       mapId,
       provinceCode: entry.provinceCode,
       provinceName: city?.name ?? "Türkiye",
@@ -165,6 +166,7 @@ export default function App() {
   const [drawingColor, setDrawingColor] = useState("#d05f64");
   const [quizOpen, setQuizOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [initializationError, setInitializationError] = useState("");
   const [pendingMarker, setPendingMarker] = useState<{
     provinceCode: number;
     draft: MarkerDraft;
@@ -272,13 +274,33 @@ export default function App() {
   );
 
   useEffect(() => {
-    void db.transaction("rw", db.studyMaps, async () => {
-      if ((await db.studyMaps.count()) === 0) {
-        const starterMap = createBlankMap("Türkiye Coğrafya Notlarım");
-        await db.studyMaps.add(starterMap);
-        setActiveMapId(starterMap.id);
+    let cancelled = false;
+
+    const initializeAtlas = async () => {
+      try {
+        await db.transaction("rw", db.studyMaps, async () => {
+          if ((await db.studyMaps.count()) === 0) {
+            const starterMap = createBlankMap("Türkiye Coğrafya Notlarım");
+            await db.studyMaps.add(starterMap);
+            if (!cancelled) setActiveMapId(starterMap.id);
+          }
+        });
+      } catch (error) {
+        console.error("Atlas başlatılamadı", error);
+        if (!cancelled) {
+          setInitializationError(
+            error instanceof Error
+              ? error.message
+              : "Tarayıcıdaki yerel kayıt alanı açılamadı.",
+          );
+        }
       }
-    });
+    };
+
+    void initializeAtlas();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -337,7 +359,7 @@ export default function App() {
     const now = new Date().toISOString();
     const copy: StudyMap = {
       ...map,
-      id: crypto.randomUUID(),
+      id: createId(),
       sourceSetId: undefined,
       name: `${map.name} — Kopya`,
       createdAt: now,
@@ -361,19 +383,19 @@ export default function App() {
       mapId: copy.id,
       items: record.items.map((item) => ({
         ...item,
-        id: crypto.randomUUID(),
+        id: createId(),
       })),
       updatedAt: now,
     }));
     const copiedMarkers = sourceMarkers.map((marker) => ({
       ...marker,
-      id: crypto.randomUUID(),
+      id: createId(),
       mapId: copy.id,
       createdAt: now,
     }));
     const copiedDrawings = sourceDrawings.map((drawing) => ({
       ...drawing,
-      id: crypto.randomUUID(),
+      id: createId(),
       mapId: copy.id,
       createdAt: now,
     }));
@@ -499,7 +521,7 @@ export default function App() {
     if (!activeMap || !pendingMarker || activeReadySet) return;
 
     const marker: MapMarker = {
-      id: crypto.randomUUID(),
+      id: createId(),
       mapId: activeMap.id,
       provinceCode: city.plateNumber,
       provinceName: city.name,
@@ -536,7 +558,7 @@ export default function App() {
   ) => {
     if (!activeMap || activeReadySet) return;
     const drawing: MapDrawing = {
-      id: crypto.randomUUID(),
+      id: createId(),
       mapId: activeMap.id,
       tool,
       color: drawingColor,
@@ -739,7 +761,7 @@ export default function App() {
       const now = new Date().toISOString();
       const importedMap: StudyMap = {
         ...parsed.map,
-        id: crypto.randomUUID(),
+        id: createId(),
         name: `${parsed.map.name} — İçe aktarıldı`,
         createdAt: now,
         updatedAt: now,
@@ -759,7 +781,7 @@ export default function App() {
           items: Array.isArray(record.items)
             ? record.items.map((item) => ({
                 ...item,
-                id: crypto.randomUUID(),
+                id: createId(),
               }))
             : [],
           updatedAt: now,
@@ -777,7 +799,7 @@ export default function App() {
         )
         .map((marker) => ({
           ...marker,
-          id: crypto.randomUUID(),
+          id: createId(),
           mapId: importedMap.id,
           createdAt: now,
         }));
@@ -792,7 +814,7 @@ export default function App() {
         )
         .map((drawing) => ({
           ...drawing,
-          id: crypto.randomUUID(),
+          id: createId(),
           mapId: importedMap.id,
           createdAt: now,
         }));
@@ -824,6 +846,19 @@ export default function App() {
       if (importInputRef.current) importInputRef.current.value = "";
     }
   };
+
+  if (initializationError) {
+    return (
+      <div className="app-loading app-loading--error" role="alert">
+        <div className="loading-mark"><MapPinned size={29} /></div>
+        <strong>Atlas başlatılamadı</strong>
+        <span>{initializationError}</span>
+        <button type="button" onClick={() => window.location.reload()}>
+          Tekrar dene
+        </button>
+      </div>
+    );
+  }
 
   if (
     !maps ||

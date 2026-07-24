@@ -6,6 +6,7 @@ import type {
   QuizStats,
   StudyMap,
 } from "./types";
+import { createId } from "./id";
 
 class GeographyDatabase extends Dexie {
   studyMaps!: EntityTable<StudyMap, "id">;
@@ -47,7 +48,7 @@ export function createBlankMap(
   const now = new Date().toISOString();
 
   return {
-    id: crypto.randomUUID(),
+    id: createId(),
     name,
     description: "",
     themeColor,

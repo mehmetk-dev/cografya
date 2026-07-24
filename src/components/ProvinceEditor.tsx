@@ -16,6 +16,7 @@ import {
   getMarkerVisual,
   MARKER_KINDS,
 } from "../markerKinds";
+import { createId } from "../id";
 import { CatalogIcon } from "./CatalogIcon";
 import type {
   City,
@@ -58,7 +59,7 @@ const CATEGORIES = [
 
 function emptyItem(): ProvinceItem {
   return {
-    id: crypto.randomUUID(),
+    id: createId(),
     text: "",
     category: "Genel",
   };
