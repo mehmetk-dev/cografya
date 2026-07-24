@@ -173,6 +173,7 @@ export default function App() {
   } | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const exportPosterRef = useRef<HTMLDivElement>(null);
+  const pendingMapActivationRef = useRef<string | null>(null);
 
   const activeMap = maps?.find((map) => map.id === activeMapId);
   const activeReadySet = getReadySet(activeMap?.sourceSetId);
@@ -282,7 +283,10 @@ export default function App() {
           if ((await db.studyMaps.count()) === 0) {
             const starterMap = createBlankMap("Türkiye Coğrafya Notlarım");
             await db.studyMaps.add(starterMap);
-            if (!cancelled) setActiveMapId(starterMap.id);
+            if (!cancelled) {
+              pendingMapActivationRef.current = starterMap.id;
+              setActiveMapId(starterMap.id);
+            }
           }
         });
       } catch (error) {
@@ -306,9 +310,20 @@ export default function App() {
   useEffect(() => {
     if (!maps?.length) return;
 
-    if (!activeMapId || !maps.some((map) => map.id === activeMapId)) {
-      setActiveMapId(maps[0].id);
+    const pendingMapId = pendingMapActivationRef.current;
+    if (pendingMapId && maps.some((map) => map.id === pendingMapId)) {
+      pendingMapActivationRef.current = null;
     }
+
+    if (!activeMapId) {
+      setActiveMapId(maps[0].id);
+      return;
+    }
+
+    if (maps.some((map) => map.id === activeMapId)) return;
+    if (pendingMapId === activeMapId) return;
+
+    setActiveMapId(maps[0].id);
   }, [maps, activeMapId]);
 
   useEffect(() => {
@@ -348,6 +363,7 @@ export default function App() {
   const createMap = async (name: string, color: string) => {
     const map = createBlankMap(name, color);
     await db.studyMaps.add(map);
+    pendingMapActivationRef.current = map.id;
     setActiveMapId(map.id);
     setSelectedCity(null);
     setPendingMarker(null);
@@ -414,6 +430,7 @@ export default function App() {
       },
     );
 
+    pendingMapActivationRef.current = copy.id;
     setActiveMapId(copy.id);
     setSelectedCity(null);
     setPendingMarker(null);
@@ -448,6 +465,7 @@ export default function App() {
       await db.studyMaps.add(map);
       await db.mapMarkers.bulkAdd(markers);
     });
+    pendingMapActivationRef.current = map.id;
     selectMap(map.id);
     setToast(`${set.items.length} bilgiyle “${set.shortTitle}” seti hazır`);
   };
@@ -832,6 +850,7 @@ export default function App() {
           await db.mapDrawings.bulkPut(importedDrawings);
         },
       );
+      pendingMapActivationRef.current = importedMap.id;
       setActiveMapId(importedMap.id);
       setSelectedCity(null);
       setPendingMarker(null);
