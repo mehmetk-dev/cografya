@@ -1,4 +1,11 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ChevronDown,
   Circle,
@@ -168,6 +175,7 @@ export function TurkeyMap({
   const svgRef = useRef<SVGSVGElement>(null);
   const panGestureRef = useRef<PanGesture | null>(null);
   const suppressMapClickRef = useRef(false);
+  const riverClipId = `river-land-${useId().replaceAll(":", "")}`;
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState<Point>({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -715,6 +723,14 @@ export function TurkeyMap({
             suppressMapClickRef.current = false;
           }}
         >
+          <defs>
+            <clipPath id={riverClipId}>
+              {cities.map((city) => (
+                <path key={city.id} d={city.path} />
+              ))}
+            </clipPath>
+          </defs>
+
           <g className="province-layer">
             {cities.map((city) => {
               const record = recordsByCode.get(city.plateNumber);
@@ -822,20 +838,38 @@ export function TurkeyMap({
                   <title>
                     {marker.label} · {visual.label} · Kolları: {branchNames}
                   </title>
-                  <path
-                    className="river-route__hit"
-                    d={smoothPath(route.points)}
-                  />
-                  <path
-                    className="river-route__main"
-                    d={smoothPath(route.points)}
-                  />
-                  {route.branches.map((branch) => (
-                    <g key={branch.name}>
+                  <g clipPath={`url(#${riverClipId})`}>
+                    <path
+                      className="river-route__hit"
+                      d={smoothPath(route.points)}
+                    />
+                    <path
+                      className="river-route__main"
+                      d={smoothPath(route.points)}
+                    />
+                    {route.branches.map((branch) => (
                       <path
+                        key={branch.name}
                         className="river-route__branch"
                         d={smoothPath(branch.points)}
                       />
+                    ))}
+                    <circle
+                      className="river-route__source"
+                      cx={route.points[0].x}
+                      cy={route.points[0].y}
+                      r="3.6"
+                    />
+                    {last && (
+                      <path
+                        className="river-route__arrow"
+                        d="M -9 -5 L 0 0 L -9 5"
+                        transform={`translate(${last.x} ${last.y}) rotate(${angle})`}
+                      />
+                    )}
+                  </g>
+                  {route.branches.map((branch) => (
+                    <g key={branch.name}>
                       {showLabels && branch.labelAt && (
                         <text
                           className="river-route__branch-label"
@@ -847,19 +881,6 @@ export function TurkeyMap({
                       )}
                     </g>
                   ))}
-                  <circle
-                    className="river-route__source"
-                    cx={route.points[0].x}
-                    cy={route.points[0].y}
-                    r="3.6"
-                  />
-                  {last && (
-                    <path
-                      className="river-route__arrow"
-                      d="M -9 -5 L 0 0 L -9 5"
-                      transform={`translate(${last.x} ${last.y}) rotate(${angle})`}
-                    />
-                  )}
                   {showLabels && (
                     <g
                       className="river-route__label"
