@@ -58,6 +58,35 @@ test("hazır set ekranı mobil genişliğe sığar", async ({ page }) => {
   await expectNoHorizontalScroll(page);
 });
 
+test("plato ve millî park setleri mobilde açılır", async ({ page }) => {
+  await page.goto("/");
+
+  for (const readySet of [
+    {
+      button: /Platolar/,
+      heading: "Türkiye'nin Platoları",
+      count: "15 işaret",
+    },
+    {
+      button: /Millî Parklar/,
+      heading: "Türkiye'nin Millî Parkları",
+      count: "50 işaret",
+    },
+  ]) {
+    await page
+      .locator(".ready-library__list")
+      .getByRole("button", { name: readySet.button })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: readySet.heading, exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.locator(".ready-set-hero__stats").getByText(readySet.count),
+    ).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  }
+});
+
 test("quiz ve istatistik pencereleri mobil genişliğe sığar", async ({
   page,
 }) => {

@@ -9,7 +9,7 @@ export type MarkerKindOption = {
 
 export const MARKER_KINDS: MarkerKindOption[] = [
   { id: "mountain", label: "Dağ", icon: "mountain", color: "#a85d42" },
-  { id: "plain", label: "Ova", icon: "land", color: "#bf9a45" },
+  { id: "plain", label: "Ova / Plato", icon: "land", color: "#bf9a45" },
   { id: "agriculture", label: "Tarım", icon: "sprout", color: "#4f8b67" },
   { id: "river", label: "Akarsu", icon: "spline", color: "#397ca8" },
   { id: "lake", label: "Göl", icon: "waves", color: "#4d91bd" },
@@ -60,6 +60,10 @@ export const MARKER_SUBTYPES: MarkerSubtypeOption[] = [
   subtype("plain", "karstic", "Oluşum", "Karstik Ova", "circle", "#8b7b5a", "Karstik çözünme ve çökme süreçleriyle oluşur"),
   subtype("plain", "coastal", "Konum", "Kıyı Ovası", "umbrella", "#4b8ea8", "Denize yakın alçak kıyı düzlüğü"),
   subtype("plain", "interior", "Konum", "İç Bölge Ovası", "land", "#a18c4b", "İç kesimlerde bulunan ova"),
+  subtype("plain", "plateau-tabular", "Plato Oluşumu", "Tabaka Düzlüğü Platosu", "layers", "#b58a3c", "Yatay tabakaların akarsular tarafından yarılmasıyla oluşan plato"),
+  subtype("plain", "plateau-karstic", "Plato Oluşumu", "Karstik Plato", "circle", "#8b7b5a", "Kalkerli arazinin çözünmesi ve yarılmasıyla oluşan plato"),
+  subtype("plain", "plateau-volcanic", "Plato Oluşumu", "Volkanik Plato", "volcano", "#a45f42", "Lav örtülerinin akarsular tarafından yarılmasıyla oluşan plato"),
+  subtype("plain", "plateau-erosion", "Plato Oluşumu", "Aşınım Düzlüğü Platosu", "activity", "#7d805e", "Eski aşınım yüzeylerinin akarsularla parçalanmasıyla oluşan plato"),
 
   subtype("river", "black-sea", "Döküldüğü Havza", "Karadeniz Havzası", "waves", "#367ca5", "Sularını Karadeniz’e ulaştıran akarsu"),
   subtype("river", "marmara", "Döküldüğü Havza", "Marmara Havzası", "waves", "#4c88a6", "Sularını Marmara Denizi’ne ulaştıran akarsu"),

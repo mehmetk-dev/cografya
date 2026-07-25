@@ -109,6 +109,12 @@ const MEB_AGRICULTURE_PAGE_29 =
   "https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/ayt-cografya/files/basic-html/page29.html";
 const MEB_AGRICULTURE_PAGE_30 =
   "https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/ayt-cografya/files/basic-html/page30.html";
+const MEB_PLATEAUS_PAGE =
+  "https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/tyt-cografya/files/basic-html/page76.html";
+const MEB_EKPSS_GEOGRAPHY_BOOK =
+  "https://orgm.meb.gov.tr/ekpssmebozel/content/magazines/pdf/cografya2.pdf";
+const DKMP_NATIONAL_PARKS =
+  "https://www.tarimorman.gov.tr/DKMP/Menu/27/Milli-Parklar%3B";
 
 const mebAgricultureItems = (
   topic: string,
@@ -168,6 +174,43 @@ const mountains: ReadySetItem[] = [
         ? "Kırık Dağlar (Horst)"
         : "Kıvrım Dağları",
 }));
+
+const plateau = (
+  id: string,
+  label: string,
+  provinceCode: number,
+  subtype: MarkerSubtype,
+  topic: string,
+  place: string,
+  description: string,
+  sourceUrl = MEB_PLATEAUS_PAGE,
+  sourceLabel = "MEBİ TYT sayfa 76",
+) =>
+  item(id, label, provinceCode, "plain", subtype, description, {
+    topic,
+    place,
+    relation: "Plato–il/bölge eşleştirmesi",
+    sourceLabel,
+    sourceUrl,
+  });
+
+const plateaus: ReadySetItem[] = [
+  plateau("plateau-haymana", "Haymana Platosu", 6, "plain-plateau-tabular", "Tabaka düzlüğü", "Ankara", "Ankara'nın güneyinde yer alan İç Anadolu tabaka düzlüğü platosudur."),
+  plateau("plateau-cihanbeyli", "Cihanbeyli Platosu", 42, "plain-plateau-tabular", "Tabaka düzlüğü", "Konya", "Konya'nın kuzeyinde yer alan geniş İç Anadolu platosudur."),
+  plateau("plateau-bozok", "Bozok Platosu", 66, "plain-plateau-tabular", "Tabaka düzlüğü", "Yozgat", "Yozgat çevresinde Kızılırmak yayı içinde uzanan tabaka düzlüğü platosudur.", MEB_EKPSS_GEOGRAPHY_BOOK, "MEB e-KPSS sayfa 59"),
+  plateau("plateau-obruk", "Obruk Platosu", 42, "plain-plateau-tabular", "Tabaka düzlüğü", "Konya", "Konya'nın güneydoğusunda, karstik çukurlarıyla da tanınan tabaka düzlüğü platosudur."),
+  plateau("plateau-uzunyayla", "Uzunyayla Platosu", 38, "plain-plateau-tabular", "Tabaka düzlüğü", "Kayseri-Sivas", "Kayseri ile Sivas arasında uzanan yüksek İç Anadolu platosudur."),
+  plateau("plateau-gaziantep", "Gaziantep Platosu", 27, "plain-plateau-tabular", "Tabaka düzlüğü", "Gaziantep", "Fırat'ın batısında yer alan Güneydoğu Anadolu platosudur."),
+  plateau("plateau-sanliurfa", "Şanlıurfa Platosu", 63, "plain-plateau-tabular", "Tabaka düzlüğü", "Şanlıurfa", "Fırat'ın doğusunda geniş alan kaplayan Güneydoğu Anadolu platosudur."),
+  plateau("plateau-yazilikaya", "Yazılıkaya Platosu", 26, "plain-plateau-tabular", "Tabaka düzlüğü", "Eskişehir-Afyonkarahisar", "İç Batı Anadolu'da Frigya Yazılıkaya çevresinde uzanan platodur."),
+  plateau("plateau-usak-esme", "Uşak-Eşme Platosu", 64, "plain-plateau-tabular", "Tabaka düzlüğü", "Uşak", "MEBİ TYT özetinde İç Batı Anadolu'nun başlıca platoları arasında gösterilir."),
+  plateau("plateau-teke", "Teke Platosu", 7, "plain-plateau-karstic", "Karstik", "Antalya", "Antalya'nın batısında, kalkerli arazide gelişmiş karstik platodur."),
+  plateau("plateau-taseli", "Taşeli Platosu", 33, "plain-plateau-karstic", "Karstik", "Antalya-Mersin", "Orta Toroslar'da Antalya ile Mersin arasında uzanan karstik platodur."),
+  plateau("plateau-erzurum-kars", "Erzurum-Kars Platosu", 36, "plain-plateau-volcanic", "Volkanik", "Erzurum-Kars", "Lav örtülerinin akarsularla yarılması sonucu oluşmuş yüksek volkanik platodur."),
+  plateau("plateau-ardahan", "Ardahan Platosu", 75, "plain-plateau-volcanic", "Volkanik", "Ardahan", "Doğu Anadolu'nun kuzeydoğusunda yer alan yüksek volkanik platodur."),
+  plateau("plateau-catalca-kocaeli", "Çatalca-Kocaeli Platosu", 41, "plain-plateau-erosion", "Aşınım düzlüğü", "İstanbul-Kocaeli", "Deniz seviyesine yakın eski aşınım yüzeyleri üzerinde gelişmiş platodur."),
+  plateau("plateau-persembe", "Perşembe Platosu", 52, "plain-plateau-erosion", "Aşınım düzlüğü", "Ordu", "Ordu çevresinde denize yakın eski aşınım yüzeyleri üzerinde gelişmiş platodur."),
+];
 
 const lakes: ReadySetItem[] = [
   item("van", "Van Gölü", 65, "lake", "lake-tectonic-volcanic-set", "Türkiye'nin en büyük gölüdür; tektonik çanakta Nemrut volkanından çıkan lavların oluşturduğu set de etkili olmuştur."),
@@ -493,6 +536,89 @@ const resources: ReadySetItem[] = [
   ]),
 ];
 
+type NationalPark = {
+  id: string;
+  name: string;
+  provinceCode: number;
+  provinces: string;
+  declaredAt: string;
+  historical?: boolean;
+  note?: string;
+};
+
+const nationalParkData: NationalPark[] = [
+  { id: "nemrut-dagi", name: "Nemrut Dağı Millî Parkı", provinceCode: 2, provinces: "Adıyaman-Malatya", declaredAt: "7 Aralık 1988", note: "Kommagene kalıntılarıyla tanınır; Bitlis'teki volkanik Nemrut Dağı ile karıştırılmamalıdır." },
+  { id: "akdag", name: "Akdağ Millî Parkı", provinceCode: 3, provinces: "Afyonkarahisar-Denizli", declaredAt: "17 Ocak 2024" },
+  { id: "baskomutan", name: "Başkomutan Tarihî Millî Parkı", provinceCode: 3, provinces: "Afyonkarahisar-Kütahya-Uşak", declaredAt: "8 Kasım 1981", historical: true, note: "MEBİ'nin millî park örnekleri arasında vurguladığı tarihî alandır." },
+  { id: "agri-dagi", name: "Ağrı Dağı Millî Parkı", provinceCode: 4, provinces: "Ağrı-Iğdır", declaredAt: "17 Kasım 2004", note: "Yaklaşık 88 bin hektarla güncel resmî listedeki en geniş millî parktır." },
+  { id: "soguksu", name: "Soğuksu Millî Parkı", provinceCode: 6, provinces: "Ankara", declaredAt: "19 Şubat 1959" },
+  { id: "sakarya-meydan-muharebesi", name: "Sakarya Meydan Muharebesi Tarihî Millî Parkı", provinceCode: 6, provinces: "Ankara", declaredAt: "8 Şubat 2015", historical: true, note: "Polatlı-Haymana çevresindedir; Sakarya iliyle karıştırılmamalıdır." },
+  { id: "saricali-dagi", name: "Sarıçalı Dağı Millî Parkı", provinceCode: 6, provinces: "Ankara", declaredAt: "28 Ekim 2021" },
+  { id: "gulluk-dagi-termessos", name: "Güllük Dağı-Termessos Millî Parkı", provinceCode: 7, provinces: "Antalya", declaredAt: "3 Kasım 1970" },
+  { id: "beydaglari-sahil", name: "Beydağları Sahil Millî Parkı", provinceCode: 7, provinces: "Antalya", declaredAt: "16 Mart 1972" },
+  { id: "altinbesik-magarasi", name: "Altınbeşik Mağarası Millî Parkı", provinceCode: 7, provinces: "Antalya", declaredAt: "31 Ağustos 1994" },
+  { id: "koprulu-kanyon", name: "Köprülü Kanyon Millî Parkı", provinceCode: 7, provinces: "Antalya-Isparta", declaredAt: "12 Aralık 1973" },
+  { id: "hatila-vadisi", name: "Hatila Vadisi Millî Parkı", provinceCode: 8, provinces: "Artvin", declaredAt: "31 Ağustos 1994" },
+  { id: "kackar-daglari", name: "Kaçkar Dağları Millî Parkı", provinceCode: 8, provinces: "Artvin", declaredAt: "31 Ağustos 1994", note: "Güncel DKMP listesinde Artvin ile eşleştirilir; dağ sırası Rize-Artvin kuşağındadır." },
+  { id: "dilek-yarimadasi", name: "Dilek Yarımadası-Büyük Menderes Deltası Millî Parkı", provinceCode: 9, provinces: "Aydın", declaredAt: "19 Mayıs 1966" },
+  { id: "kuscenneti", name: "Kuşcenneti Millî Parkı", provinceCode: 10, provinces: "Balıkesir", declaredAt: "27 Temmuz 1959", note: "Manyas Kuş Gölü çevresindedir." },
+  { id: "kazdagi", name: "Kazdağı Millî Parkı", provinceCode: 10, provinces: "Balıkesir", declaredAt: "17 Nisan 1993" },
+  { id: "kop-dagi-mudafaasi", name: "Kop Dağı Müdafaası Tarihî Millî Parkı", provinceCode: 69, provinces: "Bayburt-Erzurum", declaredAt: "15 Kasım 2016", historical: true },
+  { id: "yedigoller", name: "Yedigöller Millî Parkı", provinceCode: 14, provinces: "Bolu", declaredAt: "29 Nisan 1965" },
+  { id: "abant-golu", name: "Abant Gölü Millî Parkı", provinceCode: 14, provinces: "Bolu", declaredAt: "10 Haziran 2022" },
+  { id: "uludag", name: "Uludağ Millî Parkı", provinceCode: 16, provinces: "Bursa", declaredAt: "20 Eylül 1961" },
+  { id: "troya", name: "Troya Tarihî Millî Parkı", provinceCode: 17, provinces: "Çanakkale", declaredAt: "7 Kasım 1996", historical: true },
+  { id: "bogazkoy-alacahoyuk", name: "Boğazköy-Alacahöyük Millî Parkı", provinceCode: 19, provinces: "Çorum", declaredAt: "21 Eylül 1988", historical: true },
+  { id: "honaz-dagi", name: "Honaz Dağı Millî Parkı", provinceCode: 20, provinces: "Denizli", declaredAt: "21 Nisan 1998" },
+  { id: "gala-golu", name: "Gala Gölü Millî Parkı", provinceCode: 22, provinces: "Edirne", declaredAt: "5 Mart 2005" },
+  { id: "nene-hatun", name: "Nene Hatun Tarihî Millî Parkı", provinceCode: 25, provinces: "Erzurum", declaredAt: "6 Haziran 2009", historical: true },
+  { id: "cilo-sat-daglari", name: "Hakkâri Cilo ve Sat Dağları Millî Parkı", provinceCode: 30, provinces: "Hakkâri", declaredAt: "26 Eylül 2020" },
+  { id: "kizildag", name: "Kızıldağ Millî Parkı", provinceCode: 32, provinces: "Isparta", declaredAt: "9 Mayıs 1969" },
+  { id: "kovada-golu", name: "Kovada Gölü Millî Parkı", provinceCode: 32, provinces: "Isparta", declaredAt: "3 Kasım 1970" },
+  { id: "geben-vadisi", name: "Geben Vadisi Millî Parkı", provinceCode: 46, provinces: "Kahramanmaraş", declaredAt: "30 Mayıs 2025", note: "Güncel 50 parklık resmî listenin en son ilan edilen parkıdır." },
+  { id: "sarikamis-allahuekber", name: "Sarıkamış-Allahuekber Dağları Millî Parkı", provinceCode: 36, provinces: "Kars-Erzurum", declaredAt: "19 Ekim 2004" },
+  { id: "kure-daglari", name: "Küre Dağları Millî Parkı", provinceCode: 37, provinces: "Kastamonu-Bartın", declaredAt: "7 Temmuz 2000" },
+  { id: "ilgaz-dagi", name: "Ilgaz Dağı Millî Parkı", provinceCode: 37, provinces: "Kastamonu-Çankırı", declaredAt: "2 Haziran 1976" },
+  { id: "istiklal-yolu", name: "İstiklal Yolu Tarihî Millî Parkı", provinceCode: 37, provinces: "Kastamonu-Çankırı", declaredAt: "2 Kasım 2018", historical: true, note: "MEBİ'nin millî park örnekleri arasında vurguladığı tarihî güzergâhtır." },
+  { id: "sultan-sazligi", name: "Sultan Sazlığı Millî Parkı", provinceCode: 38, provinces: "Kayseri", declaredAt: "17 Mart 2006" },
+  { id: "igneada-longoz", name: "İğneada Longoz Ormanları Millî Parkı", provinceCode: 39, provinces: "Kırklareli", declaredAt: "13 Kasım 2007" },
+  { id: "beysehir-golu", name: "Beyşehir Gölü Millî Parkı", provinceCode: 42, provinces: "Konya", declaredAt: "11 Ocak 1993" },
+  { id: "derebucak-camlik-magaralari", name: "Derebucak Çamlık Mağaraları Millî Parkı", provinceCode: 42, provinces: "Konya", declaredAt: "7 Haziran 2022" },
+  { id: "spil-dagi", name: "Spil Dağı Millî Parkı", provinceCode: 45, provinces: "Manisa", declaredAt: "22 Nisan 1968" },
+  { id: "marmaris", name: "Marmaris Millî Parkı", provinceCode: 48, provinces: "Muğla", declaredAt: "8 Mart 1996" },
+  { id: "saklikent", name: "Saklıkent Millî Parkı", provinceCode: 48, provinces: "Muğla-Antalya", declaredAt: "6 Haziran 1996" },
+  { id: "malazgirt", name: "Malazgirt Meydan Muharebesi Tarihî Millî Parkı", provinceCode: 49, provinces: "Muş", declaredAt: "17 Mart 2018", historical: true, note: "MEBİ'nin millî park örnekleri arasında vurguladığı tarihî alandır." },
+  { id: "aladaglar", name: "Aladağlar Millî Parkı", provinceCode: 51, provinces: "Niğde-Adana-Kayseri", declaredAt: "21 Nisan 1995" },
+  { id: "karatepe-aslantas", name: "Karatepe-Aslantaş Millî Parkı", provinceCode: 80, provinces: "Osmaniye", declaredAt: "29 Mayıs 1958" },
+  { id: "karagol-sahara", name: "Karagöl-Sahara Millî Parkı", provinceCode: 53, provinces: "Rize-Artvin", declaredAt: "31 Ağustos 1994" },
+  { id: "botan-vadisi", name: "Botan Vadisi Millî Parkı", provinceCode: 56, provinces: "Siirt", declaredAt: "15 Ağustos 2019" },
+  { id: "divrigi", name: "Divriği Millî Parkı", provinceCode: 58, provinces: "Sivas", declaredAt: "2 Kasım 2024" },
+  { id: "tek-tek-daglari", name: "Tek Tek Dağları Millî Parkı", provinceCode: 63, provinces: "Şanlıurfa", declaredAt: "29 Mayıs 2007" },
+  { id: "altindere-vadisi", name: "Altındere Vadisi Millî Parkı", provinceCode: 61, provinces: "Trabzon", declaredAt: "9 Eylül 1987", note: "Sümela Manastırı'nın bulunduğu vadiyi kapsar." },
+  { id: "munzur-vadisi", name: "Munzur Vadisi Millî Parkı", provinceCode: 62, provinces: "Tunceli", declaredAt: "21 Aralık 1971" },
+  { id: "yozgat-camligi", name: "Yozgat Çamlığı Millî Parkı", provinceCode: 66, provinces: "Yozgat", declaredAt: "5 Şubat 1958", note: "Türkiye'nin ilk millî parkıdır." },
+];
+
+const nationalParks: ReadySetItem[] = nationalParkData.map((park) =>
+  item(
+    `national-park-${park.id}`,
+    park.name,
+    park.provinceCode,
+    "tourism",
+    park.historical ? "tourism-historical" : "tourism-nature",
+    `${park.provinces} sınırlarında yer alır; ${park.declaredAt} tarihinde ilan edilmiştir.${park.note ? ` ${park.note}` : ""}`,
+    {
+      topic: park.historical ? "Tarihî millî parklar" : "Doğal millî parklar",
+      place: park.provinces,
+      relation: park.historical
+        ? "Tarihî millî park–il eşleştirmesi"
+        : "Millî park–il eşleştirmesi",
+      sourceLabel: "DKMP güncel liste",
+      sourceUrl: DKMP_NATIONAL_PARKS,
+    },
+  ),
+);
+
 const trade: ReadySetItem[] = [
   item("istanbul-port", "İstanbul Limanları", 34, "city", "city-port", "Boğazlar üzerindeki konumu, büyük pazar ve ulaşım bağlantılarıyla dış ticaretin ana düğümlerindendir."),
   item("izmir-port", "İzmir / Alsancak Limanı", 35, "city", "city-port", "Ege'nin tarım ve sanayi hinterlandını dış pazarlara bağlayan önemli limandır."),
@@ -647,6 +773,24 @@ export const READY_STUDY_SETS: ReadyStudySet[] = [
     items: mountains,
   },
   {
+    id: "plateaus",
+    title: "Türkiye'nin Platoları",
+    shortTitle: "Platolar",
+    subject: "Yeryüzü şekilleri",
+    description: "MEBİ TYT ve MEB e-KPSS haritalarında öne çıkan 15 plato; tabaka düzlüğü, karstik, volkanik ve aşınım düzlüğü gruplarıyla.",
+    color: "#b58a3c",
+    icon: "land",
+    quizLabel: "Platonun bulunduğu ili bul",
+    quizQuestions: QUIZ_BANKS.plateaus,
+    keyFacts: [
+      "Platoların Türkiye'de en geniş yer kapladığı bölge İç Anadolu'dur.",
+      "Teke ve Taşeli karstik; Erzurum-Kars ve Ardahan volkanik platolardır.",
+      "Çatalca-Kocaeli ile Perşembe, deniz seviyesine yakın aşınım düzlüğü platolarıdır.",
+      "Haymana Ankara; Cihanbeyli ve Obruk Konya; Bozok Yozgat ile eşleştirilir.",
+    ],
+    items: plateaus,
+  },
+  {
     id: "lakes",
     title: "Türkiye'nin Gölleri",
     shortTitle: "Göller",
@@ -718,6 +862,24 @@ export const READY_STUDY_SETS: ReadyStudySet[] = [
       "Ege'de jeotermal ve rüzgâr, Doğu Anadolu'da hidroelektrik enerji potansiyeli yüksektir.",
     ],
     items: resources,
+  },
+  {
+    id: "national-parks",
+    title: "Türkiye'nin Millî Parkları",
+    shortTitle: "Millî Parklar",
+    subject: "Korunan alanlar ve tarihî parklar",
+    description: "DKMP'nin güncel resmî listesindeki 50 millî park; MEBİ'de vurgulanan tarihî parklar ve KPSS'de öne çıkan il–park eşleştirmeleriyle.",
+    color: "#3f7c58",
+    icon: "tree",
+    quizLabel: "Millî parkın bulunduğu ili bul",
+    quizQuestions: QUIZ_BANKS["national-parks"],
+    keyFacts: [
+      "Türkiye'nin ilk millî parkı, 5 Şubat 1958'de ilan edilen Yozgat Çamlığı'dır.",
+      "Ağrı Dağı yaklaşık 88 bin hektarla güncel resmî listedeki en geniş millî parktır.",
+      "MEBİ; Başkomutan, İstiklal Yolu, Malazgirt ve Sakarya Meydan Muharebesi tarihî millî parklarını özellikle örnekler.",
+      "Sakarya Meydan Muharebesi Parkı Ankara'da; Nemrut Dağı Millî Parkı Adıyaman-Malatya sınırındadır.",
+    ],
+    items: nationalParks,
   },
   {
     id: "trade",

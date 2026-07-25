@@ -33,6 +33,9 @@ Hazır setlerdeki sınıflandırma ve hızlı sınav notları, MEB OGM Materyal 
 
 - Türkiye'de dağlar:  
   https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/tyt-cografya/files/basic-html/page76.html
+- Türkiye'nin platoları ve MEB e-KPSS plato haritası:
+  https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/tyt-cografya/files/basic-html/page76.html
+  https://orgm.meb.gov.tr/ekpssmebozel/content/magazines/pdf/cografya2.pdf
 - Türkiye'de göller:  
   https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/tyt-cografya/files/basic-html/page81.html
 - Türkiye'nin akarsu havzaları:  
@@ -50,6 +53,14 @@ Hazır setlerdeki sınıflandırma ve hızlı sınav notları, MEB OGM Materyal 
   https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/ayt-cografya/files/basic-html/page39.html
 - Hizmet sektörü ve ulaşım:  
   https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/ayt-cografya/files/basic-html/page80.html
+- Türkiye turizmi ve MEBİ millî park örnekleri:
+  https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/ayt-cografya/files/basic-html/page86.html
+
+Millî parkların güncel adları, il eşleştirmeleri ve ilan tarihleri için T.C.
+Tarım ve Orman Bakanlığı Doğa Koruma ve Millî Parklar Genel Müdürlüğünün
+güncel listesi kullanılmıştır:
+
+- https://www.tarimorman.gov.tr/DKMP/Menu/27/Milli-Parklar%3B
 
 Altın, trona ve güncel doğal kaynak ek notları için T.C. Enerji ve Tabii
 Kaynaklar Bakanlığının bilgi merkezi kullanılmıştır:

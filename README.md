@@ -208,12 +208,15 @@ Hazır çalışma içerikleri hazırlanırken MEBİ Coğrafya konu özetlerindek
 sınıflandırmalar ve sınavda öne çıkan bilgiler esas alınmıştır:
 
 - [Türkiye’de ana yer şekilleri ve dağlar](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/tyt-cografya/files/basic-html/page76.html)
+- [MEB e-KPSS Türkiye’nin platoları haritası](https://orgm.meb.gov.tr/ekpssmebozel/content/magazines/pdf/cografya2.pdf)
 - [Türkiye’de göller](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/tyt-cografya/files/basic-html/page81.html)
 - [Türkiye’de akarsular ve havzalar](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/tyt-cografya/files/basic-html/page83.html)
 - [Türkiye’de tarım ürünleri](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/ayt-cografya/files/basic-html/page28.html)
 - [Türkiye’de madencilik ve enerji kaynakları](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/ayt-cografya/files/basic-html/page34.html)
 - [Türkiye’de sanayi](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/ayt-cografya/files/basic-html/page37.html)
 - [Hizmet sektörü ve ulaşım](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/ayt-cografya/files/basic-html/page80.html)
+- [MEBİ Türkiye turizmi ve millî park örnekleri](https://ogmmateryal.eba.gov.tr/kitap/mebi-konu-ozetleri/ayt-cografya/files/basic-html/page86.html)
+- [DKMP güncel millî park listesi](https://www.tarimorman.gov.tr/DKMP/Menu/27/Milli-Parklar%3B)
 
 Harita verileri, paket lisansları ve kullanılan görsellerle ilgili ayrıntılar
 için [ATTRIBUTIONS.md](./ATTRIBUTIONS.md) dosyasını inceleyin.
