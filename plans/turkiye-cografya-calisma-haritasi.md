@@ -185,15 +185,16 @@ Temel bütünlük kuralı:
 
 ### İkinci sürüm: hesap ve bulut eşitleme
 
-İhtiyaç oluşursa:
+Uygulanan:
 
-- Kullanıcı hesabı
-- Bulut veritabanı
-- Telefon ve bilgisayar arasında eşitleme
+- Supabase e-posta/şifre kullanıcı hesabı
+- RLS korumalı kullanıcı snapshot veritabanı
+- Telefon ve bilgisayar arasında yerel önbellekli eşitleme
+
+İleride eklenebilir:
+
 - Paylaşılabilir salt okunur harita bağlantısı
 - Öğretmen/öğrenci paylaşımı
-
-eklenebilir. İlk MVP için sunucu zorunlu değildir.
 
 ## 8. Yapım aşamaları
 
@@ -379,4 +380,3 @@ Proje aşağıdaki senaryo eksiksiz çalıştığında MVP sayılır:
 7. Ağrı'ya "Ağrı Dağı" ekler.
 8. İki haritanın kayıtları birbirine karışmaz.
 9. Çalışmasını JSON dosyası olarak dışa aktarır ve yeniden içe alabilir.
-

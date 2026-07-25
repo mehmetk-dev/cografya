@@ -11,19 +11,23 @@ import {
   Circle,
   Eraser,
   Minus,
+  MousePointer2,
   MoveRight,
   Pencil,
   Plus,
   Scan,
+  Trash2,
   Type,
   Undo2,
 } from "lucide-react";
 import { cities as mapCities } from "turkey-map-react/lib/data";
+import { createId } from "../id";
 import { getMarkerVisual } from "../markerKinds";
 import { RIVER_ROUTES } from "../riverRoutes";
 import { CatalogIcon } from "./CatalogIcon";
 import type {
   City,
+  DrawingMode,
   DrawingTool,
   MapDrawing,
   MapMarker,
@@ -45,14 +49,19 @@ type TurkeyMapProps = {
   onPlaceMarker?: (city: City, point: Point) => void;
   onPlacementMismatch?: (city: City) => void;
   matchingProvinceCodes?: Set<number> | null;
-  drawingTool?: DrawingTool | null;
+  drawingTool?: DrawingMode | null;
   drawingColor?: string;
-  onDrawingToolChange?: (tool: DrawingTool | null) => void;
+  onDrawingToolChange?: (tool: DrawingMode | null) => void;
   onDrawingColorChange?: (color: string) => void;
   onAddDrawing?: (
     tool: DrawingTool,
     points: MapPoint[],
     text?: string,
+  ) => void;
+  onUpdateDrawing?: (drawing: MapDrawing) => void;
+  onReplaceDrawings?: (
+    removedIds: string[],
+    replacements: MapDrawing[],
   ) => void;
   onUndoDrawing?: () => void;
   onClearDrawings?: () => void;
@@ -81,6 +90,21 @@ type PanGesture = {
   moved: boolean;
 };
 
+type DrawingGesture =
+  | {
+      kind: "move";
+      pointerId: number;
+      start: MapPoint;
+      original: MapDrawing;
+      current: MapDrawing;
+      moved: boolean;
+    }
+  | {
+      kind: "erase";
+      pointerId: number;
+      points: MapPoint[];
+    };
+
 const BASE_VIEWBOX = {
   x: 0,
   y: 80,
@@ -89,6 +113,8 @@ const BASE_VIEWBOX = {
 };
 
 const DENSE_MARKER_LABEL_THRESHOLD = 18;
+const DRAWING_HIT_RADIUS = 12;
+const ERASER_RADIUS = 14;
 
 const cities = [...(mapCities as City[])].sort(
   (left, right) => left.plateNumber - right.plateNumber,
@@ -137,6 +163,268 @@ function smoothPath(points: MapPoint[]) {
   return path;
 }
 
+function isDrawingTool(mode: DrawingMode | null): mode is DrawingTool {
+  return (
+    mode === "pen" ||
+    mode === "arrow" ||
+    mode === "circle" ||
+    mode === "text"
+  );
+}
+
+function distanceToSegment(
+  point: MapPoint,
+  start: MapPoint,
+  end: MapPoint,
+) {
+  const deltaX = end.x - start.x;
+  const deltaY = end.y - start.y;
+  if (deltaX === 0 && deltaY === 0) {
+    return Math.hypot(point.x - start.x, point.y - start.y);
+  }
+  const ratio = Math.max(
+    0,
+    Math.min(
+      1,
+      ((point.x - start.x) * deltaX + (point.y - start.y) * deltaY) /
+        (deltaX * deltaX + deltaY * deltaY),
+    ),
+  );
+  return Math.hypot(
+    point.x - (start.x + ratio * deltaX),
+    point.y - (start.y + ratio * deltaY),
+  );
+}
+
+function distanceToPolyline(point: MapPoint, points: MapPoint[]) {
+  if (points.length === 0) return Number.POSITIVE_INFINITY;
+  if (points.length === 1) {
+    return Math.hypot(point.x - points[0].x, point.y - points[0].y);
+  }
+  let nearest = Number.POSITIVE_INFINITY;
+  for (let index = 1; index < points.length; index += 1) {
+    nearest = Math.min(
+      nearest,
+      distanceToSegment(point, points[index - 1], points[index]),
+    );
+  }
+  return nearest;
+}
+
+function getArrowHead(first: MapPoint, last: MapPoint) {
+  const angle = Math.atan2(last.y - first.y, last.x - first.x);
+  const size = 11;
+  return {
+    left: {
+      x: last.x - size * Math.cos(angle - Math.PI / 6),
+      y: last.y - size * Math.sin(angle - Math.PI / 6),
+    },
+    right: {
+      x: last.x - size * Math.cos(angle + Math.PI / 6),
+      y: last.y - size * Math.sin(angle + Math.PI / 6),
+    },
+  };
+}
+
+function getTextBounds(drawing: MapDrawing) {
+  const origin = drawing.points[0];
+  const width = Math.max(18, (drawing.text?.length ?? 1) * 11);
+  return {
+    x: origin.x - 3,
+    y: origin.y - 23,
+    width,
+    height: 30,
+  };
+}
+
+function drawingHitDistance(drawing: MapDrawing, point: MapPoint) {
+  if (drawing.points.length === 0) return Number.POSITIVE_INFINITY;
+  const first = drawing.points[0];
+  const last = drawing.points[drawing.points.length - 1];
+
+  if (drawing.tool === "text") {
+    const bounds = getTextBounds(drawing);
+    return point.x >= bounds.x &&
+      point.x <= bounds.x + bounds.width &&
+      point.y >= bounds.y &&
+      point.y <= bounds.y + bounds.height
+      ? 0
+      : Number.POSITIVE_INFINITY;
+  }
+  if (drawing.tool === "circle") {
+    const radius = Math.hypot(last.x - first.x, last.y - first.y);
+    return Math.abs(Math.hypot(point.x - first.x, point.y - first.y) - radius);
+  }
+  if (drawing.tool === "arrow") {
+    const { left, right } = getArrowHead(first, last);
+    return Math.min(
+      distanceToSegment(point, first, last),
+      distanceToSegment(point, left, last),
+      distanceToSegment(point, last, right),
+    );
+  }
+  return distanceToPolyline(point, drawing.points);
+}
+
+function findDrawingAt(
+  drawings: MapDrawing[],
+  point: MapPoint,
+  radius: number,
+) {
+  return [...drawings]
+    .reverse()
+    .find((drawing) => drawingHitDistance(drawing, point) <= radius);
+}
+
+function translateDrawing(
+  drawing: MapDrawing,
+  deltaX: number,
+  deltaY: number,
+): MapDrawing {
+  return {
+    ...drawing,
+    points: drawing.points.map((point) => ({
+      x: point.x + deltaX,
+      y: point.y + deltaY,
+    })),
+  };
+}
+
+function drawingBounds(drawing: MapDrawing) {
+  if (drawing.tool === "text") return getTextBounds(drawing);
+  const first = drawing.points[0];
+  const last = drawing.points[drawing.points.length - 1];
+  if (drawing.tool === "circle") {
+    const radius = Math.hypot(last.x - first.x, last.y - first.y);
+    return {
+      x: first.x - radius,
+      y: first.y - radius,
+      width: radius * 2,
+      height: radius * 2,
+    };
+  }
+  const points =
+    drawing.tool === "arrow"
+      ? [
+          ...drawing.points,
+          ...Object.values(getArrowHead(first, last)),
+        ]
+      : drawing.points;
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+  return {
+    x: Math.min(...xs),
+    y: Math.min(...ys),
+    width: Math.max(...xs) - Math.min(...xs),
+    height: Math.max(...ys) - Math.min(...ys),
+  };
+}
+
+function densifyPolyline(points: MapPoint[], maxStep = 4) {
+  if (points.length < 2) return [...points];
+  const result: MapPoint[] = [points[0]];
+  for (let index = 1; index < points.length; index += 1) {
+    const start = points[index - 1];
+    const end = points[index];
+    const steps = Math.max(
+      1,
+      Math.ceil(Math.hypot(end.x - start.x, end.y - start.y) / maxStep),
+    );
+    for (let step = 1; step <= steps; step += 1) {
+      result.push({
+        x: start.x + ((end.x - start.x) * step) / steps,
+        y: start.y + ((end.y - start.y) * step) / steps,
+      });
+    }
+  }
+  return result;
+}
+
+function drawingPolylines(drawing: MapDrawing) {
+  if (drawing.points.length === 0 || drawing.tool === "text") return [];
+  const first = drawing.points[0];
+  const last = drawing.points[drawing.points.length - 1];
+  if (drawing.tool === "circle") {
+    const radius = Math.hypot(last.x - first.x, last.y - first.y);
+    return [
+      Array.from({ length: 97 }, (_, index) => {
+        const angle = (index / 96) * Math.PI * 2;
+        return {
+          x: first.x + Math.cos(angle) * radius,
+          y: first.y + Math.sin(angle) * radius,
+        };
+      }),
+    ];
+  }
+  if (drawing.tool === "arrow") {
+    const { left, right } = getArrowHead(first, last);
+    return [[first, last], [left, last, right]];
+  }
+  return [drawing.points];
+}
+
+function splitPolylineByEraser(
+  points: MapPoint[],
+  eraserPath: MapPoint[],
+  radius: number,
+) {
+  const pieces: MapPoint[][] = [];
+  let current: MapPoint[] = [];
+  densifyPolyline(points).forEach((point) => {
+    if (distanceToPolyline(point, eraserPath) <= radius) {
+      if (current.length >= 2) pieces.push(current);
+      current = [];
+      return;
+    }
+    current.push(point);
+  });
+  if (current.length >= 2) pieces.push(current);
+  return pieces;
+}
+
+function eraseDrawings(
+  drawings: MapDrawing[],
+  eraserPath: MapPoint[],
+  radius: number,
+) {
+  const removedIds: string[] = [];
+  const replacements: MapDrawing[] = [];
+
+  drawings.forEach((drawing) => {
+    if (drawing.tool === "text") {
+      const touched = eraserPath.some(
+        (point) => drawingHitDistance(drawing, point) <= radius,
+      );
+      if (touched) removedIds.push(drawing.id);
+      return;
+    }
+
+    const polylines = drawingPolylines(drawing);
+    const touched = polylines.some((polyline) =>
+      densifyPolyline(polyline).some(
+        (point) => distanceToPolyline(point, eraserPath) <= radius,
+      ),
+    );
+    if (!touched) return;
+
+    removedIds.push(drawing.id);
+    const pieces = polylines.flatMap((polyline) =>
+      splitPolylineByEraser(polyline, eraserPath, radius),
+    );
+    pieces.forEach((points, index) => {
+      replacements.push({
+        ...drawing,
+        id: index === 0 ? drawing.id : createId(),
+        tool: "pen",
+        points,
+        text: undefined,
+      });
+    });
+  });
+
+  return { removedIds, replacements };
+}
+
 function clampPan(point: Point, zoom: number): Point {
   const visibleWidth = BASE_VIEWBOX.width / zoom;
   const visibleHeight = BASE_VIEWBOX.height / zoom;
@@ -168,12 +456,16 @@ export function TurkeyMap({
   onDrawingToolChange,
   onDrawingColorChange,
   onAddDrawing,
+  onUpdateDrawing,
+  onReplaceDrawings,
   onUndoDrawing,
   onClearDrawings,
   exportMode = false,
 }: TurkeyMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const panGestureRef = useRef<PanGesture | null>(null);
+  const drawingGestureRef = useRef<DrawingGesture | null>(null);
+  const draftDrawingRef = useRef<MapPoint[]>([]);
   const suppressMapClickRef = useRef(false);
   const riverClipId = `river-land-${useId().replaceAll(":", "")}`;
   const [zoom, setZoom] = useState(1);
@@ -184,6 +476,11 @@ export function TurkeyMap({
     Record<number, { width: number; height: number }>
   >({});
   const [draftDrawing, setDraftDrawing] = useState<MapPoint[]>([]);
+  const [selectedDrawingId, setSelectedDrawingId] = useState<string | null>(
+    null,
+  );
+  const [movingDrawing, setMovingDrawing] = useState<MapDrawing | null>(null);
+  const [eraserTrail, setEraserTrail] = useState<MapPoint[]>([]);
   const [legendOpen, setLegendOpen] = useState(
     () => !window.matchMedia("(max-width: 640px)").matches,
   );
@@ -196,6 +493,27 @@ export function TurkeyMap({
     mobileQuery.addEventListener("change", syncLegend);
     return () => mobileQuery.removeEventListener("change", syncLegend);
   }, []);
+
+  useEffect(() => {
+    if (
+      selectedDrawingId &&
+      !drawings.some((drawing) => drawing.id === selectedDrawingId)
+    ) {
+      setSelectedDrawingId(null);
+      setMovingDrawing(null);
+    }
+  }, [drawings, selectedDrawingId]);
+
+  useEffect(() => {
+    if (drawingTool !== "select") {
+      setSelectedDrawingId(null);
+      setMovingDrawing(null);
+    }
+    if (!isDrawingTool(drawingTool)) {
+      draftDrawingRef.current = [];
+      setDraftDrawing([]);
+    }
+  }, [drawingTool]);
 
   const recordsByCode = useMemo(
     () => new Map(records.map((record) => [record.provinceCode, record])),
@@ -224,18 +542,46 @@ export function TurkeyMap({
     return [...groups.values()];
   }, [markers]);
   const routedRivers = useMemo(
-    () =>
-      markers.flatMap((marker) => {
+    () => {
+      const seenRouteIds = new Set<string>();
+
+      return markers.flatMap((marker) => {
         if (marker.kind !== "river" || !marker.presetItemId) return [];
         const route = RIVER_ROUTES[marker.presetItemId];
-        return route ? [{ marker, route }] : [];
-      }),
+        if (!route || seenRouteIds.has(route.id)) return [];
+        seenRouteIds.add(route.id);
+        return [{ marker, route }];
+      });
+    },
     [markers],
   );
-  const routedRiverMarkerIds = useMemo(
-    () => new Set(routedRivers.map(({ marker }) => marker.id)),
-    [routedRivers],
-  );
+  const routedRiverMarkerIds = useMemo(() => {
+    const routedLabels = new Set(
+      routedRivers.map(({ marker }) => marker.label),
+    );
+
+    return new Set(
+      markers
+        .filter(
+          (marker) =>
+            marker.kind === "river" && routedLabels.has(marker.label),
+        )
+        .map((marker) => marker.id),
+    );
+  }, [markers, routedRivers]);
+  const visibleRiverLabelCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    const addLabel = (label: string) => {
+      counts.set(label, (counts.get(label) ?? 0) + 1);
+    };
+
+    routedRivers.forEach(({ marker, route }) => {
+      addLabel(marker.label);
+      route.branches.forEach((branch) => addLabel(branch.name));
+    });
+
+    return counts;
+  }, [routedRivers]);
   const denseMarkerLabels =
     markers.length - routedRiverMarkerIds.size > DENSE_MARKER_LABEL_THRESHOLD;
   const displayedMarkers = useMemo(() => {
@@ -551,16 +897,7 @@ export function TurkeyMap({
       );
     }
     if (drawing.tool === "arrow") {
-      const angle = Math.atan2(last.y - first.y, last.x - first.x);
-      const size = 11;
-      const left = {
-        x: last.x - size * Math.cos(angle - Math.PI / 6),
-        y: last.y - size * Math.sin(angle - Math.PI / 6),
-      };
-      const right = {
-        x: last.x - size * Math.cos(angle + Math.PI / 6),
-        y: last.y - size * Math.sin(angle + Math.PI / 6),
-      };
+      const { left, right } = getArrowHead(first, last);
       return (
         <g key={drawing.id} className={common.className}>
           <line {...common} x1={first.x} y1={first.y} x2={last.x} y2={last.y} />
@@ -585,23 +922,35 @@ export function TurkeyMap({
     );
   };
 
+  const displayedDrawings = drawings.map((drawing) =>
+    movingDrawing?.id === drawing.id ? movingDrawing : drawing,
+  );
+  const selectedDrawing = selectedDrawingId
+    ? displayedDrawings.find((drawing) => drawing.id === selectedDrawingId)
+    : undefined;
+  const selectedDrawingBounds = selectedDrawing
+    ? drawingBounds(selectedDrawing)
+    : undefined;
+
   return (
     <section
       className={`map-stage ${placementProvinceCode ? "map-stage--placing" : ""}`}
       aria-label="Etkileşimli Türkiye haritası"
     >
-      <div className="map-stage__topline">
-        <div>
-          <span className="eyebrow">ÇALIŞMA ALANI</span>
-          <h2>Türkiye&apos;nin 81 ili</h2>
-        </div>
+      {!exportMode && (
+        <div className="map-stage__topline">
+          <div>
+            <span className="eyebrow">ÇALIŞMA ALANI</span>
+            <h2>Türkiye&apos;nin 81 ili</h2>
+          </div>
 
-        <div className="map-legend" aria-label="Harita açıklaması">
-          <span><i className="legend-dot legend-dot--empty" /> Boş</span>
-          <span><i className="legend-dot legend-dot--saved" /> Not eklendi</span>
-          <span><i className="legend-dot legend-dot--selected" /> Seçili</span>
+          <div className="map-legend" aria-label="Harita açıklaması">
+            <span><i className="legend-dot legend-dot--empty" /> Boş</span>
+            <span><i className="legend-dot legend-dot--saved" /> Not eklendi</span>
+            <span><i className="legend-dot legend-dot--selected" /> Seçili</span>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="map-canvas">
         <div className="map-texture" />
@@ -617,6 +966,9 @@ export function TurkeyMap({
             "turkey-map",
             zoom > 1 && !drawingTool ? "turkey-map--pannable" : "",
             isPanning ? "turkey-map--panning" : "",
+            drawingTool === "select" ? "turkey-map--selecting-drawing" : "",
+            drawingTool === "eraser" ? "turkey-map--erasing" : "",
+            isDrawingTool(drawingTool) ? "turkey-map--drawing" : "",
           ].join(" ")}
           viewBox={`${viewX} ${viewY} ${viewWidth} ${viewHeight}`}
           role="group"
@@ -624,15 +976,47 @@ export function TurkeyMap({
           onPointerDown={(event) => {
             if (exportMode) return;
             if (drawingTool) {
+              if (event.pointerType === "mouse" && event.button !== 0) return;
               const point = eventToPoint(event);
               if (!point) return;
+              if (drawingTool === "select") {
+                const drawing = findDrawingAt(
+                  drawings,
+                  point,
+                  DRAWING_HIT_RADIUS / zoom,
+                );
+                setSelectedDrawingId(drawing?.id ?? null);
+                setMovingDrawing(drawing ?? null);
+                if (!drawing) return;
+                event.currentTarget.setPointerCapture(event.pointerId);
+                drawingGestureRef.current = {
+                  kind: "move",
+                  pointerId: event.pointerId,
+                  start: point,
+                  original: drawing,
+                  current: drawing,
+                  moved: false,
+                };
+                return;
+              }
+              if (drawingTool === "eraser") {
+                event.currentTarget.setPointerCapture(event.pointerId);
+                drawingGestureRef.current = {
+                  kind: "erase",
+                  pointerId: event.pointerId,
+                  points: [point],
+                };
+                setEraserTrail([point]);
+                return;
+              }
               if (drawingTool === "text") {
                 const text = window.prompt("Haritaya yazılacak metin:");
                 if (text?.trim()) onAddDrawing?.("text", [point], text.trim());
                 return;
               }
               event.currentTarget.setPointerCapture(event.pointerId);
-              setDraftDrawing([point]);
+              draftDrawingRef.current = [point];
+              setDraftDrawing(draftDrawingRef.current);
               return;
             }
 
@@ -650,14 +1034,50 @@ export function TurkeyMap({
             setIsPanning(true);
           }}
           onPointerMove={(event) => {
-            if (drawingTool && draftDrawing.length > 0) {
+            const drawingGesture = drawingGestureRef.current;
+            if (
+              drawingGesture &&
+              drawingGesture.pointerId === event.pointerId
+            ) {
               const point = eventToPoint(event);
               if (!point) return;
-              setDraftDrawing((current) =>
+              event.preventDefault();
+              if (drawingGesture.kind === "move") {
+                const deltaX = point.x - drawingGesture.start.x;
+                const deltaY = point.y - drawingGesture.start.y;
+                const current = translateDrawing(
+                  drawingGesture.original,
+                  deltaX,
+                  deltaY,
+                );
+                drawingGesture.current = current;
+                drawingGesture.moved =
+                  drawingGesture.moved || Math.hypot(deltaX, deltaY) > 1;
+                setMovingDrawing(current);
+              } else {
+                const previous =
+                  drawingGesture.points[drawingGesture.points.length - 1];
+                if (Math.hypot(point.x - previous.x, point.y - previous.y) > 1) {
+                  drawingGesture.points.push(point);
+                  setEraserTrail([...drawingGesture.points]);
+                }
+              }
+              return;
+            }
+
+            if (
+              isDrawingTool(drawingTool) &&
+              draftDrawingRef.current.length > 0
+            ) {
+              const point = eventToPoint(event);
+              if (!point) return;
+              event.preventDefault();
+              const next =
                 drawingTool === "pen"
-                  ? [...current, point]
-                  : [current[0], point],
-              );
+                  ? [...draftDrawingRef.current, point]
+                  : [draftDrawingRef.current[0], point];
+              draftDrawingRef.current = next;
+              setDraftDrawing(next);
               return;
             }
 
@@ -685,11 +1105,65 @@ export function TurkeyMap({
             );
           }}
           onPointerUp={(event) => {
-            if (drawingTool && draftDrawing.length > 0) {
-              event.currentTarget.releasePointerCapture(event.pointerId);
-              if (draftDrawing.length > 1) {
-                onAddDrawing?.(drawingTool, draftDrawing);
+            const drawingGesture = drawingGestureRef.current;
+            if (
+              drawingGesture &&
+              drawingGesture.pointerId === event.pointerId
+            ) {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
               }
+              if (drawingGesture.kind === "move") {
+                if (drawingGesture.moved) {
+                  onUpdateDrawing?.(drawingGesture.current);
+                }
+                setMovingDrawing(null);
+              } else {
+                const finalPoint = eventToPoint(event);
+                if (finalPoint) drawingGesture.points.push(finalPoint);
+                const result = eraseDrawings(
+                  drawings,
+                  drawingGesture.points,
+                  ERASER_RADIUS / zoom,
+                );
+                if (result.removedIds.length > 0) {
+                  onReplaceDrawings?.(
+                    result.removedIds,
+                    result.replacements,
+                  );
+                }
+                setEraserTrail([]);
+              }
+              drawingGestureRef.current = null;
+              return;
+            }
+
+            if (
+              isDrawingTool(drawingTool) &&
+              draftDrawingRef.current.length > 0
+            ) {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+              const finalPoint = eventToPoint(event);
+              let completed = draftDrawingRef.current;
+              const lastPoint = completed[completed.length - 1];
+              if (
+                finalPoint &&
+                Math.hypot(
+                  finalPoint.x - lastPoint.x,
+                  finalPoint.y - lastPoint.y,
+                ) > 1
+              ) {
+                completed =
+                  drawingTool === "pen"
+                    ? [...completed, finalPoint]
+                    : [completed[0], finalPoint];
+              }
+              if (completed.length > 1) {
+                onAddDrawing?.(drawingTool, completed);
+              }
+              draftDrawingRef.current = [];
               setDraftDrawing([]);
               return;
             }
@@ -707,6 +1181,11 @@ export function TurkeyMap({
             }, 0);
           }}
           onPointerCancel={(event) => {
+            if (drawingGestureRef.current?.pointerId === event.pointerId) {
+              drawingGestureRef.current = null;
+              setMovingDrawing(null);
+              setEraserTrail([]);
+            }
             if (
               panGestureRef.current?.pointerId === event.pointerId
             ) {
@@ -714,6 +1193,7 @@ export function TurkeyMap({
               suppressMapClickRef.current = false;
               setIsPanning(false);
             }
+            draftDrawingRef.current = [];
             setDraftDrawing([]);
           }}
           onClickCapture={(event) => {
@@ -876,7 +1356,9 @@ export function TurkeyMap({
                           x={branch.labelAt.x}
                           y={branch.labelAt.y}
                         >
-                          {branch.name}
+                          {(visibleRiverLabelCounts.get(branch.name) ?? 0) > 1
+                            ? `${branch.name} · ${marker.label}`
+                            : branch.name}
                         </text>
                       )}
                     </g>
@@ -930,8 +1412,18 @@ export function TurkeyMap({
           )}
 
           <g className="drawing-layer" aria-hidden="true">
-            {drawings.map((drawing) => renderDrawing(drawing))}
-            {drawingTool &&
+            {displayedDrawings.map((drawing) => renderDrawing(drawing))}
+            {selectedDrawingBounds && (
+              <rect
+                className="drawing-selection"
+                x={selectedDrawingBounds.x - 8}
+                y={selectedDrawingBounds.y - 8}
+                width={Math.max(16, selectedDrawingBounds.width + 16)}
+                height={Math.max(16, selectedDrawingBounds.height + 16)}
+                rx="7"
+              />
+            )}
+            {isDrawingTool(drawingTool) &&
               draftDrawing.length > 0 &&
               renderDrawing(
                 {
@@ -942,6 +1434,20 @@ export function TurkeyMap({
                 },
                 true,
               )}
+            {drawingTool === "eraser" && eraserTrail.length > 0 && (
+              <>
+                <path
+                  className="drawing-eraser-trail"
+                  d={drawingPath(eraserTrail)}
+                />
+                <circle
+                  className="drawing-eraser-cursor"
+                  cx={eraserTrail[eraserTrail.length - 1].x}
+                  cy={eraserTrail[eraserTrail.length - 1].y}
+                  r={ERASER_RADIUS / zoom}
+                />
+              </>
+            )}
           </g>
 
           {showLabels && (
@@ -1135,10 +1641,20 @@ export function TurkeyMap({
         {!exportMode && !readOnly && (
           <div className="drawing-toolbar" aria-label="Harita çizim araçları">
             {[
+              {
+                tool: "select" as const,
+                label: "Seç ve taşı",
+                icon: MousePointer2,
+              },
               { tool: "pen" as const, label: "Kalem", icon: Pencil },
               { tool: "arrow" as const, label: "Ok", icon: MoveRight },
               { tool: "circle" as const, label: "Daire", icon: Circle },
               { tool: "text" as const, label: "Metin", icon: Type },
+              {
+                tool: "eraser" as const,
+                label: "Bölgesel silgi",
+                icon: Eraser,
+              },
             ].map(({ tool, label, icon: Icon }) => (
               <button
                 key={tool}
@@ -1165,36 +1681,32 @@ export function TurkeyMap({
               <Undo2 size={15} />
             </button>
             <button type="button" title="Bütün çizimleri sil" onClick={onClearDrawings}>
-              <Eraser size={15} />
+              <Trash2 size={15} />
             </button>
           </div>
         )}
 
-        {markerLegend.length > 0 && (
+        {!exportMode && markerLegend.length > 0 && (
           <div
             className={[
               "marker-legend",
-              legendOpen || exportMode
-                ? "marker-legend--open"
-                : "marker-legend--collapsed",
+              legendOpen ? "marker-legend--open" : "marker-legend--collapsed",
             ].join(" ")}
             aria-label="İşaret lejantı"
           >
             <button
               className="marker-legend__toggle"
               type="button"
-              aria-expanded={legendOpen || exportMode}
+              aria-expanded={legendOpen}
               onClick={() => setLegendOpen((current) => !current)}
             >
               <strong>LEJANT</strong>
-              {!exportMode && (
-                <ChevronDown
-                  className={legendOpen ? "is-open" : ""}
-                  size={14}
-                />
-              )}
+              <ChevronDown
+                className={legendOpen ? "is-open" : ""}
+                size={14}
+              />
             </button>
-            {(legendOpen || exportMode) && (
+            {legendOpen && (
               <div>
                 {markerLegend.map((group) => (
                   <span key={group.visual.id}>

@@ -71,6 +71,7 @@ export type MarkerDraft = Pick<
 >;
 
 export type DrawingTool = "pen" | "arrow" | "circle" | "text";
+export type DrawingMode = DrawingTool | "select" | "eraser";
 
 export type MapPoint = {
   x: number;

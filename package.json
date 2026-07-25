@@ -11,13 +11,15 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.110.8",
     "dexie": "^4.2.1",
     "dexie-react-hooks": "^4.2.0",
     "html-to-image": "^1.11.13",
     "lucide-react": "^0.468.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "turkey-map-react": "^2.0.5"
+    "turkey-map-react": "^2.0.5",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

@@ -18,6 +18,7 @@ import { CatalogIcon } from "./CatalogIcon";
 type MapSidebarProps = {
   maps: StudyMap[];
   activeMapId: string | null;
+  activeReadySetId?: string;
   recordCounts: Record<string, number>;
   onSelect: (mapId: string) => void;
   onCreate: (name: string, color: string) => Promise<void>;
@@ -43,6 +44,7 @@ const MOBILE_SIDEBAR_QUERY = "(max-width: 940px)";
 export function MapSidebar({
   maps,
   activeMapId,
+  activeReadySetId,
   recordCounts,
   onSelect,
   onCreate,
@@ -58,6 +60,9 @@ export function MapSidebar({
   const [isMapsExpanded, setIsMapsExpanded] = useState(
     () => !window.matchMedia(MOBILE_SIDEBAR_QUERY).matches,
   );
+  const [isReadySetsExpanded, setIsReadySetsExpanded] = useState(
+    () => !window.matchMedia(MOBILE_SIDEBAR_QUERY).matches,
+  );
   const [name, setName] = useState("");
   const [color, setColor] = useState("#e9a23b");
 
@@ -66,6 +71,7 @@ export function MapSidebar({
     const handleChange = (event: MediaQueryListEvent) => {
       setIsMobileSidebar(event.matches);
       setIsMapsExpanded(!event.matches);
+      setIsReadySetsExpanded(!event.matches);
     };
 
     mediaQuery.addEventListener("change", handleChange);
@@ -73,6 +79,8 @@ export function MapSidebar({
   }, []);
 
   const isMapsSectionOpen = !isMobileSidebar || isMapsExpanded;
+  const isReadySetsSectionOpen =
+    !isMobileSidebar || isReadySetsExpanded;
   const readyNoteTopics = STUDY_NOTE_TOPICS.filter(
     (topic) => topic.status === "ready",
   );
@@ -252,36 +260,61 @@ export function MapSidebar({
       </div>
 
       <div className="ready-library" id="ready-library">
-        <div className="ready-library__heading">
+        <button
+          className="ready-library__heading ready-library__heading--toggle"
+          type="button"
+          disabled={!isMobileSidebar}
+          aria-expanded={isMobileSidebar ? isReadySetsExpanded : undefined}
+          aria-controls={
+            isMobileSidebar ? "ready-library-content" : undefined
+          }
+          onClick={() => setIsReadySetsExpanded((expanded) => !expanded)}
+        >
           <div>
             <span className="eyebrow">DERS KÜTÜPHANESİ</span>
             <h2>Hazır setler</h2>
           </div>
-          <span>{READY_STUDY_SETS.length}</span>
-        </div>
-        <div className="ready-library__list">
-          {READY_STUDY_SETS.map((set) => {
-            const activeMap = maps.find((map) => map.id === activeMapId);
-            const active = activeMap?.sourceSetId === set.id;
-            return (
-              <button
-                type="button"
-                key={set.id}
-                className={active ? "is-active" : ""}
-                style={{ "--set-color": set.color } as React.CSSProperties}
-                onClick={() => void onOpenReadySet(set)}
-              >
-                <i>
-                  <CatalogIcon name={set.icon} size={16} color="#fff" />
-                </i>
-                <span>
-                  <strong>{set.shortTitle}</strong>
-                  <small>{set.items.length} hazır bilgi</small>
-                </span>
-                <BookOpen size={14} />
-              </button>
-            );
-          })}
+          <span className="ready-library__heading-meta">
+            <span>{READY_STUDY_SETS.length}</span>
+            <ChevronDown
+              className={`ready-library__heading-chevron ${
+                isReadySetsExpanded ? "is-open" : ""
+              }`}
+              size={18}
+            />
+          </span>
+        </button>
+        <div
+          className="ready-library__content"
+          id="ready-library-content"
+          hidden={!isReadySetsSectionOpen}
+        >
+          <div className="ready-library__list">
+            {READY_STUDY_SETS.map((set) => {
+              const active = activeReadySetId === set.id;
+              return (
+                <button
+                  type="button"
+                  key={set.id}
+                  className={active ? "is-active" : ""}
+                  style={{ "--set-color": set.color } as React.CSSProperties}
+                  onClick={() => {
+                    void onOpenReadySet(set);
+                    if (isMobileSidebar) setIsReadySetsExpanded(false);
+                  }}
+                >
+                  <i>
+                    <CatalogIcon name={set.icon} size={16} color="#fff" />
+                  </i>
+                  <span>
+                    <strong>{set.shortTitle}</strong>
+                    <small>{set.items.length} hazır bilgi</small>
+                  </span>
+                  <BookOpen size={14} />
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 

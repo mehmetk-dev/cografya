@@ -1,0 +1,1 @@
+-- Uygulama verileri kullanıcı girişi sonrasında istemci tarafından oluşturulur.

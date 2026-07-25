@@ -8,7 +8,8 @@ yaptığı soruları daha sonra yeniden çalışabilir.
 
 ## CONSTRAINTS
 
-- Çalışma verileri çevrimdışı kalmalı ve yalnız kullanıcının cihazında tutulmalı.
+- Çalışma verileri IndexedDB'de yerel kalmalı ve oturum açan kullanıcının
+  Supabase kaydıyla cihazlar arasında senkronize edilmelidir.
 - Günlük çalışma en fazla 10 cevabı günlük ilerlemeye saymalı.
 - Yanlış cevaplar soru kimliğiyle tekilleştirilmeli; tekrar yanlışta hata sayısı
   artmalı, doğru cevapta yanlışlar listesinden kaldırılmalı.
@@ -18,7 +19,8 @@ yaptığı soruları daha sonra yeniden çalışabilir.
 
 ## IMPLEMENTATION CONTRACT
 
-- IndexedDB, günlük ilerleme ve yanlış soru kayıtlarının sahibidir.
+- IndexedDB çalışma sırasındaki yerel veri kaynağıdır; Supabase kullanıcıya ait
+  bulut snapshot'ını RLS ile korur.
 - Quiz ekranı `standart`, `günlük`, `yanlışlar` ve `karışık` modlarını destekler.
 - Mobil alt menü Harita, Setler, Günlük ve Yanlışlar yüzeylerini açar.
 - Karışık ve günlük modlar bütün hazır setlerin soru ve harita işaretlerinden
@@ -27,14 +29,10 @@ yaptığı soruları daha sonra yeniden çalışabilir.
 
 ## NON-GOALS
 
-- Kullanıcı hesabı, sunucu senkronizasyonu ve çevrim içi liderlik tablosu yoktur.
+- Çevrim içi liderlik tablosu ve kullanıcılar arası paylaşım yoktur.
 - Günlük soru havuzu uzaktan güncellenmez.
-
-## OPEN QUESTIONS
-
-- Çoklu cihaz senkronizasyonu ileride ayrı bir hesap/senkronizasyon paketi olarak
-  ele alınabilir.
 
 ## HANDOFF
 
-Mevcut React, Dexie ve hazır set mimarisi içinde doğrudan uygulanabilir.
+Mevcut React, Dexie, Supabase Auth ve kullanıcı snapshot senkronizasyonu içinde
+doğrudan uygulanabilir.

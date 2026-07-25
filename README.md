@@ -12,10 +12,11 @@ kişisel notlar, konum işaretleri ve açıklamalı quizler tek bir uygulamada.
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white">
   <img alt="Vite" src="https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white">
   <img alt="IndexedDB" src="https://img.shields.io/badge/IndexedDB-Yerel%20kayıt-17443A">
+  <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Bulut%20senkronizasyonu-3FCF8E?logo=supabase&logoColor=white">
   <img alt="Responsive" src="https://img.shields.io/badge/Tasarım-Responsive-E9A23B">
 </p>
 
-**Sunucu gerektirmez · Üyelik gerektirmez · Çevrimdışı çalışabilir**
+**Node.js backend gerektirmez · Hesaplı cihaz senkronizasyonu · Yerel kayıt**
 
 </div>
 
@@ -111,16 +112,18 @@ flowchart LR
     C --> H[("IndexedDB")]
     D --> H
     F --> H
+    H <--> I[("Supabase")]
 ```
 
-Uygulama verileri harici bir sunucuya göndermek yerine tarayıcıdaki
-**IndexedDB** alanında saklar. Bu nedenle hızlıdır ve internet bağlantısı
-olmadan da kullanılabilir.
+Uygulama çalışma sırasında verileri tarayıcıdaki **IndexedDB** alanında tutar.
+Oturum açıldığında bu yerel kayıtlar kullanıcıya ait tek bir Supabase kaydıyla
+senkronize edilir. Böylece bilgisayarda yapılan değişiklikler aynı hesapla
+telefondan açıldığında da görünür.
 
 > [!IMPORTANT]
-> Kayıtlar kullanılan tarayıcı ve cihaza özeldir. Tarayıcı verileri silinirse
-> notlar da silinebilir. Önemli haritaları düzenli olarak JSON biçiminde
-> yedeklemeniz önerilir.
+> İlk senkronizasyon tamamlanana kadar veriler yalnızca kullanılan cihazdadır.
+> Hesap göstergesindeki “Tüm cihazlarda güncel” mesajı görüldükten sonra çıkış
+> yapılmalıdır. JSON yedeği ayrıca bağımsız bir kurtarma seçeneğidir.
 
 ## Teknolojiler
 
@@ -130,6 +133,7 @@ olmadan da kullanılabilir.
 | TypeScript | Tip güvenli uygulama geliştirme |
 | Vite 6 | Geliştirme sunucusu ve üretim derlemesi |
 | Dexie / IndexedDB | Tarayıcı içinde kalıcı yerel kayıt |
+| Supabase Auth / Postgres | Kullanıcı girişi ve cihazlar arası senkronizasyon |
 | Lucide React | Arayüz ve harita simgeleri |
 | html-to-image | Haritayı yüksek çözünürlüklü görsele dönüştürme |
 | turkey-map-react | Türkiye il sınırı verileri |
@@ -145,11 +149,35 @@ Gereksinimler:
 git clone <depo-adresi>
 cd cografya
 npm ci
+cp .env.example .env.local
 npm run dev
 ```
 
 Uygulama geliştirme ortamında varsayılan olarak
 [`http://localhost:5173`](http://localhost:5173) adresinde açılır.
+
+### Supabase kurulumu
+
+1. Supabase projesinde e-posta/şifre girişini etkin bırakın.
+2. Projeyi bağlayıp migration dosyasını uygulayın:
+
+```bash
+npx supabase link --project-ref <PROJECT_REF>
+npx supabase db push --linked
+```
+
+3. `.env.local` içine proje URL’sini ve **publishable key** değerini yazın:
+
+```dotenv
+VITE_SUPABASE_URL=https://PROJECT_REF.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+4. Supabase Auth URL ayarlarında hem üretim alan adını hem de geliştirme için
+   `http://localhost:5173` adresini izin verilen yönlendirmelere ekleyin.
+
+`secret` veya `service_role` anahtarı hiçbir zaman Vite ortam değişkenine
+eklenmemelidir.
 
 ## Kullanılabilir komutlar
 
@@ -162,6 +190,7 @@ Uygulama geliştirme ortamında varsayılan olarak
 ## Sunucuya yükleme
 
 Proje statik olarak yayınlanabilir; Node.js çalışan bir backend gerekmez.
+Supabase yönetilen veritabanı ve kimlik doğrulama hizmeti olarak kullanılır.
 
 ```bash
 npm ci
@@ -176,6 +205,7 @@ Netlify, Vercel veya benzeri bir statik barındırma servisine yükleyin.
 | Build command | `npm ci && npm run build` |
 | Output directory | `dist` |
 | Node.js backend | Gerekli değil |
+| Ortam değişkenleri | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` |
 
 > [!NOTE]
 > Mevcut üretim paketi alan adının kökünde (`site.com/`) çalışacak şekilde
@@ -190,6 +220,8 @@ coğrafya/
 ├── public/
 │   └── images/sets/       # Hazır ders görselleri
 ├── src/
+│   ├── auth/              # Supabase giriş ve kayıt ekranı
+│   ├── cloud/             # IndexedDB ile Supabase senkronizasyonu
 │   ├── components/        # Harita, paneller, quiz ve dışa aktarma
 │   ├── App.tsx            # Ana uygulama akışı
 │   ├── db.ts              # IndexedDB / Dexie veri katmanı
@@ -198,6 +230,7 @@ coğrafya/
 │   ├── readySets.ts       # MEB/KPSS odaklı hazır ders içerikleri
 │   └── styles.css         # Masaüstü ve responsive tasarım
 ├── ATTRIBUTIONS.md        # Veri, görsel ve paket atıfları
+├── supabase/              # RLS korumalı veritabanı migration'ı
 ├── package.json
 └── vite.config.ts
 ```

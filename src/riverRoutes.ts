@@ -205,8 +205,10 @@ export const RIVER_ROUTES: Record<string, RiverRoute> = {
   coruh: {
     id: "coruh",
     points: [
-      { x: 775, y: 310 },
-      { x: 790, y: 285 },
+      { x: 815, y: 310 },
+      { x: 790, y: 300 },
+      { x: 770, y: 285 },
+      { x: 785, y: 270 },
       { x: 810, y: 265 },
       { x: 830, y: 245 },
       { x: 850, y: 225 },
@@ -329,6 +331,8 @@ export const RIVER_ROUTES: Record<string, RiverRoute> = {
   "buyuk-menderes": {
     id: "buyuk-menderes",
     points: [
+      { x: 270, y: 430 },
+      { x: 250, y: 440 },
       { x: 230, y: 450 },
       { x: 205, y: 445 },
       { x: 175, y: 440 },
@@ -442,9 +446,7 @@ export const RIVER_ROUTES: Record<string, RiverRoute> = {
   seyhan: {
     id: "seyhan",
     points: [
-      { x: 560, y: 395 },
-      { x: 545, y: 420 },
-      { x: 535, y: 450 },
+      { x: 540, y: 445 },
       { x: 530, y: 480 },
       { x: 525, y: 510 },
       { x: 525, y: 535 },
@@ -455,8 +457,9 @@ export const RIVER_ROUTES: Record<string, RiverRoute> = {
         name: "Zamantı Irmağı",
         points: [
           { x: 580, y: 370 },
-          { x: 570, y: 385 },
-          { x: 560, y: 395 },
+          { x: 570, y: 395 },
+          { x: 555, y: 420 },
+          { x: 540, y: 445 },
         ],
         labelAt: { x: 591, y: 382 },
       },
@@ -464,8 +467,9 @@ export const RIVER_ROUTES: Record<string, RiverRoute> = {
         name: "Göksu",
         points: [
           { x: 600, y: 410 },
-          { x: 570, y: 430 },
-          { x: 535, y: 450 },
+          { x: 580, y: 425 },
+          { x: 560, y: 440 },
+          { x: 540, y: 445 },
         ],
         labelAt: { x: 581, y: 417 },
       },
@@ -678,21 +682,22 @@ export const RIVER_ROUTES: Record<string, RiverRoute> = {
   aras: {
     id: "aras",
     points: [
-      { x: 820, y: 300 },
-      { x: 850, y: 295 },
-      { x: 885, y: 290 },
-      { x: 925, y: 290 },
-      { x: 965, y: 295 },
+      { x: 815, y: 320 },
+      { x: 850, y: 330 },
+      { x: 885, y: 328 },
+      { x: 915, y: 315 },
+      { x: 940, y: 305 },
+      { x: 965, y: 298 },
       { x: 1005, y: 295 },
     ],
-    labelAt: { x: 915, y: 277 },
+    labelAt: { x: 910, y: 302 },
     branches: [
       {
         name: "Arpaçay",
         points: [
           { x: 920, y: 235 },
-          { x: 925, y: 260 },
-          { x: 925, y: 290 },
+          { x: 925, y: 270 },
+          { x: 940, y: 305 },
         ],
         labelAt: { x: 935, y: 258 },
       },
@@ -701,7 +706,7 @@ export const RIVER_ROUTES: Record<string, RiverRoute> = {
         points: [
           { x: 970, y: 335 },
           { x: 970, y: 315 },
-          { x: 965, y: 295 },
+          { x: 965, y: 298 },
         ],
         labelAt: { x: 985, y: 316 },
       },

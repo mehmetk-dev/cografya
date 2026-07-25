@@ -1,6 +1,8 @@
 import type { StudyNoteTopic } from "./studyNotes";
 
 export const FLASHCARD_PROGRESS_KEY = "cografya-atlasim-flashcard-progress-v1";
+export const FLASHCARD_PROGRESS_CHANGED_EVENT =
+  "cografya-atlasim:flashcard-progress-changed";
 
 export type FlashcardKind = "quick" | "exam";
 export type FlashcardRating = "known" | "again";
@@ -192,6 +194,7 @@ export function saveFlashcardProgress(progress: FlashcardProgress) {
       FLASHCARD_PROGRESS_KEY,
       JSON.stringify(progress),
     );
+    window.dispatchEvent(new Event(FLASHCARD_PROGRESS_CHANGED_EVENT));
   } catch {
     // Kart çalışması depolama kapalıyken de kesintisiz devam eder.
   }

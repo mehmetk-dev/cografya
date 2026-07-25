@@ -41,6 +41,7 @@ import {
 import type {
   City,
   DailyProgress,
+  DrawingMode,
   DrawingTool,
   MapDrawing,
   MapMarker,
@@ -107,6 +108,59 @@ function safeFileName(name: string) {
     .replace(/[üÜ]/g, "u")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+const EXPORTED_SVG_STYLE_PROPERTIES = [
+  "color",
+  "display",
+  "fill",
+  "fill-opacity",
+  "filter",
+  "font-family",
+  "font-size",
+  "font-style",
+  "font-weight",
+  "letter-spacing",
+  "opacity",
+  "paint-order",
+  "stroke",
+  "stroke-dasharray",
+  "stroke-dashoffset",
+  "stroke-linecap",
+  "stroke-linejoin",
+  "stroke-opacity",
+  "stroke-width",
+  "text-anchor",
+  "vector-effect",
+  "visibility",
+] as const;
+
+function freezeExportSvgStyles(root: HTMLElement) {
+  const elements = Array.from(
+    root.querySelectorAll<SVGElement>("svg, svg *"),
+  );
+  const previousStyles = elements.map((element) => ({
+    element,
+    style: element.getAttribute("style"),
+  }));
+
+  elements.forEach((element) => {
+    const computed = window.getComputedStyle(element);
+    EXPORTED_SVG_STYLE_PROPERTIES.forEach((property) => {
+      const value = computed.getPropertyValue(property);
+      if (value) element.style.setProperty(property, value);
+    });
+  });
+
+  return () => {
+    previousStyles.forEach(({ element, style }) => {
+      if (style === null) {
+        element.removeAttribute("style");
+      } else {
+        element.setAttribute("style", style);
+      }
+    });
+  };
 }
 
 function buildReadySetMarkers(set: ReadyStudySet, mapId: string) {
@@ -183,6 +237,7 @@ async function refreshReadySetContent(set: ReadyStudySet, mapId: string) {
     presetMarkers.map((marker) => [marker.presetItemId, marker]),
   );
   const needsRefresh =
+    currentMarkers.length !== set.items.length ||
     presetMarkers.length !== set.items.length ||
     expectedMarkers.some((expected) => {
       const current = currentByPresetId.get(expected.presetItemId);
@@ -194,9 +249,9 @@ async function refreshReadySetContent(set: ReadyStudySet, mapId: string) {
   if (!needsRefresh) return false;
 
   await db.transaction("rw", db.studyMaps, db.mapMarkers, async () => {
-    if (presetMarkers.length > 0) {
+    if (currentMarkers.length > 0) {
       await db.mapMarkers.bulkDelete(
-        presetMarkers.map((marker) => marker.id),
+        currentMarkers.map((marker) => marker.id),
       );
     }
     await db.mapMarkers.bulkAdd(expectedMarkers);
@@ -232,7 +287,7 @@ export default function App() {
   const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [readyTopicFilter, setReadyTopicFilter] = useState<string | null>(null);
-  const [drawingTool, setDrawingTool] = useState<DrawingTool | null>(null);
+  const [drawingTool, setDrawingTool] = useState<DrawingMode | null>(null);
   const [drawingColor, setDrawingColor] = useState("#d05f64");
   const [quizOpen, setQuizOpen] = useState(false);
   const [quizMode, setQuizMode] = useState<QuizMode>("standard");
@@ -256,6 +311,10 @@ export default function App() {
 
   const activeMap = maps?.find((map) => map.id === activeMapId);
   const activeReadySet = getReadySet(activeMap?.sourceSetId);
+  const personalMaps = useMemo(
+    () => (maps ?? []).filter((map) => !map.sourceSetId),
+    [maps],
+  );
   const activeRecords = useMemo(
     () =>
       (allRecords ?? []).filter((record) => record.mapId === activeMapId),
@@ -750,6 +809,32 @@ export default function App() {
     await db.mapDrawings.add(drawing);
   };
 
+  const updateDrawing = async (drawing: MapDrawing) => {
+    if (!activeMap || activeReadySet || drawing.mapId !== activeMap.id) return;
+    await db.transaction("rw", db.studyMaps, db.mapDrawings, async () => {
+      await db.mapDrawings.put(drawing);
+      await db.studyMaps.update(activeMap.id, {
+        updatedAt: new Date().toISOString(),
+      });
+    });
+  };
+
+  const replaceDrawings = async (
+    removedIds: string[],
+    replacements: MapDrawing[],
+  ) => {
+    if (!activeMap || activeReadySet || removedIds.length === 0) return;
+    await db.transaction("rw", db.studyMaps, db.mapDrawings, async () => {
+      await db.mapDrawings.bulkDelete(removedIds);
+      if (replacements.length > 0) {
+        await db.mapDrawings.bulkPut(replacements);
+      }
+      await db.studyMaps.update(activeMap.id, {
+        updatedAt: new Date().toISOString(),
+      });
+    });
+  };
+
   const undoDrawing = async () => {
     const latest = [...activeDrawings].sort((left, right) =>
       right.createdAt.localeCompare(left.createdAt),
@@ -1002,31 +1087,42 @@ export default function App() {
     if (!activeMap || !exportPosterRef.current) return;
 
     setIsExportingImage(true);
+    let restoreSvgStyles: () => void = () => undefined;
     try {
+      await document.fonts.ready;
       await new Promise<void>((resolve) => {
         window.requestAnimationFrame(() =>
           window.requestAnimationFrame(() => resolve()),
         );
       });
 
+      restoreSvgStyles = freezeExportSvgStyles(exportPosterRef.current);
       const imageBlob = await toBlob(exportPosterRef.current, {
         backgroundColor: "#f2eee5",
         cacheBust: true,
         pixelRatio: 2,
+        style: {
+          position: "static",
+          top: "0",
+          left: "0",
+          zIndex: "0",
+        },
       });
       if (!imageBlob) {
         throw new Error("PNG verisi oluşturulamadı.");
       }
       downloadImageBlob(
         imageBlob,
-        `${safeFileName(activeMap.name) || "cografya-haritasi"}-notlar.png`,
+        `${safeFileName(activeMap.name) || "cografya-haritasi"}-harita.png`,
       );
-      setToast("Harita ve bütün notlar PNG olarak indirildi");
-    } catch {
+      setToast("Harita görseli PNG olarak indirildi");
+    } catch (error) {
+      console.error("Harita görseli oluşturulamadı", error);
       window.alert(
         "Görsel hazırlanırken bir hata oluştu. Lütfen tekrar deneyin.",
       );
     } finally {
+      restoreSvgStyles();
       setIsExportingImage(false);
     }
   };
@@ -1172,8 +1268,9 @@ export default function App() {
   return (
     <div className="app-shell">
       <MapSidebar
-        maps={maps}
+        maps={personalMaps}
         activeMapId={activeMapId}
+        activeReadySetId={activeReadySet?.id}
         recordCounts={recordCounts}
         onSelect={selectMap}
         onCreate={createMap}
@@ -1367,7 +1464,9 @@ export default function App() {
             themeColor={activeMap.themeColor}
             showLabels={activeMap.showLabels}
             showProvinceNames={
-              Boolean(activeReadySet) && activeMap.showLabels
+              activeReadySet !== undefined &&
+              activeReadySet.id !== "rivers" &&
+              activeMap.showLabels
             }
             readOnly={Boolean(activeReadySet)}
             matchingProvinceCodes={matchingProvinceCodes}
@@ -1380,6 +1479,10 @@ export default function App() {
             onDrawingColorChange={setDrawingColor}
             onAddDrawing={(tool, points, text) =>
               void addDrawing(tool, points, text)
+            }
+            onUpdateDrawing={(drawing) => void updateDrawing(drawing)}
+            onReplaceDrawings={(removedIds, replacements) =>
+              void replaceDrawings(removedIds, replacements)
             }
             onUndoDrawing={() => void undoDrawing()}
             onClearDrawings={() => void clearDrawings()}
@@ -1446,9 +1549,7 @@ export default function App() {
         ref={exportPosterRef}
         map={activeMap}
         records={activeRecords}
-        markers={
-          activeReadySet && readyTopicFilter ? visibleMarkers : activeMarkers
-        }
+        markers={visibleMarkers}
         drawings={activeDrawings}
       />
 
