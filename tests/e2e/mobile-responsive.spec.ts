@@ -113,6 +113,32 @@ test("plato ve millî park setleri mobilde açılır", async ({ page }) => {
   }
 });
 
+test("millî parklar haritası PNG olarak indirilir", async ({ page }) => {
+  await page.setViewportSize({ width: 1365, height: 820 });
+  await page.goto("/");
+  await page
+    .locator(".ready-library__list")
+    .getByRole("button", { name: /Millî Parklar/ })
+    .click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Türkiye'nin Millî Parkları",
+      exact: true,
+    }),
+  ).toBeVisible();
+
+  const downloadPromise = page.waitForEvent("download", { timeout: 20_000 });
+  await page.getByRole("button", { name: "Görsel al" }).click();
+  const download = await downloadPromise;
+
+  expect(download.suggestedFilename()).toBe(
+    "turkiye-nin-mill-parklari-notlar.png",
+  );
+  await expect(
+    page.getByText("Harita ve bütün notlar PNG olarak indirildi"),
+  ).toBeVisible();
+});
+
 test("quiz ve istatistik pencereleri mobil genişliğe sığar", async ({
   page,
 }) => {

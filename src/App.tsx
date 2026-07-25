@@ -13,8 +13,9 @@ import {
   PencilLine,
   Search,
 } from "lucide-react";
-import { toPng } from "html-to-image";
+import { toBlob } from "html-to-image";
 import { db, createBlankMap } from "./db";
+import { downloadImageBlob } from "./imageDownload";
 import { MapSidebar } from "./components/MapSidebar";
 import {
   TurkeyMap,
@@ -778,15 +779,18 @@ export default function App() {
         );
       });
 
-      const dataUrl = await toPng(exportPosterRef.current, {
+      const imageBlob = await toBlob(exportPosterRef.current, {
         backgroundColor: "#f2eee5",
         cacheBust: true,
         pixelRatio: 2,
       });
-      const anchor = document.createElement("a");
-      anchor.href = dataUrl;
-      anchor.download = `${safeFileName(activeMap.name) || "cografya-haritasi"}-notlar.png`;
-      anchor.click();
+      if (!imageBlob) {
+        throw new Error("PNG verisi oluşturulamadı.");
+      }
+      downloadImageBlob(
+        imageBlob,
+        `${safeFileName(activeMap.name) || "cografya-haritasi"}-notlar.png`,
+      );
       setToast("Harita ve bütün notlar PNG olarak indirildi");
     } catch {
       window.alert(
