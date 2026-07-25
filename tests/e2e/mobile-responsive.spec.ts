@@ -103,9 +103,11 @@ test("plato ve millî park setleri mobilde açılır", async ({ page }) => {
     } else {
       expect(await visibleMarkerLabelCount(page)).toBe(0);
       await page
-        .locator(".workspace-body > .map-stage .marker-layer .map-marker")
+        .locator(
+          ".workspace-body > .map-stage .marker-layer .map-marker .map-marker__pin",
+        )
         .first()
-        .hover();
+        .hover({ force: true });
       await expect.poll(() => visibleMarkerLabelCount(page)).toBe(1);
     }
   }

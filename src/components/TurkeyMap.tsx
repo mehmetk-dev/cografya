@@ -81,6 +81,8 @@ const BASE_VIEWBOX = {
   height: 585,
 };
 
+const DENSE_MARKER_LABEL_THRESHOLD = 18;
+
 const cities = [...(mapCities as City[])].sort(
   (left, right) => left.plateNumber - right.plateNumber,
 );
@@ -226,6 +228,8 @@ export function TurkeyMap({
     () => new Set(routedRivers.map(({ marker }) => marker.id)),
     [routedRivers],
   );
+  const denseMarkerLabels =
+    markers.length - routedRiverMarkerIds.size > DENSE_MARKER_LABEL_THRESHOLD;
   const markerPositions = useMemo(() => {
     const offsets = [
       { x: 0, y: 0 },
@@ -930,10 +934,28 @@ export function TurkeyMap({
               return (
                 <g
                   key={marker.id}
-                  className="map-marker"
+                  className={[
+                    "map-marker",
+                    denseMarkerLabels ? "map-marker--dense" : "",
+                    selectedCode === marker.provinceCode
+                      ? "map-marker--selected"
+                      : "",
+                  ].join(" ")}
                   transform={`translate(${position.x} ${position.y})`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${marker.label}, ${marker.provinceName}, ${visual.label}`}
                   onClick={(event) => {
                     event.stopPropagation();
+                    const city = cities.find(
+                      (candidate) =>
+                        candidate.plateNumber === marker.provinceCode,
+                    );
+                    if (city && !placementProvinceCode) onSelect(city);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter" && event.key !== " ") return;
+                    event.preventDefault();
                     const city = cities.find(
                       (candidate) =>
                         candidate.plateNumber === marker.provinceCode,

@@ -1316,6 +1316,7 @@ select:focus-visible,
   vector-effect: non-scaling-stroke;
   opacity: 0.78;
   pointer-events: none;
+  transition: opacity 140ms ease;
 }
 
 .map-marker__symbol {
@@ -1330,6 +1331,39 @@ select:focus-visible,
   fill: rgba(255, 254, 250, 0.97);
   stroke: color-mix(in srgb, var(--marker-color) 45%, #d8d1c5);
   stroke-width: 0.8;
+}
+
+.map-marker__label {
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.map-marker--dense .map-marker__leader,
+.map-marker--dense .map-marker__label {
+  opacity: 0;
+}
+
+.map-marker--dense:hover .map-marker__leader,
+.map-marker--dense:focus-visible .map-marker__leader,
+.map-marker--dense.map-marker--selected .map-marker__leader {
+  opacity: 0.78;
+}
+
+.map-marker--dense:hover .map-marker__label,
+.map-marker--dense:focus-visible .map-marker__label,
+.map-marker--dense.map-marker--selected .map-marker__label {
+  opacity: 1;
+}
+
+.map-marker:focus {
+  outline: none;
+}
+
+.map-marker--dense:hover .map-marker__pin,
+.map-marker--dense:focus-visible .map-marker__pin,
+.map-marker--dense.map-marker--selected .map-marker__pin {
+  stroke: #173f36;
+  stroke-width: 2.4;
 }
 
 .map-marker__label .map-marker__label-accent {
