@@ -4031,6 +4031,25 @@ a.ready-source-badge:hover {
 }
 
 @media (max-width: 640px) {
+  .map-sidebar::after {
+    display: none;
+  }
+
+  .map-list {
+    display: flex;
+    max-height: none;
+    grid-auto-columns: initial;
+    grid-auto-flow: row;
+    overflow-x: hidden;
+  }
+
+  .ready-library__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-columns: initial;
+    grid-auto-flow: row;
+    overflow-x: hidden;
+  }
+
   .workspace-header {
     min-height: auto;
     align-items: flex-start;
@@ -4136,32 +4155,16 @@ a.ready-source-badge:hover {
 
   .map-canvas {
     min-height: 345px;
-    justify-items: start;
-    overflow-x: auto;
+    justify-items: center;
+    overflow-x: hidden;
     overflow-y: hidden;
     border-radius: 14px 14px 14px 4px;
-    overscroll-behavior-x: contain;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(23, 68, 58, 0.3) transparent;
   }
 
   .turkey-map {
-    width: 760px;
-    max-width: none;
+    width: 100%;
+    max-width: 100%;
     flex: 0 0 auto;
-  }
-
-  .map-canvas::-webkit-scrollbar {
-    height: 6px;
-  }
-
-  .map-canvas::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: rgba(23, 68, 58, 0.3);
-  }
-
-  .map-canvas::-webkit-scrollbar-track {
-    background: transparent;
   }
 
   .map-marker__label text {
@@ -4257,6 +4260,8 @@ a.ready-source-badge:hover {
 
   .quiz-modal,
   .stats-modal {
+    width: 100%;
+    max-width: 100%;
     max-height: calc(100vh - 20px);
   }
 
@@ -4317,6 +4322,10 @@ a.ready-source-badge:hover {
 }
 
 @media (max-width: 420px) {
+  .ready-library__list {
+    grid-template-columns: 1fr;
+  }
+
   .ready-topic-picker > div:last-child {
     max-height: none;
     grid-template-columns: 1fr;
