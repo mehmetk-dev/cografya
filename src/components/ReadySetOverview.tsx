@@ -321,56 +321,61 @@ export function ReadySetOverview({
             <small>HAZIR İÇERİK</small>
             <strong>İsim, tür ve sınav notu</strong>
           </div>
+          <span className="ready-set-catalog__count">
+            {visibleItems.length} içerik
+          </span>
         </div>
 
-        {[...groups.entries()].map(([group, entries]) => (
-          <div className="ready-set-group" key={group}>
-            <h3>{group}</h3>
-            <div>
-              {entries.map((entry) => {
-                const city = cityFor(entry);
-                const visual = visualFor(entry, set.color);
-                return (
-                  <button
-                    className="ready-set-item"
-                    type="button"
-                    key={entry.id}
-                    onClick={() => city && onSelectCity(city)}
-                  >
-                    <i style={{ backgroundColor: visual.color }}>
-                      <CatalogIcon
-                        name={visual.icon}
-                        size={15}
-                        color="#fff"
-                      />
-                    </i>
-                    <span>
-                      <strong>{entry.label}</strong>
-                      <small>
-                        {entry.place ?? city?.name ?? "Türkiye"} ·{" "}
-                        {city?.name ?? visual.label}
-                      </small>
-                      {entry.relation && <em>{entry.relation}</em>}
-                      {entry.sourceLabel && (
-                        <span className="ready-source-badge">
-                          <BookOpenCheck size={10} />
-                          {entry.sourceLabel}
-                        </span>
-                      )}
-                      <p>{entry.description}</p>
-                      {entry.branches?.length && (
-                        <em>
-                          Kolları: {entry.branches.join(", ")}
-                        </em>
-                      )}
-                    </span>
-                    <ArrowUpRight size={14} />
-                  </button>
-                );
-              })}
+        <div className="ready-set-catalog__scroll">
+          {[...groups.entries()].map(([group, entries]) => (
+            <div className="ready-set-group" key={group}>
+              <h3>{group}</h3>
+              <div>
+                {entries.map((entry) => {
+                  const city = cityFor(entry);
+                  const visual = visualFor(entry, set.color);
+                  return (
+                    <button
+                      className="ready-set-item"
+                      type="button"
+                      key={entry.id}
+                      onClick={() => city && onSelectCity(city)}
+                    >
+                      <i style={{ backgroundColor: visual.color }}>
+                        <CatalogIcon
+                          name={visual.icon}
+                          size={15}
+                          color="#fff"
+                        />
+                      </i>
+                      <span>
+                        <strong>{entry.label}</strong>
+                        <small>
+                          {entry.place ?? city?.name ?? "Türkiye"} ·{" "}
+                          {city?.name ?? visual.label}
+                        </small>
+                        {entry.relation && <em>{entry.relation}</em>}
+                        {entry.sourceLabel && (
+                          <span className="ready-source-badge">
+                            <BookOpenCheck size={10} />
+                            {entry.sourceLabel}
+                          </span>
+                        )}
+                        <p>{entry.description}</p>
+                        {entry.branches?.length && (
+                          <em>
+                            Kolları: {entry.branches.join(", ")}
+                          </em>
+                        )}
+                      </span>
+                      <ArrowUpRight size={14} />
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </section>
     </aside>
   );

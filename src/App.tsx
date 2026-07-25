@@ -3,6 +3,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import {
   CheckCircle2,
   Download,
+  EllipsisVertical,
   Eye,
   EyeOff,
   FileUp,
@@ -189,6 +190,7 @@ export default function App() {
   const [mapName, setMapName] = useState("");
   const [toast, setToast] = useState("");
   const [isExportingImage, setIsExportingImage] = useState(false);
+  const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [readyTopicFilter, setReadyTopicFilter] = useState<string | null>(null);
   const [drawingTool, setDrawingTool] = useState<DrawingTool | null>(null);
@@ -202,6 +204,7 @@ export default function App() {
   } | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const exportPosterRef = useRef<HTMLDivElement>(null);
+  const mobileActionsRef = useRef<HTMLDivElement>(null);
   const pendingMapActivationRef = useRef<string | null>(null);
 
   const activeMap = maps?.find((map) => map.id === activeMapId);
@@ -379,6 +382,19 @@ export default function App() {
     const timeout = window.setTimeout(() => setToast(""), 2800);
     return () => window.clearTimeout(timeout);
   }, [toast]);
+
+  useEffect(() => {
+    if (!mobileActionsOpen) return;
+
+    const closeMenu = (event: PointerEvent) => {
+      if (!mobileActionsRef.current?.contains(event.target as Node)) {
+        setMobileActionsOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", closeMenu);
+    return () => document.removeEventListener("pointerdown", closeMenu);
+  }, [mobileActionsOpen]);
 
   const selectMap = (mapId: string) => {
     setActiveMapId(mapId);
@@ -983,7 +999,12 @@ export default function App() {
             </div>
           </div>
 
-          <div className="workspace-actions">
+          <div
+            className={`workspace-actions ${
+              mobileActionsOpen ? "is-menu-open" : ""
+            }`}
+            ref={mobileActionsRef}
+          >
             <label className="province-search">
               <Search size={16} />
               <select
@@ -1008,62 +1029,94 @@ export default function App() {
             </label>
 
             <button
-              className="header-button"
+              className="mobile-actions-trigger"
               type="button"
-              onClick={() =>
-                void updateActiveMap({ showLabels: !activeMap.showLabels })
+              aria-label={
+                mobileActionsOpen
+                  ? "Harita işlemlerini kapat"
+                  : "Harita işlemlerini aç"
               }
-              title={
-                activeMap.showLabels
-                  ? "Harita yazılarını gizle"
-                  : "Harita yazılarını göster"
-              }
+              aria-expanded={mobileActionsOpen}
+              onClick={() => setMobileActionsOpen((open) => !open)}
             >
-              {activeMap.showLabels ? <Eye size={17} /> : <EyeOff size={17} />}
-              <span>Yazılar</span>
+              <EllipsisVertical size={21} />
             </button>
 
-            <button
-              className="header-button"
-              type="button"
-              onClick={() => importInputRef.current?.click()}
-            >
-              <FileUp size={17} />
-              <span>İçe aktar</span>
-            </button>
-            <input
-              ref={importInputRef}
-              className="visually-hidden"
-              type="file"
-              accept="application/json,.json"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void importMap(file);
-              }}
-            />
+            <div className="workspace-actions__menu">
+              <button
+                className="header-button"
+                type="button"
+                onClick={() => {
+                  void updateActiveMap({
+                    showLabels: !activeMap.showLabels,
+                  });
+                  setMobileActionsOpen(false);
+                }}
+                title={
+                  activeMap.showLabels
+                    ? "Harita yazılarını gizle"
+                    : "Harita yazılarını göster"
+                }
+              >
+                {activeMap.showLabels ? (
+                  <Eye size={17} />
+                ) : (
+                  <EyeOff size={17} />
+                )}
+                <span>Yazılar</span>
+              </button>
 
-            <button
-              className="header-button header-button--image"
-              type="button"
-              disabled={isExportingImage}
-              onClick={() => void exportMapImage()}
-            >
-              {isExportingImage ? (
-                <LoaderCircle className="spin" size={17} />
-              ) : (
-                <ImageDown size={17} />
-              )}
-              <span>{isExportingImage ? "Hazırlanıyor" : "Görsel al"}</span>
-            </button>
+              <button
+                className="header-button"
+                type="button"
+                onClick={() => {
+                  importInputRef.current?.click();
+                  setMobileActionsOpen(false);
+                }}
+              >
+                <FileUp size={17} />
+                <span>İçe aktar</span>
+              </button>
+              <input
+                ref={importInputRef}
+                className="visually-hidden"
+                type="file"
+                accept="application/json,.json"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void importMap(file);
+                }}
+              />
 
-            <button
-              className="header-button header-button--dark"
-              type="button"
-              onClick={() => void exportMap()}
-            >
-              <Download size={17} />
-              <span>Yedekle</span>
-            </button>
+              <button
+                className="header-button header-button--image"
+                type="button"
+                disabled={isExportingImage}
+                onClick={() => {
+                  void exportMapImage();
+                  setMobileActionsOpen(false);
+                }}
+              >
+                {isExportingImage ? (
+                  <LoaderCircle className="spin" size={17} />
+                ) : (
+                  <ImageDown size={17} />
+                )}
+                <span>{isExportingImage ? "Hazırlanıyor" : "Görsel al"}</span>
+              </button>
+
+              <button
+                className="header-button header-button--dark"
+                type="button"
+                onClick={() => {
+                  void exportMap();
+                  setMobileActionsOpen(false);
+                }}
+              >
+                <Download size={17} />
+                <span>Yedekle</span>
+              </button>
+            </div>
           </div>
         </header>
 
