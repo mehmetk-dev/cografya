@@ -81,7 +81,7 @@ export function MapSidebar({
   };
 
   return (
-    <aside className="map-sidebar">
+    <aside className="map-sidebar" id="study-library">
       <div className="brand">
         <div className="brand__mark">
           <Map size={23} />
@@ -225,7 +225,7 @@ export function MapSidebar({
         )}
       </div>
 
-      <div className="ready-library">
+      <div className="ready-library" id="ready-library">
         <div className="ready-library__heading">
           <div>
             <span className="eyebrow">DERS KÜTÜPHANESİ</span>

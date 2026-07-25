@@ -1,8 +1,10 @@
 import Dexie, { type EntityTable } from "dexie";
 import type {
+  DailyProgress,
   MapDrawing,
   MapMarker,
   ProvinceRecord,
+  QuizMistake,
   QuizStats,
   StudyMap,
 } from "./types";
@@ -14,6 +16,8 @@ class GeographyDatabase extends Dexie {
   mapMarkers!: EntityTable<MapMarker, "id">;
   mapDrawings!: EntityTable<MapDrawing, "id">;
   quizStats!: EntityTable<QuizStats, "id">;
+  quizMistakes!: EntityTable<QuizMistake, "id">;
+  dailyProgress!: EntityTable<DailyProgress, "date">;
 
   constructor() {
     super("cografya-atlasim");
@@ -35,6 +39,16 @@ class GeographyDatabase extends Dexie {
       mapMarkers: "id, mapId, provinceCode, [mapId+provinceCode], createdAt",
       mapDrawings: "id, mapId, tool, createdAt",
       quizStats: "id, mapId, updatedAt",
+    });
+
+    this.version(4).stores({
+      studyMaps: "id, updatedAt",
+      provinceRecords: "id, mapId, [mapId+provinceCode], updatedAt",
+      mapMarkers: "id, mapId, provinceCode, [mapId+provinceCode], createdAt",
+      mapDrawings: "id, mapId, tool, createdAt",
+      quizStats: "id, mapId, updatedAt",
+      quizMistakes: "id, questionId, mapId, lastAnsweredAt",
+      dailyProgress: "date, completed, updatedAt",
     });
   }
 }

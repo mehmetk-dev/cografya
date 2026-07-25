@@ -230,6 +230,40 @@ export function TurkeyMap({
   );
   const denseMarkerLabels =
     markers.length - routedRiverMarkerIds.size > DENSE_MARKER_LABEL_THRESHOLD;
+  const displayedMarkers = useMemo(() => {
+    const pointMarkers = markers.filter(
+      (marker) => !routedRiverMarkerIds.has(marker.id),
+    );
+    if (!denseMarkerLabels || zoom >= 1.35) {
+      return pointMarkers.map((marker) => ({ marker, count: 1 }));
+    }
+
+    const clusters = new Map<
+      string,
+      { marker: MapMarker; count: number }
+    >();
+    pointMarkers.forEach((marker) => {
+      const point = marker.anchoredToProvince
+        ? centers[marker.provinceCode]
+        : { x: marker.x, y: marker.y };
+      const clusterKey = point
+        ? `area-${Math.round(point.x / 115)}-${Math.round(point.y / 95)}`
+        : marker.id;
+      const current = clusters.get(clusterKey);
+      if (current) {
+        current.count += 1;
+      } else {
+        clusters.set(clusterKey, { marker, count: 1 });
+      }
+    });
+    return [...clusters.values()];
+  }, [
+    denseMarkerLabels,
+    centers,
+    markers,
+    routedRiverMarkerIds,
+    zoom,
+  ]);
   const markerPositions = useMemo(() => {
     const offsets = [
       { x: 0, y: 0 },
@@ -923,8 +957,7 @@ export function TurkeyMap({
           )}
 
           <g className="marker-layer">
-            {markers.map((marker) => {
-              if (routedRiverMarkerIds.has(marker.id)) return null;
+            {displayedMarkers.map(({ marker, count }) => {
               const position = markerPositions.get(marker.id);
               if (!position) return null;
               const labelLayout = markerLabelLayouts.get(marker.id);
@@ -944,9 +977,31 @@ export function TurkeyMap({
                   transform={`translate(${position.x} ${position.y})`}
                   role="button"
                   tabIndex={0}
-                  aria-label={`${marker.label}, ${marker.provinceName}, ${visual.label}`}
+                  aria-label={
+                    count > 1
+                      ? `${marker.provinceName}, ${count} işaret`
+                      : `${marker.label}, ${marker.provinceName}, ${visual.label}`
+                  }
                   onClick={(event) => {
                     event.stopPropagation();
+                    if (count > 1) {
+                      const nextZoom = Math.max(1.4, zoom + 0.4);
+                      setZoom(nextZoom);
+                      setPan(
+                        clampPan(
+                          {
+                            x:
+                              position.x -
+                              (BASE_VIEWBOX.x + BASE_VIEWBOX.width / 2),
+                            y:
+                              position.y -
+                              (BASE_VIEWBOX.y + BASE_VIEWBOX.height / 2),
+                          },
+                          nextZoom,
+                        ),
+                      );
+                      return;
+                    }
                     const city = cities.find(
                       (candidate) =>
                         candidate.plateNumber === marker.provinceCode,
@@ -956,6 +1011,24 @@ export function TurkeyMap({
                   onKeyDown={(event) => {
                     if (event.key !== "Enter" && event.key !== " ") return;
                     event.preventDefault();
+                    if (count > 1) {
+                      const nextZoom = Math.max(1.4, zoom + 0.4);
+                      setZoom(nextZoom);
+                      setPan(
+                        clampPan(
+                          {
+                            x:
+                              position.x -
+                              (BASE_VIEWBOX.x + BASE_VIEWBOX.width / 2),
+                            y:
+                              position.y -
+                              (BASE_VIEWBOX.y + BASE_VIEWBOX.height / 2),
+                          },
+                          nextZoom,
+                        ),
+                      );
+                      return;
+                    }
                     const city = cities.find(
                       (candidate) =>
                         candidate.plateNumber === marker.provinceCode,
@@ -967,7 +1040,9 @@ export function TurkeyMap({
                   }
                 >
                   <title>
-                    {marker.label} · {marker.provinceName} · {visual.label}
+                    {count > 1
+                      ? `${marker.provinceName} · ${count} işaret · Yakınlaştırınca ayrılır`
+                      : `${marker.label} · ${marker.provinceName} · ${visual.label}`}
                   </title>
                   {showLabels && labelLayout && (
                     <line
@@ -991,6 +1066,16 @@ export function TurkeyMap({
                       strokeWidth={2.4}
                     />
                   </g>
+                  {count > 1 && (
+                    <g
+                      className="map-marker__cluster-count"
+                      transform="translate(10 -35)"
+                      aria-hidden="true"
+                    >
+                      <circle r="11" />
+                      <text y="3">{count}</text>
+                    </g>
+                  )}
                   {showLabels && labelLayout && (
                     <g className="map-marker__label">
                       <rect

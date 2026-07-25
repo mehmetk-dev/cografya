@@ -1,5 +1,6 @@
 export type ReadyQuizQuestion = {
   id: string;
+  sourceQuestionId?: string;
   prompt: string;
   choices: string[];
   correctAnswer: string;

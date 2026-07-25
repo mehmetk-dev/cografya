@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { Brain, Check, Trophy, X, XCircle } from "lucide-react";
 import { getMarkerVisual } from "../markerKinds";
 import type { ReadyQuizQuestion } from "../quizBanks";
-import type { City, MapMarker } from "../types";
+import type {
+  City,
+  MapMarker,
+  QuizAnswerResult,
+  QuizMode,
+} from "../types";
 import { TurkeyMap, turkeyCities } from "./TurkeyMap";
 
 type QuizModalProps = {
@@ -10,8 +15,9 @@ type QuizModalProps = {
   markers?: MapMarker[];
   factQuestions?: ReadyQuizQuestion[];
   setTitle?: string;
+  mode?: QuizMode;
   onClose: () => void;
-  onAnswer: (correct: boolean, streak: number) => void;
+  onAnswer: (result: QuizAnswerResult) => void;
 };
 
 type MapQuestion = {
@@ -81,6 +87,7 @@ export function QuizModal({
   markers,
   factQuestions,
   setTitle,
+  mode = "standard",
   onClose,
   onAnswer,
 }: QuizModalProps) {
@@ -106,12 +113,51 @@ export function QuizModal({
   const finished = index >= questions.length;
   const target = questions[Math.min(index, questions.length - 1)];
 
-  const recordAnswer = (correct: boolean, selectedLabel: string, selectedProvinceCode?: number) => {
+  const recordAnswer = (
+    correct: boolean,
+    selectedLabel: string,
+    selectedProvinceCode?: number,
+  ) => {
     const nextStreak = correct ? streak + 1 : 0;
     setAnswer({ correct, selectedLabel, selectedProvinceCode });
     setStreak(nextStreak);
     if (correct) setScore((current) => current + 1);
-    onAnswer(correct, nextStreak);
+
+    const mapReviewChoices =
+      target.type === "map"
+        ? shuffle([
+            target.city.name,
+            ...shuffle(
+              turkeyCities.filter(
+                (city) => city.plateNumber !== target.city.plateNumber,
+              ),
+            )
+              .slice(0, 3)
+              .map((city) => city.name),
+          ])
+        : [];
+
+    onAnswer({
+      questionId:
+        target.type === "choice"
+          ? target.fact.sourceQuestionId ?? `fact:${target.fact.id}`
+          : `map:${target.marker?.presetItemId ?? target.marker?.id ?? target.city.id}`,
+      prompt: questionPrompt,
+      choices:
+        target.type === "choice" ? target.choices : mapReviewChoices,
+      correctAnswer:
+        target.type === "choice"
+          ? target.fact.correctAnswer
+          : target.city.name,
+      selectedAnswer: selectedLabel,
+      explanation:
+        target.type === "choice"
+          ? target.fact.explanation
+          : target.marker?.description ??
+            `${target.city.name}, Türkiye haritasında doğru konumdur.`,
+      correct,
+      streak: nextStreak,
+    });
   };
 
   const selectMapAnswer = (city: City) => {
@@ -147,6 +193,16 @@ export function QuizModal({
       : target.marker
         ? `${target.marker.label} hangi ilde?`
         : `${target.city.name} ilini haritada bul`;
+  const quizTitle =
+    mode === "daily"
+      ? "Günün 10 sorusu"
+      : mode === "mixed"
+        ? "Karışık KPSS denemesi"
+        : mode === "mistakes"
+          ? "Yanlışlar tekrarı"
+          : setTitle
+            ? `${setTitle} quizi`
+            : "İli haritada bul";
 
   return (
     <div className="modal-backdrop" role="presentation">
@@ -156,7 +212,7 @@ export function QuizModal({
             <span><Brain size={20} /></span>
             <div>
               <small>EZBER MODU</small>
-              <h2>{setTitle ? `${setTitle} quizi` : "İli haritada bul"}</h2>
+              <h2>{quizTitle}</h2>
             </div>
           </div>
           <button type="button" aria-label="Testi kapat" onClick={onClose}>

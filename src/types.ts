@@ -97,6 +97,40 @@ export type QuizStats = {
   updatedAt: string;
 };
 
+export type QuizMode = "standard" | "daily" | "mistakes" | "mixed";
+
+export type QuizAnswerResult = {
+  questionId: string;
+  prompt: string;
+  choices: string[];
+  correctAnswer: string;
+  selectedAnswer: string;
+  explanation: string;
+  correct: boolean;
+  streak: number;
+};
+
+export type QuizMistake = {
+  id: string;
+  questionId: string;
+  mapId: string;
+  prompt: string;
+  choices: string[];
+  correctAnswer: string;
+  selectedAnswer: string;
+  explanation: string;
+  mistakeCount: number;
+  lastAnsweredAt: string;
+};
+
+export type DailyProgress = {
+  date: string;
+  answered: number;
+  correct: number;
+  completed: boolean;
+  updatedAt: string;
+};
+
 export type MapBackup = {
   version: 1 | 2 | 3;
   exportedAt: string;

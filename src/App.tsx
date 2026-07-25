@@ -25,17 +25,21 @@ import {
 import { ProvinceEditor } from "./components/ProvinceEditor";
 import { ExportPoster } from "./components/ExportPoster";
 import { FeatureBar } from "./components/FeatureBar";
+import { MobileBottomNav } from "./components/MobileBottomNav";
 import { QuizModal } from "./components/QuizModal";
+import { StudyCenterModal } from "./components/StudyCenterModal";
 import { StatsModal } from "./components/StatsModal";
 import { ReadySetOverview } from "./components/ReadySetOverview";
 import { createId } from "./id";
 import { getMarkerVisual } from "./markerKinds";
 import {
   getReadySet,
+  READY_STUDY_SETS,
   type ReadyStudySet,
 } from "./readySets";
 import type {
   City,
+  DailyProgress,
   DrawingTool,
   MapDrawing,
   MapMarker,
@@ -43,11 +47,38 @@ import type {
   MarkerDraft,
   MarkerKind,
   ProvinceRecord,
+  QuizAnswerResult,
+  QuizMode,
   QuizStats,
   StudyMap,
 } from "./types";
 
 const ACTIVE_MAP_KEY = "cografya-atlasim-active-map";
+
+function dateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function dailyStreak(progress: DailyProgress[]) {
+  const completedDates = new Set(
+    progress.filter((entry) => entry.completed).map((entry) => entry.date),
+  );
+  const cursor = new Date();
+
+  if (!completedDates.has(dateKey(cursor))) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  let streak = 0;
+  while (completedDates.has(dateKey(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
 
 function isMapBackup(value: unknown): value is MapBackup {
   if (!value || typeof value !== "object") return false;
@@ -183,6 +214,12 @@ export default function App() {
   const allMarkers = useLiveQuery(() => db.mapMarkers.toArray());
   const allDrawings = useLiveQuery(() => db.mapDrawings.toArray());
   const allQuizStats = useLiveQuery(() => db.quizStats.toArray());
+  const quizMistakes = useLiveQuery(() =>
+    db.quizMistakes.orderBy("lastAnsweredAt").reverse().toArray(),
+  );
+  const dailyProgressEntries = useLiveQuery(() =>
+    db.dailyProgress.orderBy("date").reverse().toArray(),
+  );
   const [activeMapId, setActiveMapId] = useState<string | null>(() =>
     localStorage.getItem(ACTIVE_MAP_KEY),
   );
@@ -196,7 +233,12 @@ export default function App() {
   const [drawingTool, setDrawingTool] = useState<DrawingTool | null>(null);
   const [drawingColor, setDrawingColor] = useState("#d05f64");
   const [quizOpen, setQuizOpen] = useState(false);
+  const [quizMode, setQuizMode] = useState<QuizMode>("standard");
   const [statsOpen, setStatsOpen] = useState(false);
+  const [studyCenterOpen, setStudyCenterOpen] = useState(false);
+  const [studyCenterTab, setStudyCenterTab] = useState<
+    "overview" | "mistakes"
+  >("overview");
   const [initializationError, setInitializationError] = useState("");
   const [pendingMarker, setPendingMarker] = useState<{
     provinceCode: number;
@@ -227,10 +269,64 @@ export default function App() {
   const activeQuizStats = allQuizStats?.find(
     (stats) => stats.mapId === activeMapId,
   );
+  const todayProgress = dailyProgressEntries?.find(
+    (entry) => entry.date === dateKey(),
+  );
+  const currentDailyStreak = dailyStreak(dailyProgressEntries ?? []);
+  const mixedQuizMarkers = useMemo(
+    () =>
+      READY_STUDY_SETS.flatMap((set) =>
+        buildReadySetMarkers(set, `mixed-${set.id}`).map((marker) => ({
+          ...marker,
+          presetItemId: `${set.id}:${marker.presetItemId}`,
+        })),
+      ),
+    [],
+  );
+  const mixedQuizQuestions = useMemo(
+    () =>
+      READY_STUDY_SETS.flatMap((set) =>
+        set.quizQuestions.map((question) => ({
+          ...question,
+          id: `${set.id}:${question.id}`,
+        })),
+      ),
+    [],
+  );
+  const activeSetQuizQuestions = useMemo(
+    () =>
+      activeReadySet?.quizQuestions.map((question) => ({
+        ...question,
+        id: `${activeReadySet.id}:${question.id}`,
+      })),
+    [activeReadySet],
+  );
+  const mistakeQuizQuestions = useMemo(
+    () =>
+      (quizMistakes ?? []).map((mistake) => ({
+        id: mistake.questionId,
+        sourceQuestionId: mistake.questionId,
+        prompt: mistake.prompt,
+        choices: mistake.choices,
+        correctAnswer: mistake.correctAnswer,
+        explanation: mistake.explanation,
+      })),
+    [quizMistakes],
+  );
   const visibleMarkers = activeMarkers.filter(
     (marker) =>
       !activeMap?.hiddenMarkerKinds?.includes(marker.kind) &&
       (!readyTopicFilter || marker.topic === readyTopicFilter),
+  );
+  const activeSetQuizMarkers = useMemo(
+    () =>
+      activeReadySet
+        ? visibleMarkers.map((marker) => ({
+            ...marker,
+            presetItemId: `${activeReadySet.id}:${marker.presetItemId ?? marker.id}`,
+          }))
+        : undefined,
+    [activeReadySet, visibleMarkers],
   );
   const selectedRecord = selectedCity
     ? activeRecords.find(
@@ -523,16 +619,20 @@ export default function App() {
 
     await db.transaction(
       "rw",
-      db.studyMaps,
-      db.provinceRecords,
-      db.mapMarkers,
-      db.mapDrawings,
-      db.quizStats,
+      [
+        db.studyMaps,
+        db.provinceRecords,
+        db.mapMarkers,
+        db.mapDrawings,
+        db.quizStats,
+        db.quizMistakes,
+      ],
       async () => {
         await db.provinceRecords.where("mapId").equals(map.id).delete();
         await db.mapMarkers.where("mapId").equals(map.id).delete();
         await db.mapDrawings.where("mapId").equals(map.id).delete();
         await db.quizStats.where("mapId").equals(map.id).delete();
+        await db.quizMistakes.where("mapId").equals(map.id).delete();
         await db.studyMaps.delete(map.id);
       },
     );
@@ -651,7 +751,7 @@ export default function App() {
     }
   };
 
-  const startQuiz = async () => {
+  const startQuiz = async (mode: QuizMode = "standard") => {
     if (!activeMap) return;
     const existing = activeQuizStats;
     const stats: QuizStats = {
@@ -664,11 +764,14 @@ export default function App() {
       updatedAt: new Date().toISOString(),
     };
     await db.quizStats.put(stats);
+    setQuizMode(mode);
+    setStudyCenterOpen(false);
     setQuizOpen(true);
   };
 
-  const saveQuizAnswer = async (correct: boolean, streak: number) => {
+  const saveQuizAnswer = async (result: QuizAnswerResult) => {
     if (!activeMap) return;
+    const now = new Date().toISOString();
     const existing =
       (await db.quizStats.get(activeMap.id)) ??
       ({
@@ -678,15 +781,71 @@ export default function App() {
         totalAnswered: 0,
         correctAnswers: 0,
         bestStreak: 0,
-        updatedAt: new Date().toISOString(),
+        updatedAt: now,
       } satisfies QuizStats);
     await db.quizStats.put({
       ...existing,
       totalAnswered: existing.totalAnswered + 1,
-      correctAnswers: existing.correctAnswers + (correct ? 1 : 0),
-      bestStreak: Math.max(existing.bestStreak, streak),
-      updatedAt: new Date().toISOString(),
+      correctAnswers: existing.correctAnswers + (result.correct ? 1 : 0),
+      bestStreak: Math.max(existing.bestStreak, result.streak),
+      updatedAt: now,
     });
+
+    if (result.correct) {
+      await db.quizMistakes.delete(result.questionId);
+    } else {
+      const currentMistake = await db.quizMistakes.get(result.questionId);
+      await db.quizMistakes.put({
+        id: result.questionId,
+        questionId: result.questionId,
+        mapId: activeMap.id,
+        prompt: result.prompt,
+        choices: result.choices,
+        correctAnswer: result.correctAnswer,
+        selectedAnswer: result.selectedAnswer,
+        explanation: result.explanation,
+        mistakeCount: (currentMistake?.mistakeCount ?? 0) + 1,
+        lastAnsweredAt: now,
+      });
+    }
+
+    if (quizMode === "daily") {
+      const today = dateKey();
+      const currentProgress = await db.dailyProgress.get(today);
+      if ((currentProgress?.answered ?? 0) < 10) {
+        const answered = (currentProgress?.answered ?? 0) + 1;
+        await db.dailyProgress.put({
+          date: today,
+          answered,
+          correct:
+            (currentProgress?.correct ?? 0) + (result.correct ? 1 : 0),
+          completed: answered >= 10,
+          updatedAt: now,
+        });
+      }
+    }
+  };
+
+  const openStudyCenter = (tab: "overview" | "mistakes" = "overview") => {
+    setStudyCenterTab(tab);
+    setStudyCenterOpen(true);
+  };
+
+  const startMistakeQuiz = () => {
+    if (!quizMistakes?.length) {
+      setToast("Yanlışlar defterin şu an tertemiz");
+      return;
+    }
+    void startQuiz("mistakes");
+  };
+
+  const clearMistakes = async () => {
+    const approved = window.confirm(
+      "Yanlışlar defterindeki bütün sorular temizlensin mi?",
+    );
+    if (!approved) return;
+    await db.quizMistakes.clear();
+    setToast("Yanlışlar defteri temizlendi");
   };
 
   const toggleMarkerKind = async (kind: MarkerKind) => {
@@ -933,6 +1092,8 @@ export default function App() {
     !allMarkers ||
     !allDrawings ||
     !allQuizStats ||
+    !quizMistakes ||
+    !dailyProgressEntries ||
     !activeMap
   ) {
     return (
@@ -957,7 +1118,7 @@ export default function App() {
         onOpenReadySet={openReadySet}
       />
 
-      <main className="workspace">
+      <main className="workspace" id="map-workspace">
         <header className="workspace-header">
           <div className="map-title">
             <span
@@ -1126,7 +1287,7 @@ export default function App() {
           hiddenKinds={activeMap.hiddenMarkerKinds ?? []}
           onQueryChange={setQuery}
           onToggleKind={(kind) => void toggleMarkerKind(kind)}
-          onQuiz={() => void startQuiz()}
+          onQuiz={() => openStudyCenter("overview")}
           onStats={() => setStatsOpen(true)}
           onPrint={printMap}
           onShare={() => void shareMap()}
@@ -1185,7 +1346,7 @@ export default function App() {
               }}
               onBack={() => setSelectedCity(null)}
               onCopy={() => void duplicateMap(activeMap)}
-              onQuiz={() => void startQuiz()}
+              onQuiz={() => void startQuiz("standard")}
             />
           ) : (
             <ProvinceEditor
@@ -1228,11 +1389,37 @@ export default function App() {
 
       <QuizModal
         open={quizOpen}
-        markers={activeReadySet ? visibleMarkers : undefined}
-        factQuestions={activeReadySet?.quizQuestions}
-        setTitle={activeReadySet?.shortTitle}
+        markers={
+          quizMode === "daily" || quizMode === "mixed"
+            ? mixedQuizMarkers
+            : quizMode === "mistakes"
+              ? undefined
+              : activeSetQuizMarkers
+        }
+        factQuestions={
+          quizMode === "daily" || quizMode === "mixed"
+            ? mixedQuizQuestions
+            : quizMode === "mistakes"
+              ? mistakeQuizQuestions
+              : activeSetQuizQuestions
+        }
+        setTitle={quizMode === "standard" ? activeReadySet?.shortTitle : undefined}
+        mode={quizMode}
         onClose={() => setQuizOpen(false)}
-        onAnswer={(correct, streak) => void saveQuizAnswer(correct, streak)}
+        onAnswer={(result) => void saveQuizAnswer(result)}
+      />
+
+      <StudyCenterModal
+        open={studyCenterOpen}
+        initialTab={studyCenterTab}
+        dailyProgress={todayProgress}
+        dailyStreak={currentDailyStreak}
+        mistakes={quizMistakes}
+        onClose={() => setStudyCenterOpen(false)}
+        onStartDaily={() => void startQuiz("daily")}
+        onStartMixed={() => void startQuiz("mixed")}
+        onStartMistakes={startMistakeQuiz}
+        onClearMistakes={() => void clearMistakes()}
       />
 
       <StatsModal
@@ -1243,6 +1430,23 @@ export default function App() {
         drawings={activeDrawings}
         quizStats={activeQuizStats}
         onClose={() => setStatsOpen(false)}
+      />
+
+      <MobileBottomNav
+        mistakeCount={quizMistakes.length}
+        dailyCompleted={Boolean(todayProgress?.completed)}
+        onMap={() =>
+          document
+            .querySelector("#map-workspace")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" })
+        }
+        onSets={() =>
+          document
+            .querySelector("#ready-library")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" })
+        }
+        onDaily={() => void startQuiz("daily")}
+        onMistakes={() => openStudyCenter("mistakes")}
       />
 
       {toast && (
