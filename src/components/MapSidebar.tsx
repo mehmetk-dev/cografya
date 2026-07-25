@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { READY_STUDY_SETS, type ReadyStudySet } from "../readySets";
+import { STUDY_NOTE_TOPICS } from "../studyNotes";
 import type { StudyMap } from "../types";
 import { CatalogIcon } from "./CatalogIcon";
 
@@ -23,6 +24,7 @@ type MapSidebarProps = {
   onDuplicate: (map: StudyMap) => Promise<void>;
   onDelete: (map: StudyMap) => Promise<void>;
   onOpenReadySet: (set: ReadyStudySet) => Promise<void>;
+  onOpenNotes: () => void;
 };
 
 const PRESETS = [
@@ -47,6 +49,7 @@ export function MapSidebar({
   onDuplicate,
   onDelete,
   onOpenReadySet,
+  onOpenNotes,
 }: MapSidebarProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [isMobileSidebar, setIsMobileSidebar] = useState(() =>
@@ -70,6 +73,13 @@ export function MapSidebar({
   }, []);
 
   const isMapsSectionOpen = !isMobileSidebar || isMapsExpanded;
+  const readyNoteTopics = STUDY_NOTE_TOPICS.filter(
+    (topic) => topic.status === "ready",
+  );
+  const readyNoteSectionCount = readyNoteTopics.reduce(
+    (count, topic) => count + topic.sections.length,
+    0,
+  );
 
   const create = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -92,6 +102,22 @@ export function MapSidebar({
           <span>Atlasım</span>
         </div>
       </div>
+
+      <button
+        className="sidebar-notes-button"
+        type="button"
+        onClick={onOpenNotes}
+      >
+        <span><BookOpen size={18} /></span>
+        <span>
+          <small>MEB / KPSS</small>
+          <strong>Konu Notları</strong>
+          <small>
+            {readyNoteTopics.length} konu · {readyNoteSectionCount} bölüm
+          </small>
+        </span>
+        <ChevronDown size={16} />
+      </button>
 
       <button
         className="sidebar-heading sidebar-heading--toggle"

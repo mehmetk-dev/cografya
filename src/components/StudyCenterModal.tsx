@@ -1,22 +1,17 @@
 import { useEffect, useState } from "react";
 import {
-  BookOpen,
   Brain,
   CalendarDays,
   CheckCircle2,
-  ChevronDown,
   CircleAlert,
-  ExternalLink,
-  Mountain,
   RotateCcw,
   Shuffle,
   Trash2,
   X,
 } from "lucide-react";
-import { STUDY_NOTE_TOPICS } from "../studyNotes";
 import type { DailyProgress, QuizMistake } from "../types";
 
-type StudyCenterTab = "overview" | "notes" | "mistakes";
+type StudyCenterTab = "overview" | "mistakes";
 
 type StudyCenterModalProps = {
   open: boolean;
@@ -53,9 +48,6 @@ export function StudyCenterModal({
 
   const answered = dailyProgress?.answered ?? 0;
   const dailyPercent = Math.min(100, answered * 10);
-  const mountainNotes = STUDY_NOTE_TOPICS.find(
-    (topic) => topic.id === "mountains",
-  );
 
   return (
     <div className="modal-backdrop" role="presentation">
@@ -68,7 +60,11 @@ export function StudyCenterModal({
               <h2>Bugün ne çalışalım?</h2>
             </div>
           </div>
-          <button type="button" aria-label="Çalışma merkezini kapat" onClick={onClose}>
+          <button
+            type="button"
+            aria-label="Çalışma merkezini kapat"
+            onClick={onClose}
+          >
             <X size={20} />
           </button>
         </header>
@@ -80,13 +76,6 @@ export function StudyCenterModal({
             onClick={() => setTab("overview")}
           >
             Çalışma
-          </button>
-          <button
-            className={tab === "notes" ? "is-active" : ""}
-            type="button"
-            onClick={() => setTab("notes")}
-          >
-            Konu Notları
           </button>
           <button
             className={tab === "mistakes" ? "is-active" : ""}
@@ -122,9 +111,7 @@ export function StudyCenterModal({
             <div className="study-mini-stats">
               <span><b>{dailyStreak}</b> günlük seri</span>
               <span><b>{mistakes.length}</b> bekleyen yanlış</span>
-              <span>
-                <b>{dailyProgress?.correct ?? 0}</b> bugünkü doğru
-              </span>
+              <span><b>{dailyProgress?.correct ?? 0}</b> bugünkü doğru</span>
             </div>
 
             <article className="study-mode-card">
@@ -153,106 +140,6 @@ export function StudyCenterModal({
               </button>
             </article>
           </div>
-        ) : tab === "notes" && mountainNotes ? (
-          <div className="study-notes">
-            <header className="study-notes__hero">
-              <span><Mountain size={25} /></span>
-              <div>
-                <small>{mountainNotes.subject}</small>
-                <h3>{mountainNotes.title}</h3>
-                <p>{mountainNotes.description}</p>
-              </div>
-              <b>1 konu hazır</b>
-            </header>
-
-            <section className="study-note-quick">
-              <div>
-                <BookOpen size={17} />
-                <strong>60 saniyelik tekrar</strong>
-              </div>
-              <ul>
-                {mountainNotes.quickFacts.map((fact) => (
-                  <li key={fact}>{fact}</li>
-                ))}
-              </ul>
-            </section>
-
-            <div className="study-note-sections">
-              {mountainNotes.sections.map((section, index) => (
-                <details key={section.id} open={index === 0}>
-                  <summary>
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                    <div>
-                      <small>{section.eyebrow}</small>
-                      <strong>{section.title}</strong>
-                    </div>
-                    <ChevronDown size={18} />
-                  </summary>
-                  <div className="study-note-section__body">
-                    <p>{section.summary}</p>
-
-                    {section.bullets && (
-                      <ul>
-                        {section.bullets.map((bullet) => (
-                          <li key={bullet}>{bullet}</li>
-                        ))}
-                      </ul>
-                    )}
-
-                    {section.groups && (
-                      <div className="study-note-groups">
-                        {section.groups.map((group) => (
-                          <article key={group.title}>
-                            <strong>{group.title}</strong>
-                            <ul>
-                              {group.items.map((entry) => (
-                                <li key={entry}>{entry}</li>
-                              ))}
-                            </ul>
-                          </article>
-                        ))}
-                      </div>
-                    )}
-
-                    {section.examNote && (
-                      <aside>
-                        <b>KPSS ODAĞI</b>
-                        <span>{section.examNote}</span>
-                      </aside>
-                    )}
-                  </div>
-                </details>
-              ))}
-            </div>
-
-            <footer className="study-note-sources">
-              <div>
-                <BookOpen size={17} />
-                <span>
-                  <strong>Resmî MEB kaynakları</strong>
-                  <small>
-                    Notlar özetlenmiş ve sınav tekrarına göre düzenlenmiştir.
-                  </small>
-                </span>
-              </div>
-              <div>
-                {mountainNotes.sources.map((source) => (
-                  <a
-                    href={source.url}
-                    key={`${source.label}-${source.detail}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <span>
-                      <strong>{source.label}</strong>
-                      <small>{source.detail}</small>
-                    </span>
-                    <ExternalLink size={14} />
-                  </a>
-                ))}
-              </div>
-            </footer>
-          </div>
         ) : (
           <div className="mistake-notebook">
             <header>
@@ -278,9 +165,7 @@ export function StudyCenterModal({
                       <span>{mistake.mistakeCount}×</span>
                       <div>
                         <strong>{mistake.prompt}</strong>
-                        <small>
-                          Senin cevabın: {mistake.selectedAnswer}
-                        </small>
+                        <small>Senin cevabın: {mistake.selectedAnswer}</small>
                         <p>Doğru cevap: {mistake.correctAnswer}</p>
                       </div>
                     </article>
@@ -298,7 +183,9 @@ export function StudyCenterModal({
               <div className="mistake-empty">
                 <CheckCircle2 size={34} />
                 <strong>Bekleyen yanlışın yok</strong>
-                <span>Yeni bir deneme çözdüğünde yanlışların burada görünür.</span>
+                <span>
+                  Yeni bir deneme çözdüğünde yanlışların burada görünür.
+                </span>
               </div>
             )}
           </div>

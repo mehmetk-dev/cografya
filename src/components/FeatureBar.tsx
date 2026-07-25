@@ -72,7 +72,7 @@ export function FeatureBar({
             setMobileMenuOpen(false);
           }}
         >
-          <Brain size={16} /> Test modu
+          <Brain size={16} /> Çalışma merkezi
         </button>
 
         <button

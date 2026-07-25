@@ -28,6 +28,7 @@ import { FeatureBar } from "./components/FeatureBar";
 import { MobileBottomNav } from "./components/MobileBottomNav";
 import { QuizModal } from "./components/QuizModal";
 import { StudyCenterModal } from "./components/StudyCenterModal";
+import { StudyNotesPage } from "./components/StudyNotesPage";
 import { StatsModal } from "./components/StatsModal";
 import { ReadySetOverview } from "./components/ReadySetOverview";
 import { createId } from "./id";
@@ -54,6 +55,7 @@ import type {
 } from "./types";
 
 const ACTIVE_MAP_KEY = "cografya-atlasim-active-map";
+const STUDY_NOTES_HASH = "#konu-notlari";
 
 function dateKey(date = new Date()) {
   const year = date.getFullYear();
@@ -239,6 +241,9 @@ export default function App() {
   const [studyCenterTab, setStudyCenterTab] = useState<
     "overview" | "mistakes"
   >("overview");
+  const [notesPageOpen, setNotesPageOpen] = useState(
+    () => window.location.hash === STUDY_NOTES_HASH,
+  );
   const [initializationError, setInitializationError] = useState("");
   const [pendingMarker, setPendingMarker] = useState<{
     provinceCode: number;
@@ -457,6 +462,19 @@ export default function App() {
   useEffect(() => {
     if (activeMapId) localStorage.setItem(ACTIVE_MAP_KEY, activeMapId);
   }, [activeMapId]);
+
+  useEffect(() => {
+    const syncNotesPage = () => {
+      setNotesPageOpen(window.location.hash === STUDY_NOTES_HASH);
+    };
+
+    window.addEventListener("hashchange", syncNotesPage);
+    window.addEventListener("popstate", syncNotesPage);
+    return () => {
+      window.removeEventListener("hashchange", syncNotesPage);
+      window.removeEventListener("popstate", syncNotesPage);
+    };
+  }, []);
 
   useEffect(() => {
     setMapName(activeMap?.name ?? "");
@@ -826,9 +844,46 @@ export default function App() {
     }
   };
 
-  const openStudyCenter = (tab: "overview" | "mistakes" = "overview") => {
+  const openStudyCenter = (
+    tab: "overview" | "mistakes" = "overview",
+  ) => {
     setStudyCenterTab(tab);
     setStudyCenterOpen(true);
+  };
+
+  const openNotesPage = () => {
+    if (window.location.hash !== STUDY_NOTES_HASH) {
+      window.history.pushState(
+        { ...window.history.state, notesPage: true },
+        "",
+        STUDY_NOTES_HASH,
+      );
+    }
+    setNotesPageOpen(true);
+  };
+
+  const closeNotesPage = () => {
+    if (window.history.state?.notesPage) {
+      window.history.back();
+      return;
+    }
+
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${window.location.pathname}${window.location.search}`,
+    );
+    setNotesPageOpen(false);
+  };
+
+  const openStudyCenterFromNotes = () => {
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${window.location.pathname}${window.location.search}`,
+    );
+    setNotesPageOpen(false);
+    openStudyCenter("overview");
   };
 
   const startMistakeQuiz = () => {
@@ -1105,6 +1160,15 @@ export default function App() {
     );
   }
 
+  if (notesPageOpen) {
+    return (
+      <StudyNotesPage
+        onBack={closeNotesPage}
+        onOpenStudyCenter={openStudyCenterFromNotes}
+      />
+    );
+  }
+
   return (
     <div className="app-shell">
       <MapSidebar
@@ -1116,6 +1180,7 @@ export default function App() {
         onDuplicate={duplicateMap}
         onDelete={deleteMap}
         onOpenReadySet={openReadySet}
+        onOpenNotes={openNotesPage}
       />
 
       <main className="workspace" id="map-workspace">
