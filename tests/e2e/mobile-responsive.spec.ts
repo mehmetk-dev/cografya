@@ -36,6 +36,19 @@ async function expectNoHorizontalScroll(page: Page, selectors = responsiveSurfac
   }
 }
 
+async function visibleMarkerLabelCount(page: Page) {
+  return page
+    .locator(
+      ".workspace-body > .map-stage .marker-layer .map-marker__label",
+    )
+    .evaluateAll(
+      (labels) =>
+        labels.filter(
+          (label) => Number.parseFloat(getComputedStyle(label).opacity) > 0.05,
+        ).length,
+    );
+}
+
 test("ana çalışma ekranı mobil genişliğe sığar", async ({ page }) => {
   await page.goto("/");
   await expect(
@@ -84,6 +97,17 @@ test("plato ve millî park setleri mobilde açılır", async ({ page }) => {
       page.locator(".ready-set-hero__stats").getByText(readySet.count),
     ).toBeVisible();
     await expectNoHorizontalScroll(page);
+
+    if (readySet.heading === "Türkiye'nin Platoları") {
+      expect(await visibleMarkerLabelCount(page)).toBeGreaterThan(0);
+    } else {
+      expect(await visibleMarkerLabelCount(page)).toBe(0);
+      await page
+        .locator(".workspace-body > .map-stage .marker-layer .map-marker")
+        .first()
+        .hover();
+      await expect.poll(() => visibleMarkerLabelCount(page)).toBe(1);
+    }
   }
 });
 
