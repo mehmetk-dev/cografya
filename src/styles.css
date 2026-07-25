@@ -181,6 +181,32 @@ select:focus-visible,
   padding: 25px 7px 13px;
 }
 
+.sidebar-heading--toggle {
+  width: 100%;
+  color: inherit;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  cursor: default;
+  opacity: 1;
+}
+
+.sidebar-heading__meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.sidebar-heading__chevron {
+  display: none;
+  color: rgba(255, 255, 255, 0.68);
+  transition: transform 160ms ease;
+}
+
+.sidebar-heading__chevron.is-open {
+  transform: rotate(180deg);
+}
+
 .sidebar-heading .eyebrow {
   color: rgba(245, 242, 234, 0.48);
 }
@@ -3987,11 +4013,20 @@ a.ready-source-badge:hover {
   }
 
   .sidebar-heading {
+    align-items: center;
     padding: 14px 0 9px;
+  }
+
+  .sidebar-heading--toggle {
+    cursor: pointer;
   }
 
   .sidebar-heading h2 {
     font-size: 18px;
+  }
+
+  .sidebar-heading__chevron {
+    display: block;
   }
 
   .map-list {

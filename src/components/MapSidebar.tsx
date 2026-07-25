@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BookOpen,
   Check,
+  ChevronDown,
   Copy,
   Layers3,
   Map,
@@ -35,6 +36,8 @@ const PRESETS = [
   { name: "Turizm merkezleri", color: "#d05f64" },
 ];
 
+const MOBILE_SIDEBAR_QUERY = "(max-width: 940px)";
+
 export function MapSidebar({
   maps,
   activeMapId,
@@ -46,8 +49,27 @@ export function MapSidebar({
   onOpenReadySet,
 }: MapSidebarProps) {
   const [isCreating, setIsCreating] = useState(false);
+  const [isMobileSidebar, setIsMobileSidebar] = useState(() =>
+    window.matchMedia(MOBILE_SIDEBAR_QUERY).matches
+  );
+  const [isMapsExpanded, setIsMapsExpanded] = useState(
+    () => !window.matchMedia(MOBILE_SIDEBAR_QUERY).matches,
+  );
   const [name, setName] = useState("");
   const [color, setColor] = useState("#e9a23b");
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(MOBILE_SIDEBAR_QUERY);
+    const handleChange = (event: MediaQueryListEvent) => {
+      setIsMobileSidebar(event.matches);
+      setIsMapsExpanded(!event.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  const isMapsSectionOpen = !isMobileSidebar || isMapsExpanded;
 
   const create = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -71,120 +93,137 @@ export function MapSidebar({
         </div>
       </div>
 
-      <div className="sidebar-heading">
+      <button
+        className="sidebar-heading sidebar-heading--toggle"
+        type="button"
+        disabled={!isMobileSidebar}
+        aria-expanded={isMobileSidebar ? isMapsExpanded : undefined}
+        aria-controls={isMobileSidebar ? "my-maps-content" : undefined}
+        onClick={() => setIsMapsExpanded((expanded) => !expanded)}
+      >
         <div>
           <span className="eyebrow">KÜTÜPHANE</span>
           <h2>Haritalarım</h2>
         </div>
-        <span className="map-total">{maps.length}</span>
-      </div>
+        <span className="sidebar-heading__meta">
+          <span className="map-total">{maps.length}</span>
+          <ChevronDown
+            className={`sidebar-heading__chevron ${
+              isMapsExpanded ? "is-open" : ""
+            }`}
+            size={18}
+          />
+        </span>
+      </button>
 
-      <div className="map-list">
-        {maps.map((map) => {
-          const active = map.id === activeMapId;
-          return (
-            <div
-              className={`map-card ${active ? "map-card--active" : ""}`}
-              key={map.id}
-              style={{ "--map-color": map.themeColor } as React.CSSProperties}
-            >
-              <button
-                className="map-card__main"
-                type="button"
-                onClick={() => onSelect(map.id)}
-                aria-current={active ? "page" : undefined}
+      <div id="my-maps-content" hidden={!isMapsSectionOpen}>
+        <div className="map-list">
+          {maps.map((map) => {
+            const active = map.id === activeMapId;
+            return (
+              <div
+                className={`map-card ${active ? "map-card--active" : ""}`}
+                key={map.id}
+                style={{ "--map-color": map.themeColor } as React.CSSProperties}
               >
-                <span className="map-card__icon">
-                  {active ? <BookOpen size={18} /> : <Layers3 size={18} />}
-                </span>
-                <span className="map-card__copy">
-                  <strong>{map.name}</strong>
-                  <small>
-                    {map.sourceSetId
-                      ? `Salt okunur · ${recordCounts[map.id] ?? 0} il`
-                      : `${recordCounts[map.id] ?? 0} ilde not`}
-                  </small>
-                </span>
-                {active && <Check className="map-card__check" size={16} />}
-              </button>
+                <button
+                  className="map-card__main"
+                  type="button"
+                  onClick={() => onSelect(map.id)}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <span className="map-card__icon">
+                    {active ? <BookOpen size={18} /> : <Layers3 size={18} />}
+                  </span>
+                  <span className="map-card__copy">
+                    <strong>{map.name}</strong>
+                    <small>
+                      {map.sourceSetId
+                        ? `Salt okunur · ${recordCounts[map.id] ?? 0} il`
+                        : `${recordCounts[map.id] ?? 0} ilde not`}
+                    </small>
+                  </span>
+                  {active && <Check className="map-card__check" size={16} />}
+                </button>
 
-              {active && (
-                <div className="map-card__actions">
-                  <button
-                    type="button"
-                    onClick={() => onDuplicate(map)}
-                    title="Haritayı çoğalt"
-                    aria-label={`${map.name} haritasını çoğalt`}
-                  >
-                    <Copy size={14} />{" "}
-                    {map.sourceSetId ? "Kopyala ve düzenle" : "Çoğalt"}
-                  </button>
-                  {maps.length > 1 && (
+                {active && (
+                  <div className="map-card__actions">
                     <button
                       type="button"
-                      onClick={() => onDelete(map)}
-                      title="Haritayı sil"
-                      aria-label={`${map.name} haritasını sil`}
+                      onClick={() => onDuplicate(map)}
+                      title="Haritayı çoğalt"
+                      aria-label={`${map.name} haritasını çoğalt`}
                     >
-                      <Trash2 size={14} /> Sil
+                      <Copy size={14} />{" "}
+                      {map.sourceSetId ? "Kopyala ve düzenle" : "Çoğalt"}
                     </button>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                    {maps.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => onDelete(map)}
+                        title="Haritayı sil"
+                        aria-label={`${map.name} haritasını sil`}
+                      >
+                        <Trash2 size={14} /> Sil
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
 
-      {isCreating ? (
-        <form className="create-map-card" onSubmit={create}>
-          <div className="create-map-card__header">
-            <strong>Yeni harita</strong>
-            <button
-              type="button"
-              aria-label="Yeni harita formunu kapat"
-              onClick={() => setIsCreating(false)}
-            >
-              <X size={17} />
-            </button>
-          </div>
-          <input
-            autoFocus
-            value={name}
-            maxLength={60}
-            placeholder="Haritanın adı"
-            onChange={(event) => setName(event.target.value)}
-          />
-          <div className="preset-list">
-            {PRESETS.map((preset) => (
+        {isCreating ? (
+          <form className="create-map-card" onSubmit={create}>
+            <div className="create-map-card__header">
+              <strong>Yeni harita</strong>
               <button
-                key={preset.name}
                 type="button"
-                className={name === preset.name ? "is-active" : ""}
-                onClick={() => {
-                  setName(preset.name);
-                  setColor(preset.color);
-                }}
+                aria-label="Yeni harita formunu kapat"
+                onClick={() => setIsCreating(false)}
               >
-                <i style={{ backgroundColor: preset.color }} />
-                {preset.name}
+                <X size={17} />
               </button>
-            ))}
-          </div>
-          <button className="button button--primary button--full" type="submit">
-            <Plus size={16} /> Haritayı oluştur
+            </div>
+            <input
+              autoFocus
+              value={name}
+              maxLength={60}
+              placeholder="Haritanın adı"
+              onChange={(event) => setName(event.target.value)}
+            />
+            <div className="preset-list">
+              {PRESETS.map((preset) => (
+                <button
+                  key={preset.name}
+                  type="button"
+                  className={name === preset.name ? "is-active" : ""}
+                  onClick={() => {
+                    setName(preset.name);
+                    setColor(preset.color);
+                  }}
+                >
+                  <i style={{ backgroundColor: preset.color }} />
+                  {preset.name}
+                </button>
+              ))}
+            </div>
+            <button className="button button--primary button--full" type="submit">
+              <Plus size={16} /> Haritayı oluştur
+            </button>
+          </form>
+        ) : (
+          <button
+            className="new-map-button"
+            type="button"
+            onClick={() => setIsCreating(true)}
+          >
+            <Plus size={18} />
+            Yeni çalışma haritası
           </button>
-        </form>
-      ) : (
-        <button
-          className="new-map-button"
-          type="button"
-          onClick={() => setIsCreating(true)}
-        >
-          <Plus size={18} />
-          Yeni çalışma haritası
-        </button>
-      )}
+        )}
+      </div>
 
       <div className="ready-library">
         <div className="ready-library__heading">
