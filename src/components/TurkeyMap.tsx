@@ -21,6 +21,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { cities as mapCities } from "turkey-map-react/lib/data";
+import { getArrowGeometry } from "../drawingGeometry";
 import { createId } from "../id";
 import { getMarkerVisual } from "../markerKinds";
 import { RIVER_ROUTES } from "../riverRoutes";
@@ -211,21 +212,6 @@ function distanceToPolyline(point: MapPoint, points: MapPoint[]) {
   return nearest;
 }
 
-function getArrowHead(first: MapPoint, last: MapPoint) {
-  const angle = Math.atan2(last.y - first.y, last.x - first.x);
-  const size = 11;
-  return {
-    left: {
-      x: last.x - size * Math.cos(angle - Math.PI / 6),
-      y: last.y - size * Math.sin(angle - Math.PI / 6),
-    },
-    right: {
-      x: last.x - size * Math.cos(angle + Math.PI / 6),
-      y: last.y - size * Math.sin(angle + Math.PI / 6),
-    },
-  };
-}
-
 function getTextBounds(drawing: MapDrawing) {
   const origin = drawing.points[0];
   const width = Math.max(18, (drawing.text?.length ?? 1) * 11);
@@ -256,11 +242,12 @@ function drawingHitDistance(drawing: MapDrawing, point: MapPoint) {
     return Math.abs(Math.hypot(point.x - first.x, point.y - first.y) - radius);
   }
   if (drawing.tool === "arrow") {
-    const { left, right } = getArrowHead(first, last);
+    const { tip, baseCenter, left, right } = getArrowGeometry(first, last);
     return Math.min(
-      distanceToSegment(point, first, last),
-      distanceToSegment(point, left, last),
-      distanceToSegment(point, last, right),
+      distanceToSegment(point, first, baseCenter),
+      distanceToSegment(point, left, tip),
+      distanceToSegment(point, tip, right),
+      distanceToSegment(point, right, left),
     );
   }
   return distanceToPolyline(point, drawing.points);
@@ -307,7 +294,7 @@ function drawingBounds(drawing: MapDrawing) {
     drawing.tool === "arrow"
       ? [
           ...drawing.points,
-          ...Object.values(getArrowHead(first, last)),
+          ...Object.values(getArrowGeometry(first, last)),
         ]
       : drawing.points;
   const xs = points.map((point) => point.x);
@@ -357,8 +344,8 @@ function drawingPolylines(drawing: MapDrawing) {
     ];
   }
   if (drawing.tool === "arrow") {
-    const { left, right } = getArrowHead(first, last);
-    return [[first, last], [left, last, right]];
+    const { tip, baseCenter, left, right } = getArrowGeometry(first, last);
+    return [[first, baseCenter], [left, tip, right, left]];
   }
   return [drawing.points];
 }
@@ -897,14 +884,20 @@ export function TurkeyMap({
       );
     }
     if (drawing.tool === "arrow") {
-      const { left, right } = getArrowHead(first, last);
+      const { tip, baseCenter, left, right } = getArrowGeometry(first, last);
       return (
-        <g key={drawing.id} className={common.className}>
-          <line {...common} x1={first.x} y1={first.y} x2={last.x} y2={last.y} />
+        <g key={drawing.id}>
+          <line
+            {...common}
+            x1={first.x}
+            y1={first.y}
+            x2={baseCenter.x}
+            y2={baseCenter.y}
+          />
           <path
-            d={`M ${left.x} ${left.y} L ${last.x} ${last.y} L ${right.x} ${right.y}`}
-            fill="none"
-            stroke={drawing.color}
+            {...common}
+            d={`M ${left.x} ${left.y} L ${tip.x} ${tip.y} L ${right.x} ${right.y} Z`}
+            fill={drawing.color}
           />
         </g>
       );
