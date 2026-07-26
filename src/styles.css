@@ -3945,9 +3945,8 @@ body.map-fullscreen-open {
 .province-panel--empty {
   display: flex;
   align-items: center;
-  justify-content: center;
   flex-direction: column;
-  padding: 38px 27px;
+  padding: 30px 27px;
   text-align: center;
 }
 
@@ -4536,7 +4535,7 @@ a.ready-source-badge:hover {
   display: grid;
   width: 88px;
   height: 88px;
-  margin-bottom: 23px;
+  margin-bottom: 20px;
   place-items: center;
   color: #d69a3b;
   border: 1px solid #d9d2c5;
@@ -4594,29 +4593,37 @@ a.ready-source-badge:hover {
   line-height: 1.65;
 }
 
-.empty-steps {
+.general-note-form {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 27px;
-  color: #8a928e;
-  font-size: 9px;
+  width: 100%;
+  max-width: 270px;
+  flex-direction: column;
+  gap: 11px;
+  margin-top: 22px;
+  text-align: left;
 }
 
-.empty-steps span {
+.general-note-form .field textarea {
+  min-height: 148px;
+}
+
+.general-note-city-hint {
   display: flex;
-  align-items: center;
+  width: 100%;
+  max-width: 270px;
+  flex-direction: column;
   gap: 4px;
+  margin-top: 20px;
+  padding-top: 17px;
+  color: #78847f;
+  font-size: 9px;
+  line-height: 1.5;
+  border-top: 1px solid #e1dbd0;
 }
 
-.empty-steps b {
-  display: grid;
-  width: 18px;
-  height: 18px;
-  place-items: center;
-  color: #8b672e;
-  border-radius: 50%;
-  background: #f2e1c2;
+.general-note-city-hint strong {
+  color: #4f625b;
+  font-size: 10px;
 }
 
 .province-panel__header {

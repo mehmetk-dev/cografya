@@ -892,6 +892,13 @@ export default function App() {
     setToast(`${record.provinceName} notları kaydedildi`);
   };
 
+  const saveGeneralNote = async (note: string) => {
+    await updateActiveMap({ description: note });
+    setToast(
+      note ? "Genel harita notu kaydedildi" : "Genel harita notu temizlendi",
+    );
+  };
+
   const deleteProvince = async (record: ProvinceRecord) => {
     if (activeReadySet) return;
     const approved = window.confirm(
@@ -1704,6 +1711,7 @@ export default function App() {
               city={selectedCity}
               record={selectedRecord}
               markers={selectedMarkers}
+              generalNote={activeMap.description}
               themeColor={activeMap.themeColor}
               mapId={activeMap.id}
               placementActive={Boolean(pendingMarker)}
@@ -1711,6 +1719,7 @@ export default function App() {
                 setSelectedCity(null);
                 setPendingMarker(null);
               }}
+              onSaveGeneralNote={saveGeneralNote}
               onSave={saveProvince}
               onDelete={deleteProvince}
               onColorPreview={(color) => {

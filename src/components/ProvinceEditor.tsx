@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
   Check,
   ChevronDown,
-  ChevronRight,
   Crosshair,
   LocateFixed,
   MapPin,
@@ -32,8 +31,10 @@ import type {
 type ProvinceEditorProps = {
   city: City | null;
   record?: ProvinceRecord;
+  generalNote: string;
   themeColor: string;
   onClose: () => void;
+  onSaveGeneralNote: (note: string) => Promise<void>;
   onSave: (record: ProvinceRecord) => Promise<void>;
   onDelete: (record: ProvinceRecord) => Promise<void>;
   onColorPreview: (color: string) => void;
@@ -70,8 +71,10 @@ function emptyItem(): ProvinceItem {
 export function ProvinceEditor({
   city,
   record,
+  generalNote,
   themeColor,
   onClose,
+  onSaveGeneralNote,
   onSave,
   onDelete,
   onColorPreview,
@@ -84,9 +87,12 @@ export function ProvinceEditor({
 }: ProvinceEditorProps) {
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
+  const [generalNoteDraft, setGeneralNoteDraft] = useState(generalNote);
   const [color, setColor] = useState(themeColor);
   const [items, setItems] = useState<ProvinceItem[]>([emptyItem()]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingGeneralNote, setIsSavingGeneralNote] = useState(false);
+  const [generalNoteSaved, setGeneralNoteSaved] = useState(false);
   const [saved, setSaved] = useState(false);
   const [markerLabel, setMarkerLabel] = useState("");
   const [markerDescription, setMarkerDescription] = useState("");
@@ -117,6 +123,25 @@ export function ProvinceEditor({
     setSubtypeSearch("");
   }, [city?.plateNumber, record, themeColor]);
 
+  useEffect(() => {
+    setGeneralNoteDraft(generalNote);
+    setGeneralNoteSaved(false);
+  }, [generalNote, mapId]);
+
+  const submitGeneralNote = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const cleanNote = generalNoteDraft.trim();
+
+    setIsSavingGeneralNote(true);
+    try {
+      await onSaveGeneralNote(cleanNote);
+      setGeneralNoteDraft(cleanNote);
+      setGeneralNoteSaved(true);
+    } finally {
+      setIsSavingGeneralNote(false);
+    }
+  };
+
   if (!city) {
     return (
       <aside className="province-panel province-panel--empty">
@@ -124,16 +149,48 @@ export function ProvinceEditor({
           <span />
           <MapPin size={31} strokeWidth={1.7} />
         </div>
-        <span className="eyebrow">İL BİLGİLERİ</span>
-        <h2>Haritadan bir il seç</h2>
+        <span className="eyebrow">HARİTA GENELİ</span>
+        <h2>Genel harita notu</h2>
         <p>
-          Dağları, tarım ürünlerini, akarsuları veya kendi ders notlarını
-          seçtiğin ilin üzerine kaydet.
+          Bir şehre bağlı olmayan, haritanın tamamıyla ilgili bilgileri buraya
+          kaydet.
         </p>
-        <div className="empty-steps">
-          <span><b>1</b> Bir ile dokun <ChevronRight size={15} /></span>
-          <span><b>2</b> Bilgini yaz <ChevronRight size={15} /></span>
-          <span><b>3</b> Kaydet <Check size={15} /></span>
+
+        <form className="general-note-form" onSubmit={submitGeneralNote}>
+          <label className="field">
+            <span>Genel harita notu</span>
+            <textarea
+              value={generalNoteDraft}
+              rows={7}
+              maxLength={1600}
+              placeholder="Örn. Türkiye'de dağlar genel olarak doğu-batı yönünde uzanır..."
+              onChange={(event) => {
+                setGeneralNoteDraft(event.target.value);
+                setGeneralNoteSaved(false);
+              }}
+            />
+            <small className="character-count">
+              {generalNoteDraft.length}/1600
+            </small>
+          </label>
+
+          <button
+            className="button button--primary button--full"
+            type="submit"
+            disabled={isSavingGeneralNote}
+          >
+            {generalNoteSaved ? <Check size={17} /> : <Save size={17} />}
+            {isSavingGeneralNote
+              ? "Kaydediliyor..."
+              : generalNoteSaved
+                ? "Kaydedildi"
+                : "Genel notu kaydet"}
+          </button>
+        </form>
+
+        <div className="general-note-city-hint">
+          <strong>İl bazlı bilgi mi ekleyeceksin?</strong>
+          <span>Haritadan bir il seçerek o ile özel notlarını açabilirsin.</span>
         </div>
       </aside>
     );
