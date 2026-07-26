@@ -2149,6 +2149,7 @@ body.map-fullscreen-open {
   fill: #fffdf8;
   stroke: #315e52;
   stroke-width: 1;
+  vector-effect: non-scaling-stroke;
   filter: none;
 }
 
@@ -2175,12 +2176,34 @@ body.map-fullscreen-open {
   fill: #fffdf8;
   stroke: #315e52;
   stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
 }
 
 .map-label-rotate-handle:hover circle,
 .is-rotating .map-label-rotate-handle circle {
   fill: #315e52;
   stroke: #fffdf8;
+}
+
+.map-label-resize-handle .map-control-hit,
+.map-label-rotate-handle .map-control-hit {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 12px;
+  vector-effect: non-scaling-stroke;
+  pointer-events: all;
+}
+
+@media (pointer: coarse) {
+  .map-label-resize-handle .map-control-hit,
+  .map-label-rotate-handle .map-control-hit {
+    stroke-width: 36px;
+  }
+
+  .map-label-resize-handle rect:not(.map-control-hit),
+  .map-label-rotate-handle circle:not(.map-control-hit) {
+    stroke-width: 2px;
+  }
 }
 
 .drawing-layer {
@@ -7579,6 +7602,7 @@ a.ready-source-badge:hover {
   .feature-bar__more-button {
     display: inline-flex !important;
     width: auto !important;
+    min-height: 42px;
     min-width: 112px;
     justify-content: center;
     font-size: 9px !important;
@@ -7711,6 +7735,11 @@ a.ready-source-badge:hover {
     bottom: 11px;
   }
 
+  .zoom-controls button {
+    width: 40px;
+    height: 40px;
+  }
+
   .province-panel {
     padding: 21px 16px;
   }
@@ -7747,6 +7776,18 @@ a.ready-source-badge:hover {
     touch-action: pan-x;
   }
 
+  .drawing-toolbar button,
+  .drawing-toolbar__size button,
+  .drawing-toolbar label {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+  }
+
+  .drawing-toolbar__size output {
+    min-width: 34px;
+  }
+
   .drawing-toolbar::-webkit-scrollbar {
     display: none;
   }
@@ -7755,6 +7796,10 @@ a.ready-source-badge:hover {
     top: 11px;
     left: 11px;
     min-width: 100px;
+  }
+
+  .marker-legend__toggle {
+    min-height: 32px;
   }
 
   .placement-banner {

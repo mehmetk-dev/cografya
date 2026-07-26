@@ -238,6 +238,16 @@ const BASE_VIEWBOX = {
   height: 585,
 };
 
+const MOBILE_VIEWBOX = {
+  // Dar ekranda masaüstündeki geniş not ceplerinin tamamını göstermek,
+  // Türkiye haritasını gereksiz yere küçültüyordu. Mobilde cepleri koruyup
+  // daha sıkı bir çerçeve kullanıyoruz.
+  x: -35,
+  y: 80,
+  width: 1120,
+  height: 585,
+};
+
 const LABEL_SCALE_MIN = 0.7;
 const LABEL_SCALE_MAX = 1.8;
 const LABEL_RESIZE_HANDLE_SIZE = 8;
@@ -267,6 +277,7 @@ function resizedLabelScale({
   baseHeight,
   absoluteX,
   absoluteY,
+  bounds,
 }: {
   initialScale: number;
   deltaX: number;
@@ -275,6 +286,7 @@ function resizedLabelScale({
   baseHeight: number;
   absoluteX: number;
   absoluteY: number;
+  bounds: typeof BASE_VIEWBOX;
 }) {
   const horizontalChange = deltaX / baseWidth;
   const verticalChange = deltaY / baseHeight;
@@ -284,8 +296,8 @@ function resizedLabelScale({
       : verticalChange;
   const maximumForBounds = Math.min(
     LABEL_SCALE_MAX,
-    (BASE_VIEWBOX.x + BASE_VIEWBOX.width - absoluteX - 8) / baseWidth,
-    (BASE_VIEWBOX.y + BASE_VIEWBOX.height - absoluteY - 8) / baseHeight,
+    (bounds.x + bounds.width - absoluteX - 8) / baseWidth,
+    (bounds.y + bounds.height - absoluteY - 8) / baseHeight,
   );
 
   return Math.max(
@@ -699,11 +711,15 @@ function eraseDrawings(
   return { removedIds, replacements };
 }
 
-function clampPan(point: Point, zoom: number): Point {
-  const visibleWidth = BASE_VIEWBOX.width / zoom;
-  const visibleHeight = BASE_VIEWBOX.height / zoom;
-  const limitX = (BASE_VIEWBOX.width - visibleWidth) / 2;
-  const limitY = (BASE_VIEWBOX.height - visibleHeight) / 2;
+function clampPan(
+  point: Point,
+  zoom: number,
+  bounds: typeof BASE_VIEWBOX,
+): Point {
+  const visibleWidth = bounds.width / zoom;
+  const visibleHeight = bounds.height / zoom;
+  const limitX = (bounds.width - visibleWidth) / 2;
+  const limitY = (bounds.height - visibleHeight) / 2;
 
   return {
     x: Math.max(-limitX, Math.min(limitX, point.x)),
@@ -814,15 +830,30 @@ export function TurkeyMap({
   const [legendOpen, setLegendOpen] = useState(
     () => !window.matchMedia("(max-width: 640px)").matches,
   );
+  const [isNarrowViewport, setIsNarrowViewport] = useState(
+    () => window.matchMedia("(max-width: 640px)").matches,
+  );
+  const viewBounds = isNarrowViewport ? MOBILE_VIEWBOX : BASE_VIEWBOX;
+  const maximumZoom = isNarrowViewport ? 2.6 : 1.8;
+  const rotateHandleDistance = isNarrowViewport
+    ? 44
+    : LABEL_ROTATE_HANDLE_DISTANCE;
 
   useEffect(() => {
     const mobileQuery = window.matchMedia("(max-width: 640px)");
     const syncLegend = (event: MediaQueryListEvent) => {
       setLegendOpen(!event.matches);
+      setIsNarrowViewport(event.matches);
     };
     mobileQuery.addEventListener("change", syncLegend);
     return () => mobileQuery.removeEventListener("change", syncLegend);
   }, []);
+
+  useEffect(() => {
+    const normalizedZoom = Math.min(maximumZoom, zoom);
+    if (normalizedZoom !== zoom) setZoom(normalizedZoom);
+    setPan((current) => clampPan(current, normalizedZoom, viewBounds));
+  }, [maximumZoom, viewBounds, zoom]);
 
   useEffect(() => {
     const syncFullscreen = () => {
@@ -1028,16 +1059,16 @@ export function TurkeyMap({
       Pick<LabelLayout, "x" | "y" | "width" | "height">
     > = [
       // Lejant, çizim araçları ve yakınlaştırma düğmelerinin kapladığı alanlar.
-      { x: BASE_VIEWBOX.x + 4, y: 84, width: 142, height: 116 },
+      { x: viewBounds.x + 4, y: 84, width: 142, height: 116 },
       {
-        x: BASE_VIEWBOX.x + BASE_VIEWBOX.width - 220,
+        x: viewBounds.x + viewBounds.width - 220,
         y: 84,
         width: 216,
         height: 58,
       },
-      { x: BASE_VIEWBOX.x + 4, y: 598, width: 150, height: 63 },
+      { x: viewBounds.x + 4, y: 598, width: 150, height: 63 },
       {
-        x: BASE_VIEWBOX.x + BASE_VIEWBOX.width - 104,
+        x: viewBounds.x + viewBounds.width - 104,
         y: 598,
         width: 100,
         height: 63,
@@ -1094,16 +1125,16 @@ export function TurkeyMap({
 
       if (customOffset) {
         const x = Math.max(
-          BASE_VIEWBOX.x + 8,
+          viewBounds.x + 8,
           Math.min(
-            BASE_VIEWBOX.x + BASE_VIEWBOX.width - width - 8,
+            viewBounds.x + viewBounds.width - width - 8,
             position.x + customOffset.x,
           ),
         );
         const y = Math.max(
-          BASE_VIEWBOX.y + 8,
+          viewBounds.y + 8,
           Math.min(
-            BASE_VIEWBOX.y + BASE_VIEWBOX.height - height - 8,
+            viewBounds.y + viewBounds.height - height - 8,
             position.y + customOffset.y,
           ),
         );
@@ -1163,17 +1194,17 @@ export function TurkeyMap({
           0,
         );
         const outsideX =
-          Math.max(0, BASE_VIEWBOX.x + 8 - candidate.x) +
+          Math.max(0, viewBounds.x + 8 - candidate.x) +
           Math.max(
             0,
-            candidate.x + width - (BASE_VIEWBOX.x + BASE_VIEWBOX.width - 8),
+            candidate.x + width - (viewBounds.x + viewBounds.width - 8),
           );
         const outsideY =
-          Math.max(0, BASE_VIEWBOX.y + 8 - candidate.y) +
+          Math.max(0, viewBounds.y + 8 - candidate.y) +
           Math.max(
             0,
             candidate.y + height -
-              (BASE_VIEWBOX.y + BASE_VIEWBOX.height - 8),
+              (viewBounds.y + viewBounds.height - 8),
           );
         const distance = Math.hypot(
           candidate.x + width / 2 - position.x,
@@ -1219,6 +1250,7 @@ export function TurkeyMap({
     movingMarkerLabel,
     resizingMarkerLabel,
     rotatingMarkerLabel,
+    viewBounds,
   ]);
 
   useLayoutEffect(() => {
@@ -1242,17 +1274,17 @@ export function TurkeyMap({
     setProvinceSizes(nextSizes);
   }, []);
 
-  const viewWidth = BASE_VIEWBOX.width / zoom;
-  const viewHeight = BASE_VIEWBOX.height / zoom;
+  const viewWidth = viewBounds.width / zoom;
+  const viewHeight = viewBounds.height / zoom;
   const viewX =
-    BASE_VIEWBOX.x + (BASE_VIEWBOX.width - viewWidth) / 2 + pan.x;
+    viewBounds.x + (viewBounds.width - viewWidth) / 2 + pan.x;
   const viewY =
-    BASE_VIEWBOX.y + (BASE_VIEWBOX.height - viewHeight) / 2 + pan.y;
+    viewBounds.y + (viewBounds.height - viewHeight) / 2 + pan.y;
 
   const changeZoom = (nextZoom: number) => {
-    const normalizedZoom = Math.max(1, Math.min(1.8, nextZoom));
+    const normalizedZoom = Math.max(1, Math.min(maximumZoom, nextZoom));
     setZoom(normalizedZoom);
-    setPan((current) => clampPan(current, normalizedZoom));
+    setPan((current) => clampPan(current, normalizedZoom, viewBounds));
   };
 
   const toggleFullscreen = async () => {
@@ -1363,13 +1395,13 @@ export function TurkeyMap({
         : verticalChange;
     const maximumForBounds = Math.min(
       DRAWING_SIZE_MAX,
-      (BASE_VIEWBOX.x +
-        BASE_VIEWBOX.width -
+      (viewBounds.x +
+        viewBounds.width -
         gesture.bounds.x -
         8) /
         baseWidth,
-      (BASE_VIEWBOX.y +
-        BASE_VIEWBOX.height -
+      (viewBounds.y +
+        viewBounds.height -
         gesture.bounds.y -
         8) /
         baseHeight,
@@ -1592,16 +1624,16 @@ export function TurkeyMap({
     const deltaX = point.x - gesture.start.x;
     const deltaY = point.y - gesture.start.y;
     const absoluteX = Math.max(
-      BASE_VIEWBOX.x + 8,
+      viewBounds.x + 8,
       Math.min(
-        BASE_VIEWBOX.x + BASE_VIEWBOX.width - gesture.width - 8,
+        viewBounds.x + viewBounds.width - gesture.width - 8,
         gesture.position.x + gesture.originalOffset.x + deltaX,
       ),
     );
     const absoluteY = Math.max(
-      BASE_VIEWBOX.y + 8,
+      viewBounds.y + 8,
       Math.min(
-        BASE_VIEWBOX.y + BASE_VIEWBOX.height - gesture.height - 8,
+        viewBounds.y + viewBounds.height - gesture.height - 8,
         gesture.position.y + gesture.originalOffset.y + deltaY,
       ),
     );
@@ -1722,6 +1754,7 @@ export function TurkeyMap({
       baseHeight: gesture.baseHeight,
       absoluteX: gesture.position.x + gesture.offset.x,
       absoluteY: gesture.position.y + gesture.offset.y,
+      bounds: viewBounds,
     });
     gesture.currentScale = scale;
     gesture.moved =
@@ -1926,16 +1959,16 @@ export function TurkeyMap({
     const deltaY = point.y - gesture.start.y;
     const position = {
       x: Math.max(
-        BASE_VIEWBOX.x + 16,
+        viewBounds.x + 16,
         Math.min(
-          BASE_VIEWBOX.x + BASE_VIEWBOX.width - 16,
+          viewBounds.x + viewBounds.width - 16,
           gesture.originalPosition.x + deltaX,
         ),
       ),
       y: Math.max(
-        BASE_VIEWBOX.y + 42,
+        viewBounds.y + 42,
         Math.min(
-          BASE_VIEWBOX.y + BASE_VIEWBOX.height - 8,
+          viewBounds.y + viewBounds.height - 8,
           gesture.originalPosition.y + deltaY,
         ),
       ),
@@ -2027,16 +2060,16 @@ export function TurkeyMap({
     const deltaX = point.x - gesture.start.x;
     const deltaY = point.y - gesture.start.y;
     const absoluteX = Math.max(
-      BASE_VIEWBOX.x + 8,
+      viewBounds.x + 8,
       Math.min(
-        BASE_VIEWBOX.x + BASE_VIEWBOX.width - gesture.width - 8,
+        viewBounds.x + viewBounds.width - gesture.width - 8,
         gesture.center.x + gesture.originalOffset.x + deltaX,
       ),
     );
     const absoluteY = Math.max(
-      BASE_VIEWBOX.y + 8,
+      viewBounds.y + 8,
       Math.min(
-        BASE_VIEWBOX.y + BASE_VIEWBOX.height - gesture.height - 8,
+        viewBounds.y + viewBounds.height - gesture.height - 8,
         gesture.center.y + gesture.originalOffset.y + deltaY,
       ),
     );
@@ -2154,6 +2187,7 @@ export function TurkeyMap({
       baseHeight: gesture.baseHeight,
       absoluteX: gesture.center.x + gesture.offset.x,
       absoluteY: gesture.center.y + gesture.offset.y,
+      bounds: viewBounds,
     });
     gesture.currentScale = scale;
     gesture.moved =
@@ -2618,6 +2652,7 @@ export function TurkeyMap({
                     deltaY * (viewHeight / Math.max(svg.clientHeight, 1)),
                 },
                 zoom,
+                viewBounds,
               ),
             );
           }}
@@ -2985,6 +3020,20 @@ export function TurkeyMap({
                       boyuta döndür
                     </title>
                     <rect
+                      className="map-control-hit"
+                      x={
+                        selectedDrawingBounds.x +
+                        selectedDrawingBounds.width
+                      }
+                      y={
+                        selectedDrawingBounds.y +
+                        selectedDrawingBounds.height
+                      }
+                      width={LABEL_RESIZE_HANDLE_SIZE}
+                      height={LABEL_RESIZE_HANDLE_SIZE}
+                      rx="2"
+                    />
+                    <rect
                       x={
                         selectedDrawingBounds.x +
                         selectedDrawingBounds.width
@@ -3025,6 +3074,19 @@ export function TurkeyMap({
                       Sürükleyerek döndür · Çift tıklayarak düz konuma
                       döndür
                     </title>
+                    <circle
+                      className="map-control-hit"
+                      cx={
+                        selectedDrawingBounds.x +
+                        selectedDrawingBounds.width / 2
+                      }
+                      cy={
+                        selectedDrawingBounds.y -
+                        rotateHandleDistance -
+                        8
+                      }
+                      r="5"
+                    />
                     <line
                       x1={
                         selectedDrawingBounds.x +
@@ -3037,7 +3099,7 @@ export function TurkeyMap({
                       }
                       y2={
                         selectedDrawingBounds.y -
-                        LABEL_ROTATE_HANDLE_DISTANCE -
+                        rotateHandleDistance -
                         3
                       }
                     />
@@ -3048,7 +3110,7 @@ export function TurkeyMap({
                       }
                       cy={
                         selectedDrawingBounds.y -
-                        LABEL_ROTATE_HANDLE_DISTANCE -
+                        rotateHandleDistance -
                         8
                       }
                       r="5"
@@ -3120,9 +3182,9 @@ export function TurkeyMap({
                 const height =
                   (12 + labelLines.length * 10) * scale;
                 const labelCenterX = Math.min(
-                  BASE_VIEWBOX.x + BASE_VIEWBOX.width - width / 2 - 8,
+                  viewBounds.x + viewBounds.width - width / 2 - 8,
                   Math.max(
-                    BASE_VIEWBOX.x + width / 2 + 8,
+                    viewBounds.x + width / 2 + 8,
                     center.x,
                   ),
                 );
@@ -3140,17 +3202,17 @@ export function TurkeyMap({
                     : record.labelOffset ?? automaticOffset;
                 const rectX =
                   Math.max(
-                    BASE_VIEWBOX.x + 8,
+                    viewBounds.x + 8,
                     Math.min(
-                      BASE_VIEWBOX.x + BASE_VIEWBOX.width - width - 8,
+                      viewBounds.x + viewBounds.width - width - 8,
                       center.x + requestedOffset.x,
                     ),
                   ) - center.x;
                 const rectY =
                   Math.max(
-                    BASE_VIEWBOX.y + 8,
+                    viewBounds.y + 8,
                     Math.min(
-                      BASE_VIEWBOX.y + BASE_VIEWBOX.height - height - 8,
+                      viewBounds.y + viewBounds.height - height - 8,
                       center.y + requestedOffset.y,
                     ),
                   ) - center.y;
@@ -3290,6 +3352,22 @@ export function TurkeyMap({
                             normal boyuta döndür
                           </title>
                           <rect
+                            className="map-control-hit"
+                            x={
+                              rectX +
+                              width -
+                              LABEL_RESIZE_HANDLE_SIZE
+                            }
+                            y={
+                              rectY +
+                              height -
+                              LABEL_RESIZE_HANDLE_SIZE
+                            }
+                            width={LABEL_RESIZE_HANDLE_SIZE}
+                            height={LABEL_RESIZE_HANDLE_SIZE}
+                            rx="2"
+                          />
+                          <rect
                             x={
                               rectX +
                               width -
@@ -3338,15 +3416,21 @@ export function TurkeyMap({
                             Sürükleyerek döndür · Çift tıklayarak düz konuma
                             döndür
                           </title>
+                          <circle
+                            className="map-control-hit"
+                            cx={localLabelX}
+                            cy={rectY - rotateHandleDistance}
+                            r="5"
+                          />
                           <line
                             x1={localLabelX}
                             y1={rectY}
                             x2={localLabelX}
-                            y2={rectY - LABEL_ROTATE_HANDLE_DISTANCE + 5}
+                            y2={rectY - rotateHandleDistance + 5}
                           />
                           <circle
                             cx={localLabelX}
-                            cy={rectY - LABEL_ROTATE_HANDLE_DISTANCE}
+                            cy={rectY - rotateHandleDistance}
                             r="5"
                           />
                         </g>
@@ -3423,12 +3507,13 @@ export function TurkeyMap({
                           {
                             x:
                               position.x -
-                              (BASE_VIEWBOX.x + BASE_VIEWBOX.width / 2),
+                              (viewBounds.x + viewBounds.width / 2),
                             y:
                               position.y -
-                              (BASE_VIEWBOX.y + BASE_VIEWBOX.height / 2),
+                              (viewBounds.y + viewBounds.height / 2),
                           },
                           nextZoom,
+                          viewBounds,
                         ),
                       );
                       return;
@@ -3450,12 +3535,13 @@ export function TurkeyMap({
                           {
                             x:
                               position.x -
-                              (BASE_VIEWBOX.x + BASE_VIEWBOX.width / 2),
+                              (viewBounds.x + viewBounds.width / 2),
                             y:
                               position.y -
-                              (BASE_VIEWBOX.y + BASE_VIEWBOX.height / 2),
+                              (viewBounds.y + viewBounds.height / 2),
                           },
                           nextZoom,
+                          viewBounds,
                         ),
                       );
                       return;
@@ -3652,6 +3738,24 @@ export function TurkeyMap({
                             normal boyuta döndür
                           </title>
                           <rect
+                            className="map-control-hit"
+                            x={
+                              labelLayout.x -
+                              position.x +
+                              labelLayout.width -
+                              LABEL_RESIZE_HANDLE_SIZE
+                            }
+                            y={
+                              labelLayout.y -
+                              position.y +
+                              labelLayout.height -
+                              LABEL_RESIZE_HANDLE_SIZE
+                            }
+                            width={LABEL_RESIZE_HANDLE_SIZE}
+                            height={LABEL_RESIZE_HANDLE_SIZE}
+                            rx="2"
+                          />
+                          <rect
                             x={
                               labelLayout.x -
                               position.x +
@@ -3700,6 +3804,20 @@ export function TurkeyMap({
                             Sürükleyerek döndür · Çift tıklayarak düz konuma
                             döndür
                           </title>
+                          <circle
+                            className="map-control-hit"
+                            cx={
+                              labelLayout.x -
+                              position.x +
+                              labelLayout.width / 2
+                            }
+                            cy={
+                              labelLayout.y -
+                              position.y -
+                              rotateHandleDistance
+                            }
+                            r="5"
+                          />
                           <line
                             x1={
                               labelLayout.x -
@@ -3715,7 +3833,7 @@ export function TurkeyMap({
                             y2={
                               labelLayout.y -
                               position.y -
-                              LABEL_ROTATE_HANDLE_DISTANCE +
+                              rotateHandleDistance +
                               5
                             }
                           />
@@ -3728,7 +3846,7 @@ export function TurkeyMap({
                             cy={
                               labelLayout.y -
                               position.y -
-                              LABEL_ROTATE_HANDLE_DISTANCE
+                              rotateHandleDistance
                             }
                             r="5"
                           />
@@ -3894,7 +4012,7 @@ export function TurkeyMap({
                 type="button"
                 title="Yakınlaştır"
                 aria-label="Yakınlaştır"
-                disabled={zoom >= 1.8}
+                disabled={zoom >= maximumZoom}
                 onClick={() => changeZoom(zoom + 0.2)}
               >
                 <Plus size={17} />
