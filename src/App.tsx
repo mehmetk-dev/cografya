@@ -403,11 +403,68 @@ export default function App() {
       })),
     [quizMistakes],
   );
-  const visibleMarkers = activeMarkers.filter(
-    (marker) =>
-      !activeMap?.hiddenMarkerKinds?.includes(marker.kind) &&
-      (!readyTopicFilter || marker.topic === readyTopicFilter),
+  const visibleMarkers = useMemo(
+    () =>
+      activeMarkers.filter(
+        (marker) =>
+          !activeMap?.hiddenMarkerKinds?.includes(marker.kind) &&
+          (!readyTopicFilter || marker.topic === readyTopicFilter),
+      ),
+    [activeMap?.hiddenMarkerKinds, activeMarkers, readyTopicFilter],
   );
+  const personalQuizMarkers = useMemo(() => {
+    const questions = [...visibleMarkers];
+    const seen = new Set(
+      questions.map(
+        (marker) =>
+          `${marker.provinceCode}:${marker.label.trim().toLocaleLowerCase("tr-TR")}`,
+      ),
+    );
+
+    activeRecords.forEach((record) => {
+      const facts =
+        record.items.length > 0
+          ? record.items.map((item) => ({
+              id: item.id,
+              text: item.text,
+              detail: item.category,
+            }))
+          : record.title.trim()
+            ? [
+                {
+                  id: "title",
+                  text: record.title,
+                  detail: record.note,
+                },
+              ]
+            : [];
+
+      facts.forEach((fact) => {
+        const label = fact.text.trim();
+        if (!label) return;
+        const key = `${record.provinceCode}:${label.toLocaleLowerCase("tr-TR")}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        questions.push({
+          id: `record:${record.id}:${fact.id}`,
+          mapId: record.mapId,
+          provinceCode: record.provinceCode,
+          provinceName: record.provinceName,
+          x: 0,
+          y: 0,
+          label,
+          description:
+            [fact.detail, record.note].filter(Boolean).join(" · ") ||
+            `${record.provinceName} için eklediğin not`,
+          kind: "custom",
+          color: record.color,
+          createdAt: record.updatedAt,
+        });
+      });
+    });
+
+    return questions;
+  }, [activeRecords, visibleMarkers]);
   const activeSetQuizMarkers = useMemo(
     () =>
       activeReadySet
@@ -418,6 +475,9 @@ export default function App() {
         : undefined,
     [activeReadySet, visibleMarkers],
   );
+  const standardQuizMarkers = activeReadySet
+    ? activeSetQuizMarkers
+    : personalQuizMarkers;
   const selectedRecord = selectedCity
     ? activeRecords.find(
         (record) => record.provinceCode === selectedCity.plateNumber,
@@ -1541,9 +1601,21 @@ export default function App() {
           hiddenKinds={activeMap.hiddenMarkerKinds ?? []}
           onQueryChange={setQuery}
           onToggleKind={(kind) => void toggleMarkerKind(kind)}
-          showStudyCenter={Boolean(activeReadySet)}
+          studyActionLabel={
+            activeReadySet
+              ? "Çalışma merkezi"
+              : personalQuizMarkers.length > 0
+                ? "Haritamı test et"
+                : undefined
+          }
           showProvinceNames={provinceNamesVisible}
-          onQuiz={() => openStudyCenter("overview")}
+          onQuiz={() => {
+            if (activeReadySet) {
+              openStudyCenter("overview");
+            } else {
+              void startQuiz("standard");
+            }
+          }}
           onToggleProvinceNames={() =>
             void updateActiveMap({
               showProvinceNames: !provinceNamesVisible,
@@ -1674,7 +1746,7 @@ export default function App() {
             ? mixedQuizMarkers
             : quizMode === "mistakes"
               ? undefined
-              : activeSetQuizMarkers
+              : standardQuizMarkers
         }
         factQuestions={
           quizMode === "daily" || quizMode === "mixed"
@@ -1683,7 +1755,11 @@ export default function App() {
               ? mistakeQuizQuestions
               : activeSetQuizQuestions
         }
-        setTitle={quizMode === "standard" ? activeReadySet?.shortTitle : undefined}
+        setTitle={
+          quizMode === "standard"
+            ? activeReadySet?.shortTitle ?? activeMap.name
+            : undefined
+        }
         mode={quizMode}
         onClose={() => setQuizOpen(false)}
         onAnswer={(result) => void saveQuizAnswer(result)}

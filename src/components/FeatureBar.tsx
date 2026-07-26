@@ -17,7 +17,7 @@ type FeatureBarProps = {
   hiddenKinds: MarkerKind[];
   onQueryChange: (query: string) => void;
   onToggleKind: (kind: MarkerKind) => void;
-  showStudyCenter: boolean;
+  studyActionLabel?: string;
   showProvinceNames: boolean;
   onQuiz: () => void;
   onToggleProvinceNames: () => void;
@@ -29,7 +29,7 @@ export function FeatureBar({
   hiddenKinds,
   onQueryChange,
   onToggleKind,
-  showStudyCenter,
+  studyActionLabel,
   showProvinceNames,
   onQuiz,
   onToggleProvinceNames,
@@ -62,7 +62,7 @@ export function FeatureBar({
           mobileMenuOpen ? "is-menu-open" : ""
         }`}
       >
-        {showStudyCenter && (
+        {studyActionLabel && (
           <button
             className="feature-bar__quiz-button"
             type="button"
@@ -71,7 +71,7 @@ export function FeatureBar({
               setMobileMenuOpen(false);
             }}
           >
-            <Brain size={16} /> Çalışma merkezi
+            <Brain size={16} /> {studyActionLabel}
           </button>
         )}
 
