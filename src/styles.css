@@ -1925,11 +1925,39 @@ select:focus-visible,
   background: #17463b;
 }
 
+.drawing-toolbar button:disabled {
+  color: #c6cbc8;
+  cursor: not-allowed;
+  background: transparent;
+}
+
 .drawing-toolbar__divider {
   width: 1px;
   height: 20px;
   margin: 0 2px;
   background: #ddd7cb;
+}
+
+.drawing-toolbar__size {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 0 2px;
+  border-radius: 7px;
+  background: #f2efe8;
+}
+
+.drawing-toolbar__size button {
+  width: 25px;
+  height: 29px;
+}
+
+.drawing-toolbar__size output {
+  min-width: 29px;
+  color: #41534d;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
 }
 
 .drawing-toolbar label {

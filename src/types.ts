@@ -83,6 +83,7 @@ export type MapDrawing = {
   mapId: string;
   tool: DrawingTool;
   color: string;
+  size?: number;
   points: MapPoint[];
   text?: string;
   createdAt: string;

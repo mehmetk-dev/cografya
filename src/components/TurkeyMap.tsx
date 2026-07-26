@@ -52,12 +52,15 @@ type TurkeyMapProps = {
   matchingProvinceCodes?: Set<number> | null;
   drawingTool?: DrawingMode | null;
   drawingColor?: string;
+  drawingSize?: number;
   onDrawingToolChange?: (tool: DrawingMode | null) => void;
   onDrawingColorChange?: (color: string) => void;
+  onDrawingSizeChange?: (size: number) => void;
   onAddDrawing?: (
     tool: DrawingTool,
     points: MapPoint[],
     text?: string,
+    size?: number,
   ) => void;
   onUpdateDrawing?: (drawing: MapDrawing) => void;
   onReplaceDrawings?: (
@@ -116,6 +119,11 @@ const BASE_VIEWBOX = {
 const DENSE_MARKER_LABEL_THRESHOLD = 18;
 const DRAWING_HIT_RADIUS = 12;
 const ERASER_RADIUS = 14;
+const DRAWING_SIZE_MIN = 1;
+const DRAWING_SIZE_MAX = 3;
+const DRAWING_SIZE_STEP = 0.5;
+const DEFAULT_DRAWING_STROKE_WIDTH = 4;
+const DEFAULT_DRAWING_TEXT_SIZE = 19;
 
 const cities = [...(mapCities as City[])].sort(
   (left, right) => left.plateNumber - right.plateNumber,
@@ -212,14 +220,23 @@ function distanceToPolyline(point: MapPoint, points: MapPoint[]) {
   return nearest;
 }
 
+function normalizeDrawingSize(size?: number) {
+  if (!Number.isFinite(size)) return DRAWING_SIZE_MIN;
+  return Math.max(
+    DRAWING_SIZE_MIN,
+    Math.min(DRAWING_SIZE_MAX, size as number),
+  );
+}
+
 function getTextBounds(drawing: MapDrawing) {
   const origin = drawing.points[0];
-  const width = Math.max(18, (drawing.text?.length ?? 1) * 11);
+  const size = normalizeDrawingSize(drawing.size);
+  const width = Math.max(18 * size, (drawing.text?.length ?? 1) * 11 * size);
   return {
-    x: origin.x - 3,
-    y: origin.y - 23,
+    x: origin.x - 3 * size,
+    y: origin.y - 23 * size,
     width,
-    height: 30,
+    height: 30 * size,
   };
 }
 
@@ -440,8 +457,10 @@ export function TurkeyMap({
   matchingProvinceCodes = null,
   drawingTool = null,
   drawingColor = "#d05f64",
+  drawingSize = 1,
   onDrawingToolChange,
   onDrawingColorChange,
+  onDrawingSizeChange,
   onAddDrawing,
   onUpdateDrawing,
   onReplaceDrawings,
@@ -849,7 +868,10 @@ export function TurkeyMap({
       .join(" ");
 
   const renderDrawing = (
-    drawing: Pick<MapDrawing, "id" | "tool" | "color" | "points" | "text">,
+    drawing: Pick<
+      MapDrawing,
+      "id" | "tool" | "color" | "size" | "points" | "text"
+    >,
     draft = false,
   ) => {
     if (drawing.points.length === 0) return null;
@@ -867,6 +889,11 @@ export function TurkeyMap({
           {...common}
           d={drawingPath(drawing.points)}
           fill="none"
+          style={{
+            strokeWidth:
+              DEFAULT_DRAWING_STROKE_WIDTH *
+              normalizeDrawingSize(drawing.size),
+          }}
         />
       );
     }
@@ -909,6 +936,13 @@ export function TurkeyMap({
         x={first.x}
         y={first.y}
         fill={drawing.color}
+        style={{
+          fontSize:
+            DEFAULT_DRAWING_TEXT_SIZE * normalizeDrawingSize(drawing.size),
+          strokeWidth:
+            DEFAULT_DRAWING_STROKE_WIDTH *
+            normalizeDrawingSize(drawing.size),
+        }}
       >
         {drawing.text}
       </text>
@@ -1004,7 +1038,14 @@ export function TurkeyMap({
               }
               if (drawingTool === "text") {
                 const text = window.prompt("Haritaya yazılacak metin:");
-                if (text?.trim()) onAddDrawing?.("text", [point], text.trim());
+                if (text?.trim()) {
+                  onAddDrawing?.(
+                    "text",
+                    [point],
+                    text.trim(),
+                    normalizeDrawingSize(drawingSize),
+                  );
+                }
                 return;
               }
               event.currentTarget.setPointerCapture(event.pointerId);
@@ -1154,7 +1195,12 @@ export function TurkeyMap({
                     : [completed[0], finalPoint];
               }
               if (completed.length > 1) {
-                onAddDrawing?.(drawingTool, completed);
+                onAddDrawing?.(
+                  drawingTool,
+                  completed,
+                  undefined,
+                  normalizeDrawingSize(drawingSize),
+                );
               }
               draftDrawingRef.current = [];
               setDraftDrawing([]);
@@ -1423,6 +1469,7 @@ export function TurkeyMap({
                   id: "draft",
                   tool: drawingTool,
                   color: drawingColor,
+                  size: normalizeDrawingSize(drawingSize),
                   points: draftDrawing,
                 },
                 true,
@@ -1663,6 +1710,63 @@ export function TurkeyMap({
               </button>
             ))}
             <span className="drawing-toolbar__divider" />
+            {(drawingTool === "pen" || drawingTool === "text") && (
+              <>
+                <div
+                  className="drawing-toolbar__size"
+                  title={
+                    drawingTool === "pen" ? "Kalem kalınlığı" : "Yazı boyutu"
+                  }
+                >
+                  <button
+                    type="button"
+                    aria-label={
+                      drawingTool === "pen" ? "Kalemi incelt" : "Yazıyı küçült"
+                    }
+                    disabled={normalizeDrawingSize(drawingSize) <= DRAWING_SIZE_MIN}
+                    onClick={() =>
+                      onDrawingSizeChange?.(
+                        Math.max(
+                          DRAWING_SIZE_MIN,
+                          normalizeDrawingSize(drawingSize) - DRAWING_SIZE_STEP,
+                        ),
+                      )
+                    }
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <output
+                    aria-label={
+                      drawingTool === "pen"
+                        ? "Seçili kalem kalınlığı"
+                        : "Seçili yazı boyutu"
+                    }
+                  >
+                    {normalizeDrawingSize(drawingSize)}×
+                  </output>
+                  <button
+                    type="button"
+                    aria-label={
+                      drawingTool === "pen"
+                        ? "Kalemi kalınlaştır"
+                        : "Yazıyı büyüt"
+                    }
+                    disabled={normalizeDrawingSize(drawingSize) >= DRAWING_SIZE_MAX}
+                    onClick={() =>
+                      onDrawingSizeChange?.(
+                        Math.min(
+                          DRAWING_SIZE_MAX,
+                          normalizeDrawingSize(drawingSize) + DRAWING_SIZE_STEP,
+                        ),
+                      )
+                    }
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+                <span className="drawing-toolbar__divider" />
+              </>
+            )}
             <label title="Çizim rengi">
               <input
                 type="color"

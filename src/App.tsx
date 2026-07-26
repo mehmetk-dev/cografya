@@ -289,6 +289,10 @@ export default function App() {
   const [readyTopicFilter, setReadyTopicFilter] = useState<string | null>(null);
   const [drawingTool, setDrawingTool] = useState<DrawingMode | null>(null);
   const [drawingColor, setDrawingColor] = useState("#d05f64");
+  const [drawingSizes, setDrawingSizes] = useState({
+    pen: 1,
+    text: 1,
+  });
   const [quizOpen, setQuizOpen] = useState(false);
   const [quizMode, setQuizMode] = useState<QuizMode>("standard");
   const [statsOpen, setStatsOpen] = useState(false);
@@ -795,6 +799,7 @@ export default function App() {
     tool: DrawingTool,
     points: { x: number; y: number }[],
     text?: string,
+    size?: number,
   ) => {
     if (!activeMap || activeReadySet) return;
     const drawing: MapDrawing = {
@@ -802,6 +807,7 @@ export default function App() {
       mapId: activeMap.id,
       tool,
       color: drawingColor,
+      size: tool === "pen" || tool === "text" ? size : undefined,
       points,
       text,
       createdAt: new Date().toISOString(),
@@ -1472,13 +1478,23 @@ export default function App() {
             matchingProvinceCodes={matchingProvinceCodes}
             drawingTool={drawingTool}
             drawingColor={drawingColor}
+            drawingSize={
+              drawingTool === "text" ? drawingSizes.text : drawingSizes.pen
+            }
             onDrawingToolChange={(tool) => {
               setDrawingTool(tool);
               if (tool) setPendingMarker(null);
             }}
             onDrawingColorChange={setDrawingColor}
-            onAddDrawing={(tool, points, text) =>
-              void addDrawing(tool, points, text)
+            onDrawingSizeChange={(size) => {
+              const sizeTool = drawingTool === "text" ? "text" : "pen";
+              setDrawingSizes((current) => ({
+                ...current,
+                [sizeTool]: size,
+              }));
+            }}
+            onAddDrawing={(tool, points, text, size) =>
+              void addDrawing(tool, points, text, size)
             }
             onUpdateDrawing={(drawing) => void updateDrawing(drawing)}
             onReplaceDrawings={(removedIds, replacements) =>

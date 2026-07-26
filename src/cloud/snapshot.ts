@@ -82,6 +82,7 @@ const mapDrawingSchema = z.object({
   mapId: z.string().min(1),
   tool: z.enum(["pen", "arrow", "circle", "text"]),
   color: z.string(),
+  size: z.number().min(1).max(3).optional(),
   points: z.array(mapPointSchema).min(1),
   text: z.string().optional(),
   createdAt: isoDateSchema,
