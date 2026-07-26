@@ -248,13 +248,22 @@ async function refreshReadySetContent(set: ReadyStudySet, mapId: string) {
     });
   if (!needsRefresh) return false;
 
+  const refreshedMarkers = expectedMarkers.map((expected) => {
+    const current = currentByPresetId.get(expected.presetItemId);
+    return {
+      ...expected,
+      id: current?.id ?? expected.id,
+      labelOffset: current?.labelOffset,
+    };
+  });
+
   await db.transaction("rw", db.studyMaps, db.mapMarkers, async () => {
     if (currentMarkers.length > 0) {
       await db.mapMarkers.bulkDelete(
         currentMarkers.map((marker) => marker.id),
       );
     }
-    await db.mapMarkers.bulkAdd(expectedMarkers);
+    await db.mapMarkers.bulkAdd(refreshedMarkers);
     await db.studyMaps.update(mapId, {
       name: set.title,
       description: set.description,
@@ -802,6 +811,16 @@ export default function App() {
     if (!approved) return;
     await db.mapMarkers.delete(marker.id);
     setToast(`${marker.label} işareti silindi`);
+  };
+
+  const updateMarkerPresentation = async (marker: MapMarker) => {
+    if (!activeMap || marker.mapId !== activeMap.id) return;
+    await db.transaction("rw", db.studyMaps, db.mapMarkers, async () => {
+      await db.mapMarkers.put(marker);
+      await db.studyMaps.update(activeMap.id, {
+        updatedAt: new Date().toISOString(),
+      });
+    });
   };
 
   const addDrawing = async (
@@ -1507,6 +1526,7 @@ export default function App() {
               void addDrawing(tool, points, text, size)
             }
             onUpdateDrawing={(drawing) => void updateDrawing(drawing)}
+            onUpdateMarker={(marker) => void updateMarkerPresentation(marker)}
             onReplaceDrawings={(removedIds, replacements) =>
               void replaceDrawings(removedIds, replacements)
             }

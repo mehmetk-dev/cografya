@@ -62,6 +62,7 @@ export type MapMarker = {
   presetItemId?: string;
   sourceLabel?: string;
   sourceUrl?: string;
+  labelOffset?: MapPoint;
   createdAt: string;
 };
 

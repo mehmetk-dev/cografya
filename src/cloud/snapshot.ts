@@ -75,6 +75,7 @@ const mapMarkerSchema = z.object({
   presetItemId: z.string().optional(),
   sourceLabel: z.string().optional(),
   sourceUrl: z.string().optional(),
+  labelOffset: mapPointSchema.optional(),
   createdAt: isoDateSchema,
 });
 const mapDrawingSchema = z.object({

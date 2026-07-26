@@ -1768,9 +1768,31 @@ select:focus-visible,
   transition: opacity 140ms ease;
 }
 
+.map-marker__label--interactive {
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.map-marker__label--interactive.is-moving {
+  cursor: grabbing;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.map-marker__label--interactive:hover rect:first-of-type,
+.map-marker__label--interactive.is-moving rect:first-of-type {
+  stroke: #173f36;
+  stroke-width: 1.4;
+}
+
 .map-marker--dense .map-marker__leader,
 .map-marker--dense .map-marker__label {
   opacity: 0;
+}
+
+.map-marker--dense .map-marker__label--interactive {
+  pointer-events: none;
 }
 
 .map-marker--dense:hover .map-marker__leader,
@@ -1783,6 +1805,12 @@ select:focus-visible,
 .map-marker--dense:focus-visible .map-marker__label,
 .map-marker--dense.map-marker--selected .map-marker__label {
   opacity: 1;
+}
+
+.map-marker--dense:hover .map-marker__label--interactive,
+.map-marker--dense:focus-visible .map-marker__label--interactive,
+.map-marker--dense.map-marker--selected .map-marker__label--interactive {
+  pointer-events: auto;
 }
 
 .map-marker:focus {

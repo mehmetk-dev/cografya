@@ -66,6 +66,7 @@ type TurkeyMapProps = {
     text?: string,
     size?: number,
   ) => void;
+  onUpdateMarker?: (marker: MapMarker) => void;
   onUpdateDrawing?: (drawing: MapDrawing) => void;
   onReplaceDrawings?: (
     removedIds: string[],
@@ -112,6 +113,18 @@ type DrawingGesture =
       pointerId: number;
       points: MapPoint[];
     };
+
+type MarkerLabelGesture = {
+  pointerId: number;
+  marker: MapMarker;
+  position: Point;
+  width: number;
+  height: number;
+  start: MapPoint;
+  originalOffset: MapPoint;
+  currentOffset: MapPoint;
+  moved: boolean;
+};
 
 const BASE_VIEWBOX = {
   x: 0,
@@ -504,6 +517,7 @@ export function TurkeyMap({
   onDrawingColorChange,
   onDrawingSizeChange,
   onAddDrawing,
+  onUpdateMarker,
   onUpdateDrawing,
   onReplaceDrawings,
   onUndoDrawing,
@@ -513,6 +527,7 @@ export function TurkeyMap({
   const svgRef = useRef<SVGSVGElement>(null);
   const panGestureRef = useRef<PanGesture | null>(null);
   const drawingGestureRef = useRef<DrawingGesture | null>(null);
+  const markerLabelGestureRef = useRef<MarkerLabelGesture | null>(null);
   const draftDrawingRef = useRef<MapPoint[]>([]);
   const suppressMapClickRef = useRef(false);
   const riverClipId = `river-land-${useId().replaceAll(":", "")}`;
@@ -529,6 +544,10 @@ export function TurkeyMap({
   );
   const [movingDrawing, setMovingDrawing] = useState<MapDrawing | null>(null);
   const [eraserTrail, setEraserTrail] = useState<MapPoint[]>([]);
+  const [movingMarkerLabel, setMovingMarkerLabel] = useState<{
+    markerId: string;
+    offset: MapPoint;
+  } | null>(null);
   const [legendOpen, setLegendOpen] = useState(
     () => !window.matchMedia("(max-width: 640px)").matches,
   );
@@ -719,6 +738,13 @@ export function TurkeyMap({
       height: 41,
     }));
     const orderedMarkers = [...markers].sort((left, right) => {
+      const leftHasCustomPosition =
+        left.labelOffset || movingMarkerLabel?.markerId === left.id;
+      const rightHasCustomPosition =
+        right.labelOffset || movingMarkerLabel?.markerId === right.id;
+      if (Boolean(leftHasCustomPosition) !== Boolean(rightHasCustomPosition)) {
+        return leftHasCustomPosition ? -1 : 1;
+      }
       const leftPosition = markerPositions.get(left.id);
       const rightPosition = markerPositions.get(right.id);
       if (!leftPosition || !rightPosition) return 0;
@@ -734,6 +760,37 @@ export function TurkeyMap({
       const label = shortMarkerLabel(marker.label);
       const width = Math.max(52, label.length * 6.6 + 17);
       const height = 21;
+      const customOffset =
+        movingMarkerLabel?.markerId === marker.id
+          ? movingMarkerLabel.offset
+          : marker.labelOffset;
+
+      if (customOffset) {
+        const x = Math.max(
+          BASE_VIEWBOX.x + 8,
+          Math.min(
+            BASE_VIEWBOX.x + BASE_VIEWBOX.width - width - 8,
+            position.x + customOffset.x,
+          ),
+        );
+        const y = Math.max(
+          BASE_VIEWBOX.y + 8,
+          Math.min(
+            BASE_VIEWBOX.y + BASE_VIEWBOX.height - height - 8,
+            position.y + customOffset.y,
+          ),
+        );
+        const anchorX = Math.min(x + width, Math.max(x, position.x));
+        const anchorY = Math.min(
+          y + height,
+          Math.max(y, position.y - 23),
+        );
+        const layout = { x, y, width, height, anchorX, anchorY };
+        layouts.set(marker.id, layout);
+        placed.push(layout);
+        return;
+      }
+
       const verticalOffsets = [-43, 4, -69, 30, -95, 56];
       const candidates = verticalOffsets.flatMap((offsetY) => [
         { x: position.x + 14, y: position.y + offsetY },
@@ -829,7 +886,7 @@ export function TurkeyMap({
     });
 
     return layouts;
-  }, [markers, markerPositions]);
+  }, [markers, markerPositions, movingMarkerLabel]);
 
   useLayoutEffect(() => {
     const svg = svgRef.current;
@@ -873,7 +930,10 @@ export function TurkeyMap({
   };
 
   const eventToPoint = (
-    event: React.PointerEvent<SVGSVGElement> | React.MouseEvent<SVGGElement>,
+    event:
+      | React.PointerEvent<SVGSVGElement>
+      | React.PointerEvent<SVGGElement>
+      | React.MouseEvent<SVGGElement>,
   ) => {
     const svg = svgRef.current;
     const matrix = svg?.getScreenCTM();
@@ -883,6 +943,118 @@ export function TurkeyMap({
     point.y = event.clientY;
     const result = point.matrixTransform(matrix.inverse());
     return { x: result.x, y: result.y };
+  };
+
+  const startMarkerLabelMove = (
+    event: React.PointerEvent<SVGGElement>,
+    marker: MapMarker,
+    position: Point,
+    layout: LabelLayout,
+  ) => {
+    if (
+      drawingTool ||
+      placementProvinceCode ||
+      !onUpdateMarker ||
+      (event.pointerType === "mouse" && event.button !== 0)
+    ) {
+      return;
+    }
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const originalOffset = {
+      x: layout.x - position.x,
+      y: layout.y - position.y,
+    };
+    markerLabelGestureRef.current = {
+      pointerId: event.pointerId,
+      marker,
+      position,
+      width: layout.width,
+      height: layout.height,
+      start: point,
+      originalOffset,
+      currentOffset: originalOffset,
+      moved: false,
+    };
+    setMovingMarkerLabel({
+      markerId: marker.id,
+      offset: originalOffset,
+    });
+  };
+
+  const moveMarkerLabel = (event: React.PointerEvent<SVGGElement>) => {
+    const gesture = markerLabelGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const deltaX = point.x - gesture.start.x;
+    const deltaY = point.y - gesture.start.y;
+    const absoluteX = Math.max(
+      BASE_VIEWBOX.x + 8,
+      Math.min(
+        BASE_VIEWBOX.x + BASE_VIEWBOX.width - gesture.width - 8,
+        gesture.position.x + gesture.originalOffset.x + deltaX,
+      ),
+    );
+    const absoluteY = Math.max(
+      BASE_VIEWBOX.y + 8,
+      Math.min(
+        BASE_VIEWBOX.y + BASE_VIEWBOX.height - gesture.height - 8,
+        gesture.position.y + gesture.originalOffset.y + deltaY,
+      ),
+    );
+    const offset = {
+      x: absoluteX - gesture.position.x,
+      y: absoluteY - gesture.position.y,
+    };
+    gesture.currentOffset = offset;
+    gesture.moved =
+      gesture.moved || Math.hypot(deltaX, deltaY) > 1;
+    setMovingMarkerLabel({
+      markerId: gesture.marker.id,
+      offset,
+    });
+  };
+
+  const finishMarkerLabelMove = (
+    event: React.PointerEvent<SVGGElement>,
+    cancelled = false,
+  ) => {
+    const gesture = markerLabelGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!cancelled && gesture.moved) {
+      onUpdateMarker?.({
+        ...gesture.marker,
+        labelOffset: gesture.currentOffset,
+      });
+    }
+    markerLabelGestureRef.current = null;
+    setMovingMarkerLabel(null);
+  };
+
+  const resetMarkerLabelPosition = (
+    event: React.MouseEvent<SVGGElement>,
+    marker: MapMarker,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!marker.labelOffset || !onUpdateMarker) return;
+    const resetMarker = { ...marker };
+    delete resetMarker.labelOffset;
+    onUpdateMarker(resetMarker);
   };
 
   const handleProvinceClick = (
@@ -1603,6 +1775,11 @@ export function TurkeyMap({
               const labelLayout = markerLabelLayouts.get(marker.id);
               const visual = getMarkerVisual(marker);
               const shortLabel = shortMarkerLabel(marker.label);
+              const labelInteractive =
+                count === 1 &&
+                Boolean(onUpdateMarker) &&
+                !drawingTool &&
+                !placementProvinceCode;
 
               return (
                 <g
@@ -1717,7 +1894,44 @@ export function TurkeyMap({
                     </g>
                   )}
                   {showLabels && labelLayout && (
-                    <g className="map-marker__label">
+                    <g
+                      className={[
+                        "map-marker__label",
+                        labelInteractive
+                          ? "map-marker__label--interactive"
+                          : "",
+                        movingMarkerLabel?.markerId === marker.id
+                          ? "is-moving"
+                          : "",
+                      ].join(" ")}
+                      onClick={(event) => event.stopPropagation()}
+                      onDoubleClick={(event) =>
+                        resetMarkerLabelPosition(event, marker)
+                      }
+                      onPointerDown={(event) =>
+                        startMarkerLabelMove(
+                          event,
+                          marker,
+                          position,
+                          labelLayout,
+                        )
+                      }
+                      onPointerMove={moveMarkerLabel}
+                      onPointerUp={(event) =>
+                        finishMarkerLabelMove(event)
+                      }
+                      onPointerCancel={(event) =>
+                        finishMarkerLabelMove(event, true)
+                      }
+                    >
+                      {labelInteractive && (
+                        <title>
+                          Sürükleyerek taşı
+                          {marker.labelOffset
+                            ? " · Çift tıklayarak otomatik konuma döndür"
+                            : ""}
+                        </title>
+                      )}
                       <rect
                         x={labelLayout.x - position.x}
                         y={labelLayout.y - position.y}
