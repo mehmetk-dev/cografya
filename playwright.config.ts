@@ -23,6 +23,7 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 320, height: 700 },
+        hasTouch: true,
       },
     },
     {
@@ -30,6 +31,7 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 390, height: 844 },
+        hasTouch: true,
       },
     },
     {
@@ -37,11 +39,12 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 430, height: 932 },
+        hasTouch: true,
       },
     },
   ],
   webServer: {
-    command: "npm run dev -- --host 127.0.0.1",
+    command: "VITE_E2E_AUTH_BYPASS=true npm run dev -- --host 127.0.0.1",
     url: "http://127.0.0.1:5173",
     reuseExistingServer: true,
   },

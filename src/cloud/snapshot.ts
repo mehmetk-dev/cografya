@@ -37,6 +37,7 @@ const studyMapSchema = z.object({
   themeColor: z.string(),
   showLabels: z.boolean(),
   showProvinceNames: z.boolean().optional(),
+  regionFills: z.record(z.string(), z.string()).optional(),
   hiddenMarkerKinds: z.array(markerKindSchema).optional(),
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,

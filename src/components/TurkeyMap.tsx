@@ -15,6 +15,7 @@ import {
   Minimize2,
   MousePointer2,
   MoveRight,
+  Paintbrush,
   Pencil,
   Plus,
   Trash2,
@@ -25,8 +26,13 @@ import { cities as mapCities } from "turkey-map-react/lib/data";
 import { getArrowGeometry } from "../drawingGeometry";
 import { createId } from "../id";
 import { getMarkerVisual } from "../markerKinds";
+import { applyProvinceFill } from "../regionPainting";
 import { RIVER_ROUTES } from "../riverRoutes";
 import { CatalogIcon } from "./CatalogIcon";
+import {
+  RegionPainterPanel,
+  type RegionPainterMode,
+} from "./RegionPainterPanel";
 import type {
   City,
   DrawingMode,
@@ -55,6 +61,8 @@ type TurkeyMapProps = {
     provinceCode: number;
     color: string;
   } | null;
+  provinceFills?: Record<string, string>;
+  onProvinceFillsChange?: (fills: Record<string, string>) => void;
   drawingTool?: DrawingMode | null;
   drawingColor?: string;
   drawingSize?: number;
@@ -99,6 +107,11 @@ type PanGesture = {
   startClientY: number;
   startPan: Point;
   moved: boolean;
+};
+
+type RegionPaintingGesture = {
+  pointerId: number;
+  touchedProvinceCodes: Set<number>;
 };
 
 type DrawingGesture =
@@ -742,6 +755,8 @@ export function TurkeyMap({
   onPlacementMismatch,
   matchingProvinceCodes = null,
   provinceColorPreview = null,
+  provinceFills = {},
+  onProvinceFillsChange,
   drawingTool = null,
   drawingColor = "#d05f64",
   drawingSize = 1,
@@ -760,6 +775,8 @@ export function TurkeyMap({
   const svgRef = useRef<SVGSVGElement>(null);
   const mapStageRef = useRef<HTMLElement>(null);
   const panGestureRef = useRef<PanGesture | null>(null);
+  const regionPaintingGestureRef = useRef<RegionPaintingGesture | null>(null);
+  const provinceFillsRef = useRef(provinceFills);
   const drawingGestureRef = useRef<DrawingGesture | null>(null);
   const drawingTextResizeGestureRef =
     useRef<DrawingTextResizeGesture | null>(null);
@@ -827,6 +844,12 @@ export function TurkeyMap({
   } | null>(null);
   const [nativeFullscreen, setNativeFullscreen] = useState(false);
   const [fallbackFullscreen, setFallbackFullscreen] = useState(false);
+  const [regionPainterActive, setRegionPainterActive] = useState(false);
+  const [regionPainterMode, setRegionPainterMode] =
+    useState<RegionPainterMode>("paint");
+  const [regionPainterColor, setRegionPainterColor] = useState("#2f80a8");
+  const [displayProvinceFills, setDisplayProvinceFills] =
+    useState(provinceFills);
   const [legendOpen, setLegendOpen] = useState(
     () => !window.matchMedia("(max-width: 640px)").matches,
   );
@@ -892,6 +915,11 @@ export function TurkeyMap({
   }, [fallbackFullscreen]);
 
   useEffect(() => {
+    provinceFillsRef.current = provinceFills;
+    setDisplayProvinceFills(provinceFills);
+  }, [provinceFills]);
+
+  useEffect(() => {
     if (
       selectedDrawingId &&
       !drawings.some((drawing) => drawing.id === selectedDrawingId)
@@ -902,6 +930,7 @@ export function TurkeyMap({
   }, [drawings, selectedDrawingId]);
 
   useEffect(() => {
+    if (drawingTool) setRegionPainterActive(false);
     if (drawingTool !== "select") {
       setSelectedDrawingId(null);
       setMovingDrawing(null);
@@ -2344,11 +2373,51 @@ export function TurkeyMap({
     onUpdateRecord(resetRecord);
   };
 
+  const provinceCodeAtClientPoint = (
+    clientX: number,
+    clientY: number,
+    eventTarget?: EventTarget | null,
+  ) => {
+    const directTarget =
+      eventTarget instanceof Element
+        ? eventTarget.closest<SVGPathElement>("[data-province-code]")
+        : null;
+    const path =
+      directTarget ??
+      document
+        .elementsFromPoint(clientX, clientY)
+        .map((element) =>
+          element.closest<SVGPathElement>("[data-province-code]"),
+        )
+        .find((candidate) => Boolean(candidate));
+    const provinceCode = Number(path?.dataset.provinceCode);
+    return Number.isInteger(provinceCode) &&
+      provinceCode >= 1 &&
+      provinceCode <= 81
+      ? provinceCode
+      : null;
+  };
+
+  const applyRegionPainting = (
+    provinceCodes: number[],
+    fill: string | null,
+    persist = true,
+  ) => {
+    const next = applyProvinceFill(
+      provinceFillsRef.current,
+      provinceCodes,
+      fill,
+    );
+    provinceFillsRef.current = next;
+    setDisplayProvinceFills(next);
+    if (persist) onProvinceFillsChange?.(next);
+  };
+
   const handleProvinceClick = (
     event: React.MouseEvent<SVGGElement>,
     city: City,
   ) => {
-    if (drawingTool) return;
+    if (drawingTool || regionPainterActive) return;
     if (!placementProvinceCode) {
       onSelect(city);
       return;
@@ -2491,6 +2560,11 @@ export function TurkeyMap({
           <div className="map-legend" aria-label="Harita açıklaması">
             <span><i className="legend-dot legend-dot--empty" /> Boş</span>
             <span><i className="legend-dot legend-dot--saved" /> Not eklendi</span>
+            {Object.keys(displayProvinceFills).length > 0 && (
+              <span>
+                <i className="legend-dot legend-dot--region" /> Bölge rengi
+              </span>
+            )}
             <span><i className="legend-dot legend-dot--selected" /> Seçili</span>
           </div>
         </div>
@@ -2513,12 +2587,35 @@ export function TurkeyMap({
             drawingTool === "select" ? "turkey-map--selecting-drawing" : "",
             drawingTool === "eraser" ? "turkey-map--erasing" : "",
             isDrawingTool(drawingTool) ? "turkey-map--drawing" : "",
+            regionPainterActive ? "turkey-map--region-painting" : "",
           ].join(" ")}
           viewBox={`${viewX} ${viewY} ${viewWidth} ${viewHeight}`}
           role="group"
           aria-label="81 ilden oluşan Türkiye haritası"
           onPointerDown={(event) => {
             if (exportMode) return;
+            if (regionPainterActive) {
+              if (event.pointerType === "mouse" && event.button !== 0) return;
+              const provinceCode = provinceCodeAtClientPoint(
+                event.clientX,
+                event.clientY,
+                event.target,
+              );
+              if (!provinceCode) return;
+              event.preventDefault();
+              event.currentTarget.setPointerCapture(event.pointerId);
+              suppressMapClickRef.current = true;
+              regionPaintingGestureRef.current = {
+                pointerId: event.pointerId,
+                touchedProvinceCodes: new Set([provinceCode]),
+              };
+              applyRegionPainting(
+                [provinceCode],
+                regionPainterMode === "paint" ? regionPainterColor : null,
+                false,
+              );
+              return;
+            }
             if (drawingTool) {
               if (event.pointerType === "mouse" && event.button !== 0) return;
               const point = eventToPoint(event);
@@ -2585,6 +2682,31 @@ export function TurkeyMap({
             setIsPanning(true);
           }}
           onPointerMove={(event) => {
+            const regionPaintingGesture = regionPaintingGestureRef.current;
+            if (
+              regionPaintingGesture &&
+              regionPaintingGesture.pointerId === event.pointerId
+            ) {
+              const provinceCode = provinceCodeAtClientPoint(
+                event.clientX,
+                event.clientY,
+              );
+              if (
+                !provinceCode ||
+                regionPaintingGesture.touchedProvinceCodes.has(provinceCode)
+              ) {
+                return;
+              }
+              event.preventDefault();
+              regionPaintingGesture.touchedProvinceCodes.add(provinceCode);
+              applyRegionPainting(
+                [provinceCode],
+                regionPainterMode === "paint" ? regionPainterColor : null,
+                false,
+              );
+              return;
+            }
+
             const drawingGesture = drawingGestureRef.current;
             if (
               drawingGesture &&
@@ -2657,6 +2779,22 @@ export function TurkeyMap({
             );
           }}
           onPointerUp={(event) => {
+            const regionPaintingGesture = regionPaintingGestureRef.current;
+            if (
+              regionPaintingGesture &&
+              regionPaintingGesture.pointerId === event.pointerId
+            ) {
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+              onProvinceFillsChange?.(provinceFillsRef.current);
+              regionPaintingGestureRef.current = null;
+              window.setTimeout(() => {
+                suppressMapClickRef.current = false;
+              }, 0);
+              return;
+            }
+
             const drawingGesture = drawingGestureRef.current;
             if (
               drawingGesture &&
@@ -2738,6 +2876,13 @@ export function TurkeyMap({
             }, 0);
           }}
           onPointerCancel={(event) => {
+            if (
+              regionPaintingGestureRef.current?.pointerId === event.pointerId
+            ) {
+              onProvinceFillsChange?.(provinceFillsRef.current);
+              regionPaintingGestureRef.current = null;
+              suppressMapClickRef.current = false;
+            }
             if (drawingGestureRef.current?.pointerId === event.pointerId) {
               drawingGestureRef.current = null;
               setMovingDrawing(null);
@@ -2776,6 +2921,10 @@ export function TurkeyMap({
                 provinceColorPreview?.provinceCode === city.plateNumber
                   ? provinceColorPreview.color
                   : undefined;
+              const regionFill =
+                displayProvinceFills[String(city.plateNumber)];
+              const effectiveColor =
+                previewColor || regionFill || record?.color || themeColor;
 
               return (
                 <g
@@ -2784,6 +2933,7 @@ export function TurkeyMap({
                     "province",
                     isSelected ? "province--selected" : "",
                     record ? "province--recorded" : "",
+                    regionFill ? "province--region-filled" : "",
                     city.plateNumber === placementProvinceCode
                       ? "province--placement-target"
                       : "",
@@ -2794,19 +2944,28 @@ export function TurkeyMap({
                   ].join(" ")}
                   role="button"
                   tabIndex={0}
-                  aria-label={`${city.plateNumber.toString().padStart(2, "0")} ${city.name}${record ? ", not eklendi" : ""}`}
+                  aria-label={`${city.plateNumber.toString().padStart(2, "0")} ${city.name}${record ? ", not eklendi" : ""}${regionFill ? ", bölge rengi eklendi" : ""}`}
                   aria-pressed={isSelected}
                   onClick={(event) => handleProvinceClick(event, city)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
-                      if (!placementProvinceCode) onSelect(city);
+                      if (regionPainterActive) {
+                        applyRegionPainting(
+                          [city.plateNumber],
+                          regionPainterMode === "paint"
+                            ? regionPainterColor
+                            : null,
+                        );
+                      } else if (!placementProvinceCode) {
+                        onSelect(city);
+                      }
                     }
                   }}
                   style={
                     {
-                      "--record-color":
-                        previewColor || record?.color || themeColor,
+                      "--record-color": effectiveColor,
+                      "--region-color": regionFill || themeColor,
                       "--theme-color": themeColor,
                     } as React.CSSProperties
                   }
@@ -3860,8 +4019,37 @@ export function TurkeyMap({
           </g>
         </svg>
 
+        {!exportMode && !readOnly && regionPainterActive && (
+          <RegionPainterPanel
+            color={regionPainterColor}
+            fills={displayProvinceFills}
+            mode={regionPainterMode}
+            onApply={(provinceCodes, fill) =>
+              applyRegionPainting(provinceCodes, fill)
+            }
+            onClose={() => setRegionPainterActive(false)}
+            onColorChange={setRegionPainterColor}
+            onModeChange={setRegionPainterMode}
+          />
+        )}
+
         {!exportMode && !readOnly && (
           <div className="drawing-toolbar" aria-label="Harita çizim araçları">
+            <button
+              type="button"
+              className={regionPainterActive ? "is-active" : ""}
+              title="Bölge boyama"
+              aria-label="Bölge boyama"
+              aria-pressed={regionPainterActive}
+              onClick={() => {
+                const nextActive = !regionPainterActive;
+                setRegionPainterActive(nextActive);
+                if (nextActive) onDrawingToolChange?.(null);
+              }}
+            >
+              <Paintbrush size={15} />
+            </button>
+            <span className="drawing-toolbar__divider" />
             {[
               {
                 tool: "select" as const,
@@ -3884,84 +4072,109 @@ export function TurkeyMap({
                 className={drawingTool === tool ? "is-active" : ""}
                 title={label}
                 aria-label={label}
-                onClick={() =>
-                  onDrawingToolChange?.(drawingTool === tool ? null : tool)
-                }
+                onClick={() => {
+                  setRegionPainterActive(false);
+                  onDrawingToolChange?.(drawingTool === tool ? null : tool);
+                }}
               >
                 <Icon size={15} />
               </button>
             ))}
-            <span className="drawing-toolbar__divider" />
-            {(drawingTool === "pen" || drawingTool === "text") && (
+            {!regionPainterActive && (
               <>
-                <div
-                  className="drawing-toolbar__size"
-                  title={
-                    drawingTool === "pen" ? "Kalem kalınlığı" : "Yazı boyutu"
-                  }
-                >
-                  <button
-                    type="button"
-                    aria-label={
-                      drawingTool === "pen" ? "Kalemi incelt" : "Yazıyı küçült"
-                    }
-                    disabled={normalizeDrawingSize(drawingSize) <= DRAWING_SIZE_MIN}
-                    onClick={() =>
-                      onDrawingSizeChange?.(
-                        Math.max(
-                          DRAWING_SIZE_MIN,
-                          normalizeDrawingSize(drawingSize) - DRAWING_SIZE_STEP,
-                        ),
-                      )
-                    }
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <output
-                    aria-label={
-                      drawingTool === "pen"
-                        ? "Seçili kalem kalınlığı"
-                        : "Seçili yazı boyutu"
-                    }
-                  >
-                    {normalizeDrawingSize(drawingSize)}×
-                  </output>
-                  <button
-                    type="button"
-                    aria-label={
-                      drawingTool === "pen"
-                        ? "Kalemi kalınlaştır"
-                        : "Yazıyı büyüt"
-                    }
-                    disabled={normalizeDrawingSize(drawingSize) >= DRAWING_SIZE_MAX}
-                    onClick={() =>
-                      onDrawingSizeChange?.(
-                        Math.min(
-                          DRAWING_SIZE_MAX,
-                          normalizeDrawingSize(drawingSize) + DRAWING_SIZE_STEP,
-                        ),
-                      )
-                    }
-                  >
-                    <Plus size={14} />
-                  </button>
-                </div>
                 <span className="drawing-toolbar__divider" />
+                {(drawingTool === "pen" || drawingTool === "text") && (
+                  <>
+                    <div
+                      className="drawing-toolbar__size"
+                      title={
+                        drawingTool === "pen"
+                          ? "Kalem kalınlığı"
+                          : "Yazı boyutu"
+                      }
+                    >
+                      <button
+                        type="button"
+                        aria-label={
+                          drawingTool === "pen"
+                            ? "Kalemi incelt"
+                            : "Yazıyı küçült"
+                        }
+                        disabled={
+                          normalizeDrawingSize(drawingSize) <= DRAWING_SIZE_MIN
+                        }
+                        onClick={() =>
+                          onDrawingSizeChange?.(
+                            Math.max(
+                              DRAWING_SIZE_MIN,
+                              normalizeDrawingSize(drawingSize) -
+                                DRAWING_SIZE_STEP,
+                            ),
+                          )
+                        }
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <output
+                        aria-label={
+                          drawingTool === "pen"
+                            ? "Seçili kalem kalınlığı"
+                            : "Seçili yazı boyutu"
+                        }
+                      >
+                        {normalizeDrawingSize(drawingSize)}×
+                      </output>
+                      <button
+                        type="button"
+                        aria-label={
+                          drawingTool === "pen"
+                            ? "Kalemi kalınlaştır"
+                            : "Yazıyı büyüt"
+                        }
+                        disabled={
+                          normalizeDrawingSize(drawingSize) >= DRAWING_SIZE_MAX
+                        }
+                        onClick={() =>
+                          onDrawingSizeChange?.(
+                            Math.min(
+                              DRAWING_SIZE_MAX,
+                              normalizeDrawingSize(drawingSize) +
+                                DRAWING_SIZE_STEP,
+                            ),
+                          )
+                        }
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                    <span className="drawing-toolbar__divider" />
+                  </>
+                )}
+                <label title="Çizim rengi">
+                  <input
+                    type="color"
+                    value={drawingColor}
+                    onChange={(event) =>
+                      onDrawingColorChange?.(event.target.value)
+                    }
+                  />
+                </label>
+                <button
+                  type="button"
+                  title="Son çizimi geri al"
+                  onClick={onUndoDrawing}
+                >
+                  <Undo2 size={15} />
+                </button>
+                <button
+                  type="button"
+                  title="Bütün çizimleri sil"
+                  onClick={onClearDrawings}
+                >
+                  <Trash2 size={15} />
+                </button>
               </>
             )}
-            <label title="Çizim rengi">
-              <input
-                type="color"
-                value={drawingColor}
-                onChange={(event) => onDrawingColorChange?.(event.target.value)}
-              />
-            </label>
-            <button type="button" title="Son çizimi geri al" onClick={onUndoDrawing}>
-              <Undo2 size={15} />
-            </button>
-            <button type="button" title="Bütün çizimleri sil" onClick={onClearDrawings}>
-              <Trash2 size={15} />
-            </button>
           </div>
         )}
 

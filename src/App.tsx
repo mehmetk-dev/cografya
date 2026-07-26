@@ -1635,6 +1635,10 @@ export default function App() {
             readOnly={Boolean(activeReadySet)}
             matchingProvinceCodes={matchingProvinceCodes}
             provinceColorPreview={provinceColorPreview}
+            provinceFills={activeMap.regionFills ?? {}}
+            onProvinceFillsChange={(fills) =>
+              void updateActiveMap({ regionFills: fills })
+            }
             drawingTool={drawingTool}
             drawingColor={drawingColor}
             drawingSize={

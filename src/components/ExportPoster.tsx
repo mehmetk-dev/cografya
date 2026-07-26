@@ -24,6 +24,7 @@ export const ExportPoster = forwardRef<HTMLDivElement, ExportPosterProps>(
           markers={markers}
           drawings={drawings}
           themeColor={map.themeColor}
+          provinceFills={map.regionFills ?? {}}
           showLabels={map.showLabels}
           showProvinceNames={
             map.showProvinceNames ??
