@@ -7,17 +7,14 @@ import {
 } from "react";
 import type { User } from "@supabase/supabase-js";
 import { useLiveQuery } from "dexie-react-hooks";
-import {
-  CheckCircle2,
-  Cloud,
-  CloudAlert,
-  LoaderCircle,
-  LogOut,
-  RefreshCw,
-} from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import {
   FLASHCARD_PROGRESS_CHANGED_EVENT,
 } from "../flashcards";
+import {
+  CloudAccountContext,
+  type CloudSyncStatus,
+} from "./CloudAccountContext";
 import {
   clearLocalWorkspace,
   collectLocalSnapshot,
@@ -39,8 +36,6 @@ type CloudWorkspaceProps = {
   user: User;
   children: ReactNode;
 };
-
-type SyncStatus = "loading" | "syncing" | "synced" | "error";
 
 type CloudRow = {
   data: unknown;
@@ -103,7 +98,7 @@ function LocalChangeWatcher({
 
 export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
   const [ready, setReady] = useState(false);
-  const [status, setStatus] = useState<SyncStatus>("loading");
+  const [status, setStatus] = useState<CloudSyncStatus>("loading");
   const [statusMessage, setStatusMessage] = useState("Bulut verisi hazırlanıyor");
   const [signingOut, setSigningOut] = useState(false);
   const lastSignatureRef = useRef(
@@ -323,44 +318,12 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
     );
   }
 
-  const StatusIcon =
-    status === "error"
-      ? CloudAlert
-      : status === "syncing"
-        ? LoaderCircle
-        : status === "synced"
-          ? CheckCircle2
-          : Cloud;
-
   return (
-    <>
+    <CloudAccountContext.Provider
+      value={{ status, signingOut, retrySync, signOut }}
+    >
       <LocalChangeWatcher onSnapshot={syncLocalChanges} />
       {children}
-      <aside className={`cloud-account cloud-account--${status}`}>
-        <div className="cloud-account__identity">
-          <StatusIcon
-            className={status === "syncing" ? "spin" : ""}
-            size={16}
-          />
-          <span>
-            <strong>{user.email ?? "Coğrafya hesabı"}</strong>
-            <small>{statusMessage}</small>
-          </span>
-        </div>
-        {status === "error" && (
-          <button type="button" title="Senkronizasyonu yeniden dene" onClick={retrySync}>
-            <RefreshCw size={15} />
-          </button>
-        )}
-        <button
-          type="button"
-          title="Çıkış yap"
-          disabled={signingOut}
-          onClick={signOut}
-        >
-          {signingOut ? <LoaderCircle className="spin" size={15} /> : <LogOut size={15} />}
-        </button>
-      </aside>
-    </>
+    </CloudAccountContext.Provider>
   );
 }

@@ -3,13 +3,18 @@ import {
   BookOpen,
   Check,
   ChevronDown,
+  CloudAlert,
   Copy,
   Layers3,
+  LoaderCircle,
+  LogOut,
   Map,
   Plus,
+  RefreshCw,
   Trash2,
   X,
 } from "lucide-react";
+import { useCloudAccount } from "../cloud/CloudAccountContext";
 import { READY_STUDY_SETS, type ReadyStudySet } from "../readySets";
 import { STUDY_NOTE_TOPICS } from "../studyNotes";
 import type { StudyMap } from "../types";
@@ -53,6 +58,7 @@ export function MapSidebar({
   onOpenReadySet,
   onOpenNotes,
 }: MapSidebarProps) {
+  const cloudAccount = useCloudAccount();
   const [isCreating, setIsCreating] = useState(false);
   const [isMobileSidebar, setIsMobileSidebar] = useState(() =>
     window.matchMedia(MOBILE_SIDEBAR_QUERY).matches
@@ -326,6 +332,37 @@ export function MapSidebar({
             <small>Notların bu cihazda saklanır</small>
           </div>
         </div>
+        {cloudAccount && (
+          <div className="sidebar-account-actions">
+            {cloudAccount.status === "error" && (
+              <button
+                className="sidebar-account-button sidebar-account-button--retry"
+                type="button"
+                title="Senkronizasyonu yeniden dene"
+                aria-label="Senkronizasyonu yeniden dene"
+                onClick={() => void cloudAccount.retrySync()}
+              >
+                <CloudAlert size={15} />
+                <RefreshCw size={13} />
+              </button>
+            )}
+            <button
+              className="sidebar-account-button sidebar-account-button--signout"
+              type="button"
+              disabled={cloudAccount.signingOut}
+              onClick={() => void cloudAccount.signOut()}
+            >
+              {cloudAccount.signingOut ? (
+                <LoaderCircle className="spin" size={15} />
+              ) : (
+                <LogOut size={15} />
+              )}
+              <span>
+                {cloudAccount.signingOut ? "Çıkış yapılıyor" : "Çıkış yap"}
+              </span>
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );

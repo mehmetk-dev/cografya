@@ -276,85 +276,6 @@ select:focus-visible,
   font-weight: 750;
 }
 
-.cloud-account {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  z-index: 60;
-  display: flex;
-  max-width: min(360px, calc(100vw - 32px));
-  align-items: center;
-  gap: 7px;
-  padding: 7px;
-  color: #f8f4e9;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 13px 13px 13px 5px;
-  background: rgba(12, 59, 51, 0.96);
-  box-shadow: 0 14px 38px rgba(12, 42, 36, 0.24);
-  backdrop-filter: blur(12px);
-}
-
-.cloud-account--error {
-  background: rgba(116, 49, 51, 0.97);
-}
-
-.cloud-account__identity {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 8px;
-  padding: 2px 5px;
-}
-
-.cloud-account__identity > svg {
-  flex: 0 0 auto;
-  color: #efb65d;
-}
-
-.cloud-account__identity span {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-}
-
-.cloud-account__identity strong,
-.cloud-account__identity small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cloud-account__identity strong {
-  font-size: 11px;
-}
-
-.cloud-account__identity small {
-  margin-top: 1px;
-  color: rgba(255, 255, 255, 0.68);
-  font-size: 9px;
-}
-
-.cloud-account > button {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 auto;
-  place-items: center;
-  color: #f8f4e9;
-  border: 0;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.09);
-}
-
-.cloud-account > button:hover {
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.cloud-account > button:disabled {
-  cursor: wait;
-  opacity: 0.65;
-}
-
 .eyebrow {
   display: block;
   margin-bottom: 5px;
@@ -972,6 +893,52 @@ select:focus-visible,
   margin-top: 2px;
   color: rgba(248, 244, 233, 0.42);
   font-size: 9px;
+}
+
+.sidebar-account-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 13px;
+}
+
+.sidebar-account-button {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.sidebar-account-button:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.sidebar-account-button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.sidebar-account-button--retry {
+  width: 38px;
+  flex: 0 0 38px;
+  color: #f1b76a;
+}
+
+.sidebar-account-button--retry svg + svg {
+  margin-left: -8px;
+}
+
+.sidebar-account-button--signout {
+  flex: 1;
+  font-size: 10px;
+  font-weight: 750;
 }
 
 .workspace {
@@ -6726,7 +6693,17 @@ a.ready-source-badge:hover {
   }
 
   .sidebar-footer {
-    display: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-top: 13px;
+    padding: 12px 0 0;
+  }
+
+  .sidebar-account-actions {
+    min-width: 132px;
+    margin-top: 0;
   }
 
   .workspace-header {
@@ -7714,8 +7691,7 @@ a.ready-source-badge:hover {
   body.printing-poster .workspace,
   body.printing-poster .modal-backdrop,
   body.printing-poster .toast,
-  body.printing-poster .mobile-bottom-nav,
-  body.printing-poster .cloud-account {
+  body.printing-poster .mobile-bottom-nav {
     display: none !important;
   }
 
@@ -7749,13 +7725,4 @@ a.ready-source-badge:hover {
     border-radius: 18px 18px 18px 6px;
   }
 
-  .cloud-account {
-    right: 9px;
-    bottom: 72px;
-    max-width: calc(100vw - 18px);
-  }
-
-  .cloud-account__identity strong {
-    max-width: 155px;
-  }
 }
