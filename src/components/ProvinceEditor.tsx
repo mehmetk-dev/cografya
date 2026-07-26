@@ -179,6 +179,7 @@ export function ProvinceEditor({
         note: note.trim(),
         color,
         items: cleanItems,
+        labelOffset: record?.labelOffset,
         updatedAt: new Date().toISOString(),
       });
       setItems(cleanItems.length ? cleanItems : [emptyItem()]);

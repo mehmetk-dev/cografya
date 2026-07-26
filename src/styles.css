@@ -1899,7 +1899,8 @@ body.map-fullscreen-open {
   }
 }
 
-.map-annotation {
+.map-annotation > circle,
+.map-annotation > line {
   pointer-events: none;
 }
 
@@ -1921,6 +1922,26 @@ body.map-fullscreen-open {
   font-size: 9px;
   font-weight: 800;
   text-anchor: middle;
+}
+
+.map-annotation__label {
+  pointer-events: none;
+}
+
+.map-annotation__label--interactive {
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.map-annotation__label--interactive.is-moving {
+  cursor: grabbing;
+}
+
+.map-annotation__label--interactive:hover rect,
+.map-annotation__label--interactive.is-moving rect {
+  stroke: #173f36;
+  stroke-width: 1.35;
 }
 
 .placement-banner {

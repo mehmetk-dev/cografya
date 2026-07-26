@@ -61,6 +61,7 @@ const provinceRecordSchema = z.object({
       category: z.string(),
     }),
   ),
+  labelOffset: mapPointSchema.optional(),
   updatedAt: isoDateSchema,
 });
 const mapMarkerSchema = z.object({

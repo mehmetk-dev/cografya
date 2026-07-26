@@ -33,6 +33,7 @@ export type ProvinceRecord = {
   note: string;
   color: string;
   items: ProvinceItem[];
+  labelOffset?: MapPoint;
   updatedAt: string;
 };
 

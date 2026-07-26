@@ -67,6 +67,7 @@ type TurkeyMapProps = {
     text?: string,
     size?: number,
   ) => void;
+  onUpdateRecord?: (record: ProvinceRecord) => void;
   onUpdateMarker?: (marker: MapMarker) => void;
   onUpdateDrawing?: (drawing: MapDrawing) => void;
   onReplaceDrawings?: (
@@ -119,6 +120,18 @@ type MarkerLabelGesture = {
   pointerId: number;
   marker: MapMarker;
   position: Point;
+  width: number;
+  height: number;
+  start: MapPoint;
+  originalOffset: MapPoint;
+  currentOffset: MapPoint;
+  moved: boolean;
+};
+
+type ProvinceLabelGesture = {
+  pointerId: number;
+  record: ProvinceRecord;
+  center: Point;
   width: number;
   height: number;
   start: MapPoint;
@@ -527,6 +540,7 @@ export function TurkeyMap({
   onDrawingColorChange,
   onDrawingSizeChange,
   onAddDrawing,
+  onUpdateRecord,
   onUpdateMarker,
   onUpdateDrawing,
   onReplaceDrawings,
@@ -539,6 +553,7 @@ export function TurkeyMap({
   const panGestureRef = useRef<PanGesture | null>(null);
   const drawingGestureRef = useRef<DrawingGesture | null>(null);
   const markerLabelGestureRef = useRef<MarkerLabelGesture | null>(null);
+  const provinceLabelGestureRef = useRef<ProvinceLabelGesture | null>(null);
   const draftDrawingRef = useRef<MapPoint[]>([]);
   const suppressMapClickRef = useRef(false);
   const riverClipId = `river-land-${useId().replaceAll(":", "")}`;
@@ -557,6 +572,10 @@ export function TurkeyMap({
   const [eraserTrail, setEraserTrail] = useState<MapPoint[]>([]);
   const [movingMarkerLabel, setMovingMarkerLabel] = useState<{
     markerId: string;
+    offset: MapPoint;
+  } | null>(null);
+  const [movingProvinceLabel, setMovingProvinceLabel] = useState<{
+    recordId: string;
     offset: MapPoint;
   } | null>(null);
   const [nativeFullscreen, setNativeFullscreen] = useState(false);
@@ -1130,6 +1149,116 @@ export function TurkeyMap({
     const resetMarker = { ...marker };
     delete resetMarker.labelOffset;
     onUpdateMarker(resetMarker);
+  };
+
+  const startProvinceLabelMove = (
+    event: React.PointerEvent<SVGGElement>,
+    record: ProvinceRecord,
+    center: Point,
+    width: number,
+    height: number,
+    offset: MapPoint,
+  ) => {
+    if (
+      drawingTool ||
+      placementProvinceCode ||
+      readOnly ||
+      !onUpdateRecord ||
+      (event.pointerType === "mouse" && event.button !== 0)
+    ) {
+      return;
+    }
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    provinceLabelGestureRef.current = {
+      pointerId: event.pointerId,
+      record,
+      center,
+      width,
+      height,
+      start: point,
+      originalOffset: offset,
+      currentOffset: offset,
+      moved: false,
+    };
+    setMovingProvinceLabel({
+      recordId: record.id,
+      offset,
+    });
+  };
+
+  const moveProvinceLabel = (event: React.PointerEvent<SVGGElement>) => {
+    const gesture = provinceLabelGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const deltaX = point.x - gesture.start.x;
+    const deltaY = point.y - gesture.start.y;
+    const absoluteX = Math.max(
+      BASE_VIEWBOX.x + 8,
+      Math.min(
+        BASE_VIEWBOX.x + BASE_VIEWBOX.width - gesture.width - 8,
+        gesture.center.x + gesture.originalOffset.x + deltaX,
+      ),
+    );
+    const absoluteY = Math.max(
+      BASE_VIEWBOX.y + 8,
+      Math.min(
+        BASE_VIEWBOX.y + BASE_VIEWBOX.height - gesture.height - 8,
+        gesture.center.y + gesture.originalOffset.y + deltaY,
+      ),
+    );
+    const offset = {
+      x: absoluteX - gesture.center.x,
+      y: absoluteY - gesture.center.y,
+    };
+    gesture.currentOffset = offset;
+    gesture.moved = gesture.moved || Math.hypot(deltaX, deltaY) > 1;
+    setMovingProvinceLabel({
+      recordId: gesture.record.id,
+      offset,
+    });
+  };
+
+  const finishProvinceLabelMove = (
+    event: React.PointerEvent<SVGGElement>,
+    cancelled = false,
+  ) => {
+    const gesture = provinceLabelGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!cancelled && gesture.moved) {
+      onUpdateRecord?.({
+        ...gesture.record,
+        labelOffset: gesture.currentOffset,
+      });
+    }
+    provinceLabelGestureRef.current = null;
+    setMovingProvinceLabel(null);
+  };
+
+  const resetProvinceLabelPosition = (
+    event: React.MouseEvent<SVGGElement>,
+    record: ProvinceRecord,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!record.labelOffset || !onUpdateRecord) return;
+    const resetRecord = { ...record };
+    delete resetRecord.labelOffset;
+    onUpdateRecord(resetRecord);
   };
 
   const handleProvinceClick = (
@@ -1792,7 +1921,7 @@ export function TurkeyMap({
           </g>
 
           {showLabels && (
-            <g className="annotation-layer" aria-hidden="true">
+            <g className="annotation-layer">
               {records.map((record) => {
                 const center = centers[record.provinceCode];
                 const label = (record.items[0]?.text || record.title).trim();
@@ -1811,7 +1940,44 @@ export function TurkeyMap({
                     center.x,
                   ),
                 );
-                const localLabelX = labelCenterX - center.x;
+                const automaticOffset = {
+                  x: labelCenterX - center.x - width / 2,
+                  y: 12,
+                };
+                const requestedOffset =
+                  movingProvinceLabel?.recordId === record.id
+                    ? movingProvinceLabel.offset
+                    : record.labelOffset ?? automaticOffset;
+                const rectX =
+                  Math.max(
+                    BASE_VIEWBOX.x + 8,
+                    Math.min(
+                      BASE_VIEWBOX.x + BASE_VIEWBOX.width - width - 8,
+                      center.x + requestedOffset.x,
+                    ),
+                  ) - center.x;
+                const rectY =
+                  Math.max(
+                    BASE_VIEWBOX.y + 8,
+                    Math.min(
+                      BASE_VIEWBOX.y + BASE_VIEWBOX.height - height - 8,
+                      center.y + requestedOffset.y,
+                    ),
+                  ) - center.y;
+                const localLabelX = rectX + width / 2;
+                const anchorX = Math.min(
+                  rectX + width,
+                  Math.max(rectX, 0),
+                );
+                const anchorY = Math.min(
+                  rectY + height,
+                  Math.max(rectY, 4),
+                );
+                const labelInteractive =
+                  Boolean(onUpdateRecord) &&
+                  !readOnly &&
+                  !drawingTool &&
+                  !placementProvinceCode;
 
                 return (
                   <g
@@ -1823,27 +1989,68 @@ export function TurkeyMap({
                     <line
                       x1="0"
                       y1="4"
-                      x2={localLabelX}
-                      y2="13"
+                      x2={anchorX}
+                      y2={anchorY}
                     />
-                    <rect
-                      x={localLabelX - width / 2}
-                      y="12"
-                      width={width}
-                      height={height}
-                      rx="7"
-                    />
-                    <text x={localLabelX} y="27">
-                      {labelLines.map((line, index) => (
-                        <tspan
-                          key={`${line}-${index}`}
-                          x={localLabelX}
-                          dy={index === 0 ? 0 : 10}
-                        >
-                          {line}
-                        </tspan>
-                      ))}
-                    </text>
+                    <g
+                      className={[
+                        "map-annotation__label",
+                        labelInteractive
+                          ? "map-annotation__label--interactive"
+                          : "",
+                        movingProvinceLabel?.recordId === record.id
+                          ? "is-moving"
+                          : "",
+                      ].join(" ")}
+                      onClick={(event) => event.stopPropagation()}
+                      onDoubleClick={(event) =>
+                        resetProvinceLabelPosition(event, record)
+                      }
+                      onPointerDown={(event) =>
+                        startProvinceLabelMove(
+                          event,
+                          record,
+                          center,
+                          width,
+                          height,
+                          { x: rectX, y: rectY },
+                        )
+                      }
+                      onPointerMove={moveProvinceLabel}
+                      onPointerUp={(event) =>
+                        finishProvinceLabelMove(event)
+                      }
+                      onPointerCancel={(event) =>
+                        finishProvinceLabelMove(event, true)
+                      }
+                    >
+                      {labelInteractive && (
+                        <title>
+                          Sürükleyerek taşı
+                          {record.labelOffset
+                            ? " · Çift tıklayarak otomatik konuma döndür"
+                            : ""}
+                        </title>
+                      )}
+                      <rect
+                        x={rectX}
+                        y={rectY}
+                        width={width}
+                        height={height}
+                        rx="7"
+                      />
+                      <text x={localLabelX} y={rectY + 15}>
+                        {labelLines.map((line, index) => (
+                          <tspan
+                            key={`${line}-${index}`}
+                            x={localLabelX}
+                            dy={index === 0 ? 0 : 10}
+                          >
+                            {line}
+                          </tspan>
+                        ))}
+                      </text>
+                    </g>
                   </g>
                 );
               })}

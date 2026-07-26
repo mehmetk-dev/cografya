@@ -886,6 +886,24 @@ export default function App() {
     });
   };
 
+  const updateProvincePresentation = async (record: ProvinceRecord) => {
+    if (
+      !activeMap ||
+      activeReadySet ||
+      record.mapId !== activeMap.id
+    ) {
+      return;
+    }
+    const updatedAt = new Date().toISOString();
+    await db.transaction("rw", db.studyMaps, db.provinceRecords, async () => {
+      await db.provinceRecords.put({
+        ...record,
+        updatedAt,
+      });
+      await db.studyMaps.update(activeMap.id, { updatedAt });
+    });
+  };
+
   const addDrawing = async (
     tool: DrawingTool,
     points: { x: number; y: number }[],
@@ -1597,6 +1615,9 @@ export default function App() {
             }
             onUpdateDrawing={(drawing) => void updateDrawing(drawing)}
             onUpdateMarker={(marker) => void updateMarkerPresentation(marker)}
+            onUpdateRecord={(record) =>
+              void updateProvincePresentation(record)
+            }
             onReplaceDrawings={(removedIds, replacements) =>
               void replaceDrawings(removedIds, replacements)
             }
