@@ -147,6 +147,18 @@ type MarkerLabelResizeGesture = {
   baseHeight: number;
   initialScale: number;
   currentScale: number;
+  rotation: number;
+  moved: boolean;
+};
+
+type MarkerLabelRotateGesture = {
+  pointerId: number;
+  marker: MapMarker;
+  offset: MapPoint;
+  center: Point;
+  startAngle: number;
+  initialRotation: number;
+  currentRotation: number;
   moved: boolean;
 };
 
@@ -172,6 +184,18 @@ type ProvinceLabelResizeGesture = {
   baseHeight: number;
   initialScale: number;
   currentScale: number;
+  rotation: number;
+  moved: boolean;
+};
+
+type ProvinceLabelRotateGesture = {
+  pointerId: number;
+  record: ProvinceRecord;
+  offset: MapPoint;
+  center: Point;
+  startAngle: number;
+  initialRotation: number;
+  currentRotation: number;
   moved: boolean;
 };
 
@@ -196,12 +220,22 @@ const BASE_VIEWBOX = {
 const LABEL_SCALE_MIN = 0.7;
 const LABEL_SCALE_MAX = 1.8;
 const LABEL_RESIZE_HANDLE_SIZE = 8;
+const LABEL_ROTATE_HANDLE_DISTANCE = 14;
 
 function normalizeLabelScale(value?: number) {
   return Math.max(
     LABEL_SCALE_MIN,
     Math.min(LABEL_SCALE_MAX, value ?? 1),
   );
+}
+
+function normalizeLabelRotation(value?: number) {
+  const rotation = value ?? 0;
+  return ((rotation + 180) % 360 + 360) % 360 - 180;
+}
+
+function pointAngle(center: Point, point: Point) {
+  return (Math.atan2(point.y - center.y, point.x - center.x) * 180) / Math.PI;
 }
 
 function resizedLabelScale({
@@ -638,10 +672,14 @@ export function TurkeyMap({
   const markerLabelGestureRef = useRef<MarkerLabelGesture | null>(null);
   const markerLabelResizeGestureRef =
     useRef<MarkerLabelResizeGesture | null>(null);
+  const markerLabelRotateGestureRef =
+    useRef<MarkerLabelRotateGesture | null>(null);
   const markerMoveGestureRef = useRef<MarkerMoveGesture | null>(null);
   const provinceLabelGestureRef = useRef<ProvinceLabelGesture | null>(null);
   const provinceLabelResizeGestureRef =
     useRef<ProvinceLabelResizeGesture | null>(null);
+  const provinceLabelRotateGestureRef =
+    useRef<ProvinceLabelRotateGesture | null>(null);
   const draftDrawingRef = useRef<MapPoint[]>([]);
   const suppressMapClickRef = useRef(false);
   const suppressMarkerClickRef = useRef(false);
@@ -668,6 +706,11 @@ export function TurkeyMap({
     offset: MapPoint;
     scale: number;
   } | null>(null);
+  const [rotatingMarkerLabel, setRotatingMarkerLabel] = useState<{
+    markerId: string;
+    offset: MapPoint;
+    rotation: number;
+  } | null>(null);
   const [movingMarkerPosition, setMovingMarkerPosition] = useState<{
     markerId: string;
     position: Point;
@@ -680,6 +723,11 @@ export function TurkeyMap({
     recordId: string;
     offset: MapPoint;
     scale: number;
+  } | null>(null);
+  const [rotatingProvinceLabel, setRotatingProvinceLabel] = useState<{
+    recordId: string;
+    offset: MapPoint;
+    rotation: number;
   } | null>(null);
   const [nativeFullscreen, setNativeFullscreen] = useState(false);
   const [fallbackFullscreen, setFallbackFullscreen] = useState(false);
@@ -926,11 +974,13 @@ export function TurkeyMap({
       const leftHasCustomPosition =
         left.labelOffset ||
         movingMarkerLabel?.markerId === left.id ||
-        resizingMarkerLabel?.markerId === left.id;
+        resizingMarkerLabel?.markerId === left.id ||
+        rotatingMarkerLabel?.markerId === left.id;
       const rightHasCustomPosition =
         right.labelOffset ||
         movingMarkerLabel?.markerId === right.id ||
-        resizingMarkerLabel?.markerId === right.id;
+        resizingMarkerLabel?.markerId === right.id ||
+        rotatingMarkerLabel?.markerId === right.id;
       if (Boolean(leftHasCustomPosition) !== Boolean(rightHasCustomPosition)) {
         return leftHasCustomPosition ? -1 : 1;
       }
@@ -954,7 +1004,9 @@ export function TurkeyMap({
       const width = Math.max(52, label.length * 6.6 + 17) * scale;
       const height = 21 * scale;
       const customOffset =
-        resizingMarkerLabel?.markerId === marker.id
+        rotatingMarkerLabel?.markerId === marker.id
+          ? rotatingMarkerLabel.offset
+          : resizingMarkerLabel?.markerId === marker.id
           ? resizingMarkerLabel.offset
           : movingMarkerLabel?.markerId === marker.id
           ? movingMarkerLabel.offset
@@ -1086,6 +1138,7 @@ export function TurkeyMap({
     markerPositions,
     movingMarkerLabel,
     resizingMarkerLabel,
+    rotatingMarkerLabel,
   ]);
 
   useLayoutEffect(() => {
@@ -1290,6 +1343,7 @@ export function TurkeyMap({
     position: Point,
     layout: LabelLayout,
     scale: number,
+    rotation: number,
   ) => {
     if (
       drawingTool ||
@@ -1320,6 +1374,7 @@ export function TurkeyMap({
       baseHeight: layout.height / scale,
       initialScale: scale,
       currentScale: scale,
+      rotation,
       moved: false,
     };
     setResizingMarkerLabel({
@@ -1339,10 +1394,15 @@ export function TurkeyMap({
     event.stopPropagation();
     const deltaX = point.x - gesture.start.x;
     const deltaY = point.y - gesture.start.y;
+    const rotation = (gesture.rotation * Math.PI) / 180;
+    const localDeltaX =
+      deltaX * Math.cos(rotation) + deltaY * Math.sin(rotation);
+    const localDeltaY =
+      -deltaX * Math.sin(rotation) + deltaY * Math.cos(rotation);
     const scale = resizedLabelScale({
       initialScale: gesture.initialScale,
-      deltaX,
-      deltaY,
+      deltaX: localDeltaX,
+      deltaY: localDeltaY,
       baseWidth: gesture.baseWidth,
       baseHeight: gesture.baseHeight,
       absoluteX: gesture.position.x + gesture.offset.x,
@@ -1390,6 +1450,118 @@ export function TurkeyMap({
     if (!marker.labelScale || !onUpdateMarker) return;
     const resetMarker = { ...marker };
     delete resetMarker.labelScale;
+    onUpdateMarker(resetMarker);
+  };
+
+  const startMarkerLabelRotation = (
+    event: React.PointerEvent<SVGGElement>,
+    marker: MapMarker,
+    position: Point,
+    layout: LabelLayout,
+    rotation: number,
+  ) => {
+    if (
+      drawingTool ||
+      placementProvinceCode ||
+      readOnly ||
+      !onUpdateMarker ||
+      (event.pointerType === "mouse" && event.button !== 0)
+    ) {
+      return;
+    }
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const offset = {
+      x: layout.x - position.x,
+      y: layout.y - position.y,
+    };
+    const center = {
+      x: layout.x + layout.width / 2,
+      y: layout.y + layout.height / 2,
+    };
+    markerLabelRotateGestureRef.current = {
+      pointerId: event.pointerId,
+      marker,
+      offset,
+      center,
+      startAngle: pointAngle(center, point),
+      initialRotation: rotation,
+      currentRotation: rotation,
+      moved: false,
+    };
+    setRotatingMarkerLabel({
+      markerId: marker.id,
+      offset,
+      rotation,
+    });
+  };
+
+  const rotateMarkerLabel = (event: React.PointerEvent<SVGGElement>) => {
+    const gesture = markerLabelRotateGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const angleChange = normalizeLabelRotation(
+      pointAngle(gesture.center, point) - gesture.startAngle,
+    );
+    const rotation =
+      Math.round(
+        normalizeLabelRotation(
+          gesture.initialRotation + angleChange,
+        ) / 5,
+      ) * 5;
+    gesture.currentRotation = rotation;
+    gesture.moved =
+      gesture.moved ||
+      Math.abs(
+        normalizeLabelRotation(rotation - gesture.initialRotation),
+      ) >= 5;
+    setRotatingMarkerLabel({
+      markerId: gesture.marker.id,
+      offset: gesture.offset,
+      rotation,
+    });
+  };
+
+  const finishMarkerLabelRotation = (
+    event: React.PointerEvent<SVGGElement>,
+    cancelled = false,
+  ) => {
+    const gesture = markerLabelRotateGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!cancelled && gesture.moved) {
+      onUpdateMarker?.({
+        ...gesture.marker,
+        labelOffset: gesture.offset,
+        labelRotation: gesture.currentRotation,
+      });
+    }
+    markerLabelRotateGestureRef.current = null;
+    setRotatingMarkerLabel(null);
+  };
+
+  const resetMarkerLabelRotation = (
+    event: React.MouseEvent<SVGGElement>,
+    marker: MapMarker,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!marker.labelRotation || !onUpdateMarker) return;
+    const resetMarker = { ...marker };
+    delete resetMarker.labelRotation;
     onUpdateMarker(resetMarker);
   };
 
@@ -1607,6 +1779,7 @@ export function TurkeyMap({
     width: number,
     height: number,
     scale: number,
+    rotation: number,
   ) => {
     if (
       drawingTool ||
@@ -1633,6 +1806,7 @@ export function TurkeyMap({
       baseHeight: height / scale,
       initialScale: scale,
       currentScale: scale,
+      rotation,
       moved: false,
     };
     setResizingProvinceLabel({
@@ -1652,10 +1826,15 @@ export function TurkeyMap({
     event.stopPropagation();
     const deltaX = point.x - gesture.start.x;
     const deltaY = point.y - gesture.start.y;
+    const rotation = (gesture.rotation * Math.PI) / 180;
+    const localDeltaX =
+      deltaX * Math.cos(rotation) + deltaY * Math.sin(rotation);
+    const localDeltaY =
+      -deltaX * Math.sin(rotation) + deltaY * Math.cos(rotation);
     const scale = resizedLabelScale({
       initialScale: gesture.initialScale,
-      deltaX,
-      deltaY,
+      deltaX: localDeltaX,
+      deltaY: localDeltaY,
       baseWidth: gesture.baseWidth,
       baseHeight: gesture.baseHeight,
       absoluteX: gesture.center.x + gesture.offset.x,
@@ -1703,6 +1882,116 @@ export function TurkeyMap({
     if (!record.labelScale || !onUpdateRecord) return;
     const resetRecord = { ...record };
     delete resetRecord.labelScale;
+    onUpdateRecord(resetRecord);
+  };
+
+  const startProvinceLabelRotation = (
+    event: React.PointerEvent<SVGGElement>,
+    record: ProvinceRecord,
+    provinceCenter: Point,
+    offset: MapPoint,
+    width: number,
+    height: number,
+    rotation: number,
+  ) => {
+    if (
+      drawingTool ||
+      placementProvinceCode ||
+      readOnly ||
+      !onUpdateRecord ||
+      (event.pointerType === "mouse" && event.button !== 0)
+    ) {
+      return;
+    }
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const center = {
+      x: provinceCenter.x + offset.x + width / 2,
+      y: provinceCenter.y + offset.y + height / 2,
+    };
+    provinceLabelRotateGestureRef.current = {
+      pointerId: event.pointerId,
+      record,
+      offset,
+      center,
+      startAngle: pointAngle(center, point),
+      initialRotation: rotation,
+      currentRotation: rotation,
+      moved: false,
+    };
+    setRotatingProvinceLabel({
+      recordId: record.id,
+      offset,
+      rotation,
+    });
+  };
+
+  const rotateProvinceLabel = (event: React.PointerEvent<SVGGElement>) => {
+    const gesture = provinceLabelRotateGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const angleChange = normalizeLabelRotation(
+      pointAngle(gesture.center, point) - gesture.startAngle,
+    );
+    const rotation =
+      Math.round(
+        normalizeLabelRotation(
+          gesture.initialRotation + angleChange,
+        ) / 5,
+      ) * 5;
+    gesture.currentRotation = rotation;
+    gesture.moved =
+      gesture.moved ||
+      Math.abs(
+        normalizeLabelRotation(rotation - gesture.initialRotation),
+      ) >= 5;
+    setRotatingProvinceLabel({
+      recordId: gesture.record.id,
+      offset: gesture.offset,
+      rotation,
+    });
+  };
+
+  const finishProvinceLabelRotation = (
+    event: React.PointerEvent<SVGGElement>,
+    cancelled = false,
+  ) => {
+    const gesture = provinceLabelRotateGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!cancelled && gesture.moved) {
+      onUpdateRecord?.({
+        ...gesture.record,
+        labelOffset: gesture.offset,
+        labelRotation: gesture.currentRotation,
+      });
+    }
+    provinceLabelRotateGestureRef.current = null;
+    setRotatingProvinceLabel(null);
+  };
+
+  const resetProvinceLabelRotation = (
+    event: React.MouseEvent<SVGGElement>,
+    record: ProvinceRecord,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!record.labelRotation || !onUpdateRecord) return;
+    const resetRecord = { ...record };
+    delete resetRecord.labelRotation;
     onUpdateRecord(resetRecord);
   };
 
@@ -2380,6 +2669,10 @@ export function TurkeyMap({
                   resizingProvinceLabel?.recordId === record.id
                     ? resizingProvinceLabel.scale
                     : normalizeLabelScale(record.labelScale);
+                const rotation =
+                  rotatingProvinceLabel?.recordId === record.id
+                    ? rotatingProvinceLabel.rotation
+                    : normalizeLabelRotation(record.labelRotation);
                 const width =
                   Math.max(42, longestLine * 6.5 + 18) * scale;
                 const height =
@@ -2396,7 +2689,9 @@ export function TurkeyMap({
                   y: 12,
                 };
                 const requestedOffset =
-                  resizingProvinceLabel?.recordId === record.id
+                  rotatingProvinceLabel?.recordId === record.id
+                    ? rotatingProvinceLabel.offset
+                    : resizingProvinceLabel?.recordId === record.id
                     ? resizingProvinceLabel.offset
                     : movingProvinceLabel?.recordId === record.id
                     ? movingProvinceLabel.offset
@@ -2442,8 +2737,12 @@ export function TurkeyMap({
                     <line
                       x1="0"
                       y1="4"
-                      x2={anchorX}
-                      y2={anchorY}
+                      x2={rotation === 0 ? anchorX : localLabelX}
+                      y2={
+                        rotation === 0
+                          ? anchorY
+                          : rectY + height / 2
+                      }
                     />
                     <g
                       className={[
@@ -2457,7 +2756,11 @@ export function TurkeyMap({
                         resizingProvinceLabel?.recordId === record.id
                           ? "is-resizing"
                           : "",
+                        rotatingProvinceLabel?.recordId === record.id
+                          ? "is-rotating"
+                          : "",
                       ].join(" ")}
+                      transform={`rotate(${rotation} ${localLabelX} ${rectY + height / 2})`}
                       style={
                         {
                           "--label-font-size": `${9 * scale}px`,
@@ -2529,6 +2832,7 @@ export function TurkeyMap({
                               width,
                               height,
                               scale,
+                              rotation,
                             )
                           }
                           onPointerMove={resizeProvinceLabel}
@@ -2563,6 +2867,48 @@ export function TurkeyMap({
                           />
                         </g>
                       )}
+                      {labelInteractive && (
+                        <g
+                          className="map-label-rotate-handle"
+                          onDoubleClick={(event) =>
+                            resetProvinceLabelRotation(event, record)
+                          }
+                          onPointerDown={(event) =>
+                            startProvinceLabelRotation(
+                              event,
+                              record,
+                              center,
+                              { x: rectX, y: rectY },
+                              width,
+                              height,
+                              rotation,
+                            )
+                          }
+                          onPointerMove={rotateProvinceLabel}
+                          onPointerUp={(event) =>
+                            finishProvinceLabelRotation(event)
+                          }
+                          onPointerCancel={(event) =>
+                            finishProvinceLabelRotation(event, true)
+                          }
+                        >
+                          <title>
+                            Sürükleyerek döndür · Çift tıklayarak düz konuma
+                            döndür
+                          </title>
+                          <line
+                            x1={localLabelX}
+                            y1={rectY}
+                            x2={localLabelX}
+                            y2={rectY - LABEL_ROTATE_HANDLE_DISTANCE + 5}
+                          />
+                          <circle
+                            cx={localLabelX}
+                            cy={rectY - LABEL_ROTATE_HANDLE_DISTANCE}
+                            r="5"
+                          />
+                        </g>
+                      )}
                     </g>
                   </g>
                 );
@@ -2581,6 +2927,10 @@ export function TurkeyMap({
                 resizingMarkerLabel?.markerId === marker.id
                   ? resizingMarkerLabel.scale
                   : normalizeLabelScale(marker.labelScale);
+              const labelRotation =
+                rotatingMarkerLabel?.markerId === marker.id
+                  ? rotatingMarkerLabel.rotation
+                  : normalizeLabelRotation(marker.labelRotation);
               const markerInteractive =
                 count === 1 &&
                 Boolean(onUpdateMarker) &&
@@ -2688,8 +3038,20 @@ export function TurkeyMap({
                       className="map-marker__leader"
                       x1="0"
                       y1="-23"
-                      x2={labelLayout.anchorX - position.x}
-                      y2={labelLayout.anchorY - position.y}
+                      x2={
+                        labelRotation === 0
+                          ? labelLayout.anchorX - position.x
+                          : labelLayout.x -
+                            position.x +
+                            labelLayout.width / 2
+                      }
+                      y2={
+                        labelRotation === 0
+                          ? labelLayout.anchorY - position.y
+                          : labelLayout.y -
+                            position.y +
+                            labelLayout.height / 2
+                      }
                     />
                   )}
                   <g
@@ -2751,7 +3113,11 @@ export function TurkeyMap({
                         resizingMarkerLabel?.markerId === marker.id
                           ? "is-resizing"
                           : "",
+                        rotatingMarkerLabel?.markerId === marker.id
+                          ? "is-rotating"
+                          : "",
                       ].join(" ")}
+                      transform={`rotate(${labelRotation} ${labelLayout.x - position.x + labelLayout.width / 2} ${labelLayout.y - position.y + labelLayout.height / 2})`}
                       style={
                         {
                           "--label-font-size": `${8.5 * labelScale}px`,
@@ -2828,6 +3194,7 @@ export function TurkeyMap({
                               position,
                               labelLayout,
                               labelScale,
+                              labelRotation,
                             )
                           }
                           onPointerMove={resizeMarkerLabel}
@@ -2861,6 +3228,67 @@ export function TurkeyMap({
                           />
                           <path
                             d={`M ${labelLayout.x - position.x + labelLayout.width - 6} ${labelLayout.y - position.y + labelLayout.height - 2} L ${labelLayout.x - position.x + labelLayout.width - 2} ${labelLayout.y - position.y + labelLayout.height - 6} M ${labelLayout.x - position.x + labelLayout.width - 3} ${labelLayout.y - position.y + labelLayout.height - 2} L ${labelLayout.x - position.x + labelLayout.width - 2} ${labelLayout.y - position.y + labelLayout.height - 3}`}
+                          />
+                        </g>
+                      )}
+                      {labelInteractive && (
+                        <g
+                          className="map-label-rotate-handle"
+                          onDoubleClick={(event) =>
+                            resetMarkerLabelRotation(event, marker)
+                          }
+                          onPointerDown={(event) =>
+                            startMarkerLabelRotation(
+                              event,
+                              marker,
+                              position,
+                              labelLayout,
+                              labelRotation,
+                            )
+                          }
+                          onPointerMove={rotateMarkerLabel}
+                          onPointerUp={(event) =>
+                            finishMarkerLabelRotation(event)
+                          }
+                          onPointerCancel={(event) =>
+                            finishMarkerLabelRotation(event, true)
+                          }
+                        >
+                          <title>
+                            Sürükleyerek döndür · Çift tıklayarak düz konuma
+                            döndür
+                          </title>
+                          <line
+                            x1={
+                              labelLayout.x -
+                              position.x +
+                              labelLayout.width / 2
+                            }
+                            y1={labelLayout.y - position.y}
+                            x2={
+                              labelLayout.x -
+                              position.x +
+                              labelLayout.width / 2
+                            }
+                            y2={
+                              labelLayout.y -
+                              position.y -
+                              LABEL_ROTATE_HANDLE_DISTANCE +
+                              5
+                            }
+                          />
+                          <circle
+                            cx={
+                              labelLayout.x -
+                              position.x +
+                              labelLayout.width / 2
+                            }
+                            cy={
+                              labelLayout.y -
+                              position.y -
+                              LABEL_ROTATE_HANDLE_DISTANCE
+                            }
+                            r="5"
                           />
                         </g>
                       )}

@@ -181,6 +181,7 @@ export function ProvinceEditor({
         items: cleanItems,
         labelOffset: record?.labelOffset,
         labelScale: record?.labelScale,
+        labelRotation: record?.labelRotation,
         updatedAt: new Date().toISOString(),
       });
       setItems(cleanItems.length ? cleanItems : [emptyItem()]);

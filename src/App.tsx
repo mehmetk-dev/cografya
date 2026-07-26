@@ -256,6 +256,7 @@ async function refreshReadySetContent(set: ReadyStudySet, mapId: string) {
       id: current?.id ?? expected.id,
       labelOffset: current?.labelOffset,
       labelScale: current?.labelScale,
+      labelRotation: current?.labelRotation,
     };
   });
 

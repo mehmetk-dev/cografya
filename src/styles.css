@@ -1942,6 +1942,10 @@ body.map-fullscreen-open {
   cursor: nwse-resize;
 }
 
+.map-annotation__label--interactive.is-rotating {
+  cursor: grabbing;
+}
+
 .map-annotation__label--interactive:hover rect,
 .map-annotation__label--interactive.is-moving rect {
   stroke: #173f36;
@@ -2072,6 +2076,12 @@ body.map-fullscreen-open {
   pointer-events: auto !important;
 }
 
+.map-marker__label--interactive.is-rotating {
+  cursor: grabbing;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
 .map-marker__label--interactive:hover rect:first-of-type,
 .map-marker__label--interactive.is-moving rect:first-of-type {
   stroke: #173f36;
@@ -2147,6 +2157,30 @@ body.map-fullscreen-open {
   stroke: #315e52;
   stroke-width: 0.9;
   pointer-events: none;
+}
+
+.map-label-rotate-handle {
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.map-label-rotate-handle line {
+  stroke: #315e52;
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+.map-label-rotate-handle circle {
+  fill: #fffdf8;
+  stroke: #315e52;
+  stroke-width: 1.2;
+}
+
+.map-label-rotate-handle:hover circle,
+.is-rotating .map-label-rotate-handle circle {
+  fill: #315e52;
+  stroke: #fffdf8;
 }
 
 .drawing-layer {
