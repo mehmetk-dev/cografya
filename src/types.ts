@@ -99,6 +99,7 @@ export type MapDrawing = {
   tool: DrawingTool;
   color: string;
   size?: number;
+  rotation?: number;
   points: MapPoint[];
   text?: string;
   createdAt: string;

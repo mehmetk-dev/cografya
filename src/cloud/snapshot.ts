@@ -98,6 +98,7 @@ const mapDrawingSchema = z.object({
   tool: z.enum(["pen", "arrow", "circle", "text"]),
   color: z.string(),
   size: z.number().min(1).max(3).optional(),
+  rotation: z.number().min(-180).max(180).optional(),
   points: z.array(mapPointSchema).min(1),
   text: z.string().optional(),
   createdAt: isoDateSchema,

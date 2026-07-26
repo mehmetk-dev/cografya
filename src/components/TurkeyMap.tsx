@@ -116,6 +116,27 @@ type DrawingGesture =
       points: MapPoint[];
     };
 
+type DrawingTextResizeGesture = {
+  pointerId: number;
+  original: MapDrawing;
+  current: MapDrawing;
+  start: MapPoint;
+  bounds: Pick<LabelLayout, "x" | "y" | "width" | "height">;
+  initialSize: number;
+  rotation: number;
+  moved: boolean;
+};
+
+type DrawingTextRotateGesture = {
+  pointerId: number;
+  original: MapDrawing;
+  current: MapDrawing;
+  center: Point;
+  startAngle: number;
+  initialRotation: number;
+  moved: boolean;
+};
+
 type MarkerLabelGesture = {
   pointerId: number;
   marker: MapMarker;
@@ -422,7 +443,9 @@ function normalizeDrawingSize(size?: number) {
   );
 }
 
-function getTextBounds(drawing: MapDrawing) {
+function getTextBounds(
+  drawing: Pick<MapDrawing, "points" | "size" | "text">,
+) {
   const origin = drawing.points[0];
   const size = normalizeDrawingSize(drawing.size);
   const width = Math.max(18 * size, (drawing.text?.length ?? 1) * 11 * size);
@@ -434,6 +457,50 @@ function getTextBounds(drawing: MapDrawing) {
   };
 }
 
+function rotatePointAround(
+  point: Point,
+  center: Point,
+  rotation: number,
+) {
+  const radians = (rotation * Math.PI) / 180;
+  const deltaX = point.x - center.x;
+  const deltaY = point.y - center.y;
+  return {
+    x:
+      center.x +
+      deltaX * Math.cos(radians) -
+      deltaY * Math.sin(radians),
+    y:
+      center.y +
+      deltaX * Math.sin(radians) +
+      deltaY * Math.cos(radians),
+  };
+}
+
+function rotatedTextBounds(drawing: MapDrawing) {
+  const bounds = getTextBounds(drawing);
+  const rotation = normalizeLabelRotation(drawing.rotation);
+  if (rotation === 0) return bounds;
+  const center = {
+    x: bounds.x + bounds.width / 2,
+    y: bounds.y + bounds.height / 2,
+  };
+  const corners = [
+    { x: bounds.x, y: bounds.y },
+    { x: bounds.x + bounds.width, y: bounds.y },
+    { x: bounds.x + bounds.width, y: bounds.y + bounds.height },
+    { x: bounds.x, y: bounds.y + bounds.height },
+  ].map((point) => rotatePointAround(point, center, rotation));
+  const xs = corners.map((point) => point.x);
+  const ys = corners.map((point) => point.y);
+  return {
+    x: Math.min(...xs),
+    y: Math.min(...ys),
+    width: Math.max(...xs) - Math.min(...xs),
+    height: Math.max(...ys) - Math.min(...ys),
+  };
+}
+
 function drawingHitDistance(drawing: MapDrawing, point: MapPoint) {
   if (drawing.points.length === 0) return Number.POSITIVE_INFINITY;
   const first = drawing.points[0];
@@ -441,10 +508,19 @@ function drawingHitDistance(drawing: MapDrawing, point: MapPoint) {
 
   if (drawing.tool === "text") {
     const bounds = getTextBounds(drawing);
-    return point.x >= bounds.x &&
-      point.x <= bounds.x + bounds.width &&
-      point.y >= bounds.y &&
-      point.y <= bounds.y + bounds.height
+    const center = {
+      x: bounds.x + bounds.width / 2,
+      y: bounds.y + bounds.height / 2,
+    };
+    const localPoint = rotatePointAround(
+      point,
+      center,
+      -normalizeLabelRotation(drawing.rotation),
+    );
+    return localPoint.x >= bounds.x &&
+      localPoint.x <= bounds.x + bounds.width &&
+      localPoint.y >= bounds.y &&
+      localPoint.y <= bounds.y + bounds.height
       ? 0
       : Number.POSITIVE_INFINITY;
   }
@@ -489,7 +565,7 @@ function translateDrawing(
 }
 
 function drawingBounds(drawing: MapDrawing) {
-  if (drawing.tool === "text") return getTextBounds(drawing);
+  if (drawing.tool === "text") return rotatedTextBounds(drawing);
   const first = drawing.points[0];
   const last = drawing.points[drawing.points.length - 1];
   if (drawing.tool === "circle") {
@@ -669,6 +745,10 @@ export function TurkeyMap({
   const mapStageRef = useRef<HTMLElement>(null);
   const panGestureRef = useRef<PanGesture | null>(null);
   const drawingGestureRef = useRef<DrawingGesture | null>(null);
+  const drawingTextResizeGestureRef =
+    useRef<DrawingTextResizeGesture | null>(null);
+  const drawingTextRotateGestureRef =
+    useRef<DrawingTextRotateGesture | null>(null);
   const markerLabelGestureRef = useRef<MarkerLabelGesture | null>(null);
   const markerLabelResizeGestureRef =
     useRef<MarkerLabelResizeGesture | null>(null);
@@ -1222,6 +1302,241 @@ export function TurkeyMap({
     point.y = event.clientY;
     const result = point.matrixTransform(matrix.inverse());
     return { x: result.x, y: result.y };
+  };
+
+  const startDrawingTextResize = (
+    event: React.PointerEvent<SVGGElement>,
+    drawing: MapDrawing,
+    bounds: Pick<LabelLayout, "x" | "y" | "width" | "height">,
+  ) => {
+    if (
+      drawingTool !== "select" ||
+      drawing.tool !== "text" ||
+      readOnly ||
+      !onUpdateDrawing ||
+      (event.pointerType === "mouse" && event.button !== 0)
+    ) {
+      return;
+    }
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const initialSize = normalizeDrawingSize(drawing.size);
+    drawingTextResizeGestureRef.current = {
+      pointerId: event.pointerId,
+      original: drawing,
+      current: drawing,
+      start: point,
+      bounds,
+      initialSize,
+      rotation: normalizeLabelRotation(drawing.rotation),
+      moved: false,
+    };
+    setMovingDrawing(drawing);
+  };
+
+  const resizeDrawingText = (event: React.PointerEvent<SVGGElement>) => {
+    const gesture = drawingTextResizeGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const deltaX = point.x - gesture.start.x;
+    const deltaY = point.y - gesture.start.y;
+    const radians = (gesture.rotation * Math.PI) / 180;
+    const localDeltaX =
+      deltaX * Math.cos(radians) + deltaY * Math.sin(radians);
+    const localDeltaY =
+      -deltaX * Math.sin(radians) + deltaY * Math.cos(radians);
+    const baseWidth = gesture.bounds.width / gesture.initialSize;
+    const baseHeight = gesture.bounds.height / gesture.initialSize;
+    const horizontalChange = localDeltaX / baseWidth;
+    const verticalChange = localDeltaY / baseHeight;
+    const dominantChange =
+      Math.abs(horizontalChange) >= Math.abs(verticalChange)
+        ? horizontalChange
+        : verticalChange;
+    const maximumForBounds = Math.min(
+      DRAWING_SIZE_MAX,
+      (BASE_VIEWBOX.x +
+        BASE_VIEWBOX.width -
+        gesture.bounds.x -
+        8) /
+        baseWidth,
+      (BASE_VIEWBOX.y +
+        BASE_VIEWBOX.height -
+        gesture.bounds.y -
+        8) /
+        baseHeight,
+    );
+    const size = Math.max(
+      DRAWING_SIZE_MIN,
+      Math.min(
+        maximumForBounds,
+        gesture.initialSize + dominantChange,
+      ),
+    );
+    const current = {
+      ...gesture.original,
+      size,
+      points: [
+        {
+          x: gesture.bounds.x + 3 * size,
+          y: gesture.bounds.y + 23 * size,
+        },
+      ],
+    };
+    gesture.current = current;
+    gesture.moved =
+      gesture.moved || Math.abs(size - gesture.initialSize) > 0.02;
+    setMovingDrawing(current);
+  };
+
+  const finishDrawingTextResize = (
+    event: React.PointerEvent<SVGGElement>,
+    cancelled = false,
+  ) => {
+    const gesture = drawingTextResizeGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!cancelled && gesture.moved) {
+      onUpdateDrawing?.({
+        ...gesture.current,
+        size: Number(normalizeDrawingSize(gesture.current.size).toFixed(2)),
+      });
+    }
+    drawingTextResizeGestureRef.current = null;
+    setMovingDrawing(null);
+  };
+
+  const resetDrawingTextSize = (
+    event: React.MouseEvent<SVGGElement>,
+    drawing: MapDrawing,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (drawing.tool !== "text" || !onUpdateDrawing) return;
+    const bounds = getTextBounds(drawing);
+    onUpdateDrawing({
+      ...drawing,
+      size: DRAWING_SIZE_MIN,
+      points: [
+        {
+          x: bounds.x + 3 * DRAWING_SIZE_MIN,
+          y: bounds.y + 23 * DRAWING_SIZE_MIN,
+        },
+      ],
+    });
+  };
+
+  const startDrawingTextRotation = (
+    event: React.PointerEvent<SVGGElement>,
+    drawing: MapDrawing,
+    bounds: Pick<LabelLayout, "x" | "y" | "width" | "height">,
+  ) => {
+    if (
+      drawingTool !== "select" ||
+      drawing.tool !== "text" ||
+      readOnly ||
+      !onUpdateDrawing ||
+      (event.pointerType === "mouse" && event.button !== 0)
+    ) {
+      return;
+    }
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const center = {
+      x: bounds.x + bounds.width / 2,
+      y: bounds.y + bounds.height / 2,
+    };
+    const rotation = normalizeLabelRotation(drawing.rotation);
+    drawingTextRotateGestureRef.current = {
+      pointerId: event.pointerId,
+      original: drawing,
+      current: drawing,
+      center,
+      startAngle: pointAngle(center, point),
+      initialRotation: rotation,
+      moved: false,
+    };
+    setMovingDrawing(drawing);
+  };
+
+  const rotateDrawingText = (event: React.PointerEvent<SVGGElement>) => {
+    const gesture = drawingTextRotateGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const angleChange = normalizeLabelRotation(
+      pointAngle(gesture.center, point) - gesture.startAngle,
+    );
+    const rotation =
+      Math.round(
+        normalizeLabelRotation(
+          gesture.initialRotation + angleChange,
+        ) / 5,
+      ) * 5;
+    const current = {
+      ...gesture.original,
+      rotation,
+    };
+    gesture.current = current;
+    gesture.moved =
+      gesture.moved ||
+      Math.abs(
+        normalizeLabelRotation(rotation - gesture.initialRotation),
+      ) >= 5;
+    setMovingDrawing(current);
+  };
+
+  const finishDrawingTextRotation = (
+    event: React.PointerEvent<SVGGElement>,
+    cancelled = false,
+  ) => {
+    const gesture = drawingTextRotateGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!cancelled && gesture.moved) {
+      onUpdateDrawing?.(gesture.current);
+    }
+    drawingTextRotateGestureRef.current = null;
+    setMovingDrawing(null);
+  };
+
+  const resetDrawingTextRotation = (
+    event: React.MouseEvent<SVGGElement>,
+    drawing: MapDrawing,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (drawing.tool !== "text" || !drawing.rotation || !onUpdateDrawing) {
+      return;
+    }
+    const resetDrawing = { ...drawing };
+    delete resetDrawing.rotation;
+    onUpdateDrawing(resetDrawing);
   };
 
   const startMarkerLabelMove = (
@@ -2022,7 +2337,7 @@ export function TurkeyMap({
   const renderDrawing = (
     drawing: Pick<
       MapDrawing,
-      "id" | "tool" | "color" | "size" | "points" | "text"
+      "id" | "tool" | "color" | "size" | "rotation" | "points" | "text"
     >,
     draft = false,
   ) => {
@@ -2081,6 +2396,8 @@ export function TurkeyMap({
         </g>
       );
     }
+    const bounds = getTextBounds(drawing);
+    const rotation = normalizeLabelRotation(drawing.rotation);
     return (
       <text
         key={drawing.id}
@@ -2088,6 +2405,11 @@ export function TurkeyMap({
         x={first.x}
         y={first.y}
         fill={drawing.color}
+        transform={
+          rotation === 0
+            ? undefined
+            : `rotate(${rotation} ${bounds.x + bounds.width / 2} ${bounds.y + bounds.height / 2})`
+        }
         style={{
           fontSize:
             DEFAULT_DRAWING_TEXT_SIZE * normalizeDrawingSize(drawing.size),
@@ -2108,7 +2430,9 @@ export function TurkeyMap({
     ? displayedDrawings.find((drawing) => drawing.id === selectedDrawingId)
     : undefined;
   const selectedDrawingBounds = selectedDrawing
-    ? drawingBounds(selectedDrawing)
+    ? selectedDrawing.tool === "text"
+      ? getTextBounds(selectedDrawing)
+      : drawingBounds(selectedDrawing)
     : undefined;
 
   return (
@@ -2614,18 +2938,136 @@ export function TurkeyMap({
             </g>
           )}
 
-          <g className="drawing-layer" aria-hidden="true">
+          <g className="drawing-layer">
             {displayedDrawings.map((drawing) => renderDrawing(drawing))}
-            {selectedDrawingBounds && (
-              <rect
-                className="drawing-selection"
-                x={selectedDrawingBounds.x - 8}
-                y={selectedDrawingBounds.y - 8}
-                width={Math.max(16, selectedDrawingBounds.width + 16)}
-                height={Math.max(16, selectedDrawingBounds.height + 16)}
-                rx="7"
-              />
-            )}
+            {selectedDrawingBounds &&
+              (selectedDrawing?.tool === "text" ? (
+                <g
+                  className="drawing-text-controls"
+                  transform={`rotate(${normalizeLabelRotation(selectedDrawing.rotation)} ${selectedDrawingBounds.x + selectedDrawingBounds.width / 2} ${selectedDrawingBounds.y + selectedDrawingBounds.height / 2})`}
+                >
+                  <rect
+                    className="drawing-selection"
+                    x={selectedDrawingBounds.x - 8}
+                    y={selectedDrawingBounds.y - 8}
+                    width={Math.max(
+                      16,
+                      selectedDrawingBounds.width + 16,
+                    )}
+                    height={Math.max(
+                      16,
+                      selectedDrawingBounds.height + 16,
+                    )}
+                    rx="7"
+                  />
+                  <g
+                    className="map-label-resize-handle"
+                    onDoubleClick={(event) =>
+                      resetDrawingTextSize(event, selectedDrawing)
+                    }
+                    onPointerDown={(event) =>
+                      startDrawingTextResize(
+                        event,
+                        selectedDrawing,
+                        selectedDrawingBounds,
+                      )
+                    }
+                    onPointerMove={resizeDrawingText}
+                    onPointerUp={(event) =>
+                      finishDrawingTextResize(event)
+                    }
+                    onPointerCancel={(event) =>
+                      finishDrawingTextResize(event, true)
+                    }
+                  >
+                    <title>
+                      Köşeyi çekerek boyutlandır · Çift tıklayarak normal
+                      boyuta döndür
+                    </title>
+                    <rect
+                      x={
+                        selectedDrawingBounds.x +
+                        selectedDrawingBounds.width
+                      }
+                      y={
+                        selectedDrawingBounds.y +
+                        selectedDrawingBounds.height
+                      }
+                      width={LABEL_RESIZE_HANDLE_SIZE}
+                      height={LABEL_RESIZE_HANDLE_SIZE}
+                      rx="2"
+                    />
+                    <path
+                      d={`M ${selectedDrawingBounds.x + selectedDrawingBounds.width + 2} ${selectedDrawingBounds.y + selectedDrawingBounds.height + 6} L ${selectedDrawingBounds.x + selectedDrawingBounds.width + 6} ${selectedDrawingBounds.y + selectedDrawingBounds.height + 2} M ${selectedDrawingBounds.x + selectedDrawingBounds.width + 5} ${selectedDrawingBounds.y + selectedDrawingBounds.height + 6} L ${selectedDrawingBounds.x + selectedDrawingBounds.width + 6} ${selectedDrawingBounds.y + selectedDrawingBounds.height + 5}`}
+                    />
+                  </g>
+                  <g
+                    className="map-label-rotate-handle"
+                    onDoubleClick={(event) =>
+                      resetDrawingTextRotation(event, selectedDrawing)
+                    }
+                    onPointerDown={(event) =>
+                      startDrawingTextRotation(
+                        event,
+                        selectedDrawing,
+                        selectedDrawingBounds,
+                      )
+                    }
+                    onPointerMove={rotateDrawingText}
+                    onPointerUp={(event) =>
+                      finishDrawingTextRotation(event)
+                    }
+                    onPointerCancel={(event) =>
+                      finishDrawingTextRotation(event, true)
+                    }
+                  >
+                    <title>
+                      Sürükleyerek döndür · Çift tıklayarak düz konuma
+                      döndür
+                    </title>
+                    <line
+                      x1={
+                        selectedDrawingBounds.x +
+                        selectedDrawingBounds.width / 2
+                      }
+                      y1={selectedDrawingBounds.y - 8}
+                      x2={
+                        selectedDrawingBounds.x +
+                        selectedDrawingBounds.width / 2
+                      }
+                      y2={
+                        selectedDrawingBounds.y -
+                        LABEL_ROTATE_HANDLE_DISTANCE -
+                        3
+                      }
+                    />
+                    <circle
+                      cx={
+                        selectedDrawingBounds.x +
+                        selectedDrawingBounds.width / 2
+                      }
+                      cy={
+                        selectedDrawingBounds.y -
+                        LABEL_ROTATE_HANDLE_DISTANCE -
+                        8
+                      }
+                      r="5"
+                    />
+                  </g>
+                </g>
+              ) : (
+                <rect
+                  className="drawing-selection"
+                  x={selectedDrawingBounds.x - 8}
+                  y={selectedDrawingBounds.y - 8}
+                  width={Math.max(16, selectedDrawingBounds.width + 16)}
+                  height={Math.max(
+                    16,
+                    selectedDrawingBounds.height + 16,
+                  )}
+                  rx="7"
+                />
+              ))}
             {isDrawingTool(drawingTool) &&
               draftDrawing.length > 0 &&
               renderDrawing(
