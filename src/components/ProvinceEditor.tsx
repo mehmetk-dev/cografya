@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Check,
+  ChevronDown,
   ChevronRight,
   Crosshair,
   LocateFixed,
@@ -35,6 +36,7 @@ type ProvinceEditorProps = {
   onClose: () => void;
   onSave: (record: ProvinceRecord) => Promise<void>;
   onDelete: (record: ProvinceRecord) => Promise<void>;
+  onColorPreview: (color: string) => void;
   markers: MapMarker[];
   placementActive: boolean;
   onStartPlacement: (draft: MarkerDraft) => void;
@@ -72,6 +74,7 @@ export function ProvinceEditor({
   onClose,
   onSave,
   onDelete,
+  onColorPreview,
   markers,
   placementActive,
   onStartPlacement,
@@ -156,7 +159,14 @@ export function ProvinceEditor({
       .map((item) => ({ ...item, text: item.text.trim() }))
       .filter((item) => item.text);
 
-    if (!title.trim() && !note.trim() && cleanItems.length === 0) return;
+    if (
+      !title.trim() &&
+      !note.trim() &&
+      cleanItems.length === 0 &&
+      color === themeColor
+    ) {
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -294,56 +304,60 @@ export function ProvinceEditor({
           <small className="character-count">{note.length}/800</small>
         </label>
 
-        <section className="marker-editor">
-          <div className="marker-editor__heading">
+        <details className="marker-editor">
+          <summary className="marker-editor__heading">
             <div>
-              <span>Harita işaretleri</span>
-              <small>İlin içinde tam konuma yerleştir</small>
+              <span>Harita içerikleri</span>
+              <small>İşaretleri eklemek veya düzenlemek için aç</small>
             </div>
-            <span className="marker-count">{markers.length}</span>
-          </div>
+            <span className="marker-editor__meta">
+              <span className="marker-count">{markers.length}</span>
+              <ChevronDown size={16} />
+            </span>
+          </summary>
 
-          {markers.length > 0 && (
-            <div className="saved-markers">
-              {markers.map((marker) => {
-                const visual = getMarkerVisual(marker);
-                return (
-                  <div className="saved-marker" key={marker.id}>
-                    <i style={{ backgroundColor: marker.color }}>
-                      <CatalogIcon name={visual.icon} size={14} color="#fff" />
-                    </i>
-                    <div>
-                      <strong>{marker.label}</strong>
-                      <small>
-                        {visual.parentLabel} · {visual.label}
-                      </small>
+          <div className="marker-editor__content">
+            {markers.length > 0 && (
+              <div className="saved-markers">
+                {markers.map((marker) => {
+                  const visual = getMarkerVisual(marker);
+                  return (
+                    <div className="saved-marker" key={marker.id}>
+                      <i style={{ backgroundColor: marker.color }}>
+                        <CatalogIcon name={visual.icon} size={14} color="#fff" />
+                      </i>
+                      <div>
+                        <strong>{marker.label}</strong>
+                        <small>
+                          {visual.parentLabel} · {visual.label}
+                        </small>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label={`${marker.label} işaretini sil`}
+                        onClick={() => onDeleteMarker(marker)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      aria-label={`${marker.label} işaretini sil`}
-                      onClick={() => onDeleteMarker(marker)}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
 
-          <div className="marker-builder">
-            <label>
-              <span>İşaret adı</span>
-              <input
-                value={markerLabel}
-                maxLength={60}
-                placeholder="Örn. Ağrı Dağı"
-                onChange={(event) => {
-                  setMarkerLabel(event.target.value);
-                  setMarkerError("");
-                }}
-              />
-            </label>
+            <div className="marker-builder">
+              <label>
+                <span>İşaret adı</span>
+                <input
+                  value={markerLabel}
+                  maxLength={60}
+                  placeholder="Örn. Ağrı Dağı"
+                  onChange={(event) => {
+                    setMarkerLabel(event.target.value);
+                    setMarkerError("");
+                  }}
+                />
+              </label>
 
             <label>
               <span>Kısa açıklama <small>(isteğe bağlı)</small></span>
@@ -516,11 +530,12 @@ export function ProvinceEditor({
                 Şimdi haritada {city.name} sınırları içinde gerçek konuma dokun.
               </div>
             )}
+            </div>
           </div>
-        </section>
+        </details>
 
         <fieldset className="color-field">
-          <legend>Harita rengi</legend>
+          <legend>Seçili ilin rengi</legend>
           <div className="color-options">
             {["#e9a23b", "#d46a4c", "#558c79", "#4778a8", "#8a6ead"].map(
               (option) => (
@@ -533,6 +548,7 @@ export function ProvinceEditor({
                   style={{ backgroundColor: option }}
                   onClick={() => {
                     setColor(option);
+                    onColorPreview(option);
                     setSaved(false);
                   }}
                 />

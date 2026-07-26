@@ -50,6 +50,10 @@ type TurkeyMapProps = {
   onPlaceMarker?: (city: City, point: Point) => void;
   onPlacementMismatch?: (city: City) => void;
   matchingProvinceCodes?: Set<number> | null;
+  provinceColorPreview?: {
+    provinceCode: number;
+    color: string;
+  } | null;
   drawingTool?: DrawingMode | null;
   drawingColor?: string;
   drawingSize?: number;
@@ -492,6 +496,7 @@ export function TurkeyMap({
   onPlaceMarker,
   onPlacementMismatch,
   matchingProvinceCodes = null,
+  provinceColorPreview = null,
   drawingTool = null,
   drawingColor = "#d05f64",
   drawingSize = 1,
@@ -1291,6 +1296,10 @@ export function TurkeyMap({
             {cities.map((city) => {
               const record = recordsByCode.get(city.plateNumber);
               const isSelected = selectedCode === city.plateNumber;
+              const previewColor =
+                provinceColorPreview?.provinceCode === city.plateNumber
+                  ? provinceColorPreview.color
+                  : undefined;
 
               return (
                 <g
@@ -1320,7 +1329,8 @@ export function TurkeyMap({
                   }}
                   style={
                     {
-                      "--record-color": record?.color || themeColor,
+                      "--record-color":
+                        previewColor || record?.color || themeColor,
                       "--theme-color": themeColor,
                     } as React.CSSProperties
                   }

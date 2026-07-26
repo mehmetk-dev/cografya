@@ -1506,7 +1506,7 @@ select:focus-visible,
 }
 
 .province--selected path {
-  fill: var(--theme-color);
+  fill: var(--record-color);
   stroke: #173e36;
   stroke-width: 2.6;
   filter: drop-shadow(0 2px 2px rgba(15, 50, 42, 0.25));
@@ -4174,6 +4174,7 @@ a.ready-source-badge:hover {
 }
 
 .marker-editor {
+  order: 1;
   padding-top: 17px;
   border-top: 1px solid #e1dbd0;
 }
@@ -4183,6 +4184,12 @@ a.ready-source-badge:hover {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 10px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.marker-editor__heading::-webkit-details-marker {
+  display: none;
 }
 
 .marker-editor__heading > div {
@@ -4201,6 +4208,25 @@ a.ready-source-badge:hover {
   margin-top: 3px;
   color: #9ba29e;
   font-size: 8px;
+}
+
+.marker-editor__meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #7d8883;
+}
+
+.marker-editor__meta > svg {
+  transition: transform 160ms ease;
+}
+
+.marker-editor[open] .marker-editor__meta > svg {
+  transform: rotate(180deg);
+}
+
+.marker-editor__content {
+  padding-top: 2px;
 }
 
 .marker-count {
@@ -4576,6 +4602,7 @@ a.ready-source-badge:hover {
 }
 
 .form-actions {
+  order: 2;
   display: flex;
   align-items: center;
   justify-content: flex-end;

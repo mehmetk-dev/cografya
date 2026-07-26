@@ -293,6 +293,10 @@ export default function App() {
     pen: 1,
     text: 1,
   });
+  const [provinceColorPreview, setProvinceColorPreview] = useState<{
+    provinceCode: number;
+    color: string;
+  } | null>(null);
   const [quizOpen, setQuizOpen] = useState(false);
   const [quizMode, setQuizMode] = useState<QuizMode>("standard");
   const [statsOpen, setStatsOpen] = useState(false);
@@ -312,6 +316,10 @@ export default function App() {
   const exportPosterRef = useRef<HTMLDivElement>(null);
   const mobileActionsRef = useRef<HTMLDivElement>(null);
   const pendingMapActivationRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    setProvinceColorPreview(null);
+  }, [activeMapId, selectedCity?.plateNumber]);
 
   const activeMap = maps?.find((map) => map.id === activeMapId);
   const activeReadySet = getReadySet(activeMap?.sourceSetId);
@@ -755,6 +763,7 @@ export default function App() {
     );
     if (!approved) return;
     await db.provinceRecords.delete(record.id);
+    setProvinceColorPreview(null);
     setToast(`${record.provinceName} notları silindi`);
   };
 
@@ -1476,6 +1485,7 @@ export default function App() {
             }
             readOnly={Boolean(activeReadySet)}
             matchingProvinceCodes={matchingProvinceCodes}
+            provinceColorPreview={provinceColorPreview}
             drawingTool={drawingTool}
             drawingColor={drawingColor}
             drawingSize={
@@ -1546,6 +1556,13 @@ export default function App() {
               }}
               onSave={saveProvince}
               onDelete={deleteProvince}
+              onColorPreview={(color) => {
+                if (!selectedCity) return;
+                setProvinceColorPreview({
+                  provinceCode: selectedCity.plateNumber,
+                  color,
+                });
+              }}
               onStartPlacement={(draft) => {
                 if (!selectedCity) return;
                 setPendingMarker({
