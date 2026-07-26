@@ -135,6 +135,43 @@ function shortMarkerLabel(label: string) {
   return label.length > 18 ? `${label.slice(0, 17)}…` : label;
 }
 
+function wrapManualNoteLabel(label: string, maxLineLength = 34) {
+  const lines: string[] = [];
+  let currentLine = "";
+
+  label
+    .trim()
+    .split(/\s+/)
+    .forEach((word) => {
+      if (word.length > maxLineLength) {
+        if (currentLine) {
+          lines.push(currentLine);
+          currentLine = "";
+        }
+        for (let index = 0; index < word.length; index += maxLineLength) {
+          const part = word.slice(index, index + maxLineLength);
+          if (part.length === maxLineLength) {
+            lines.push(part);
+          } else {
+            currentLine = part;
+          }
+        }
+        return;
+      }
+
+      const candidate = currentLine ? `${currentLine} ${word}` : word;
+      if (candidate.length <= maxLineLength) {
+        currentLine = candidate;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    });
+
+  if (currentLine) lines.push(currentLine);
+  return lines.length > 0 ? lines : [label];
+}
+
 function overlapArea(
   left: Pick<LabelLayout, "x" | "y" | "width" | "height">,
   right: Pick<LabelLayout, "x" | "y" | "width" | "height">,
@@ -1497,9 +1534,20 @@ export function TurkeyMap({
                 const label = (record.items[0]?.text || record.title).trim();
                 if (!center || !label) return null;
 
-                const shortLabel =
-                  label.length > 13 ? `${label.slice(0, 12)}…` : label;
-                const width = Math.max(42, shortLabel.length * 6.5 + 18);
+                const labelLines = wrapManualNoteLabel(label);
+                const longestLine = Math.max(
+                  ...labelLines.map((line) => line.length),
+                );
+                const width = Math.max(42, longestLine * 6.5 + 18);
+                const height = 12 + labelLines.length * 10;
+                const labelCenterX = Math.min(
+                  BASE_VIEWBOX.x + BASE_VIEWBOX.width - width / 2 - 8,
+                  Math.max(
+                    BASE_VIEWBOX.x + width / 2 + 8,
+                    center.x,
+                  ),
+                );
+                const localLabelX = labelCenterX - center.x;
 
                 return (
                   <g
@@ -1508,15 +1556,30 @@ export function TurkeyMap({
                     transform={`translate(${center.x} ${center.y})`}
                   >
                     <circle r="4.5" fill={record.color || themeColor} />
-                    <line y1="4" y2="13" />
+                    <line
+                      x1="0"
+                      y1="4"
+                      x2={localLabelX}
+                      y2="13"
+                    />
                     <rect
-                      x={-width / 2}
+                      x={localLabelX - width / 2}
                       y="12"
                       width={width}
-                      height="22"
+                      height={height}
                       rx="7"
                     />
-                    <text y="27">{shortLabel}</text>
+                    <text x={localLabelX} y="27">
+                      {labelLines.map((line, index) => (
+                        <tspan
+                          key={`${line}-${index}`}
+                          x={localLabelX}
+                          dy={index === 0 ? 0 : 10}
+                        >
+                          {line}
+                        </tspan>
+                      ))}
+                    </text>
                   </g>
                 );
               })}
