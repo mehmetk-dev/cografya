@@ -514,6 +514,122 @@ select:focus-visible,
   scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
 }
 
+.map-folder-library {
+  display: flex;
+  max-height: 270px;
+  flex-direction: column;
+  gap: 7px;
+  padding: 1px 2px 3px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+.map-folder {
+  flex: 0 0 auto;
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 11px;
+  background: rgba(0, 24, 20, 0.1);
+}
+
+.map-folder--unfiled {
+  padding-top: 3px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.map-folder__header {
+  display: flex;
+  min-height: 31px;
+  align-items: center;
+  gap: 5px;
+}
+
+.map-folder__toggle,
+.map-folder__unfiled-title {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 6px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.map-folder__toggle {
+  text-align: left;
+  border: 0;
+  background: transparent;
+}
+
+.map-folder__toggle:hover {
+  color: #fff;
+}
+
+.map-folder__toggle > span,
+.map-folder__unfiled-title > span {
+  overflow: hidden;
+  flex: 1;
+  font-size: 10px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-folder__toggle small,
+.map-folder__unfiled-title small {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 8px;
+}
+
+.map-folder__toggle > svg:last-child {
+  color: rgba(255, 255, 255, 0.4);
+  transition: transform 150ms ease;
+}
+
+.map-folder__toggle > svg:last-child.is-open {
+  transform: rotate(180deg);
+}
+
+.map-folder__actions {
+  display: flex;
+  align-items: center;
+}
+
+.map-folder__actions button {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.38);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+}
+
+.map-folder__actions button:hover {
+  color: #efb65d;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.map-folder .map-list {
+  max-height: none;
+  padding: 3px 0 0;
+  overflow: visible;
+}
+
+.map-folder__empty {
+  margin: 2px 5px 5px;
+  padding: 9px;
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 8px;
+  text-align: center;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
 .ready-library {
   display: flex;
   min-height: 0;
@@ -722,11 +838,13 @@ select:focus-visible,
 
 .map-card__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   padding: 0 10px 9px 54px;
 }
 
-.map-card__actions button {
+.map-card__actions button,
+.map-card__folder-select {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -741,6 +859,30 @@ select:focus-visible,
   color: #f4bc66;
 }
 
+.map-card__folder-select {
+  width: 100%;
+  padding: 4px 0 5px;
+}
+
+.map-card__folder-select select {
+  min-width: 0;
+  flex: 1;
+  padding: 4px 5px;
+  color: rgba(248, 244, 233, 0.68);
+  font-size: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  outline: 0;
+  background: #19483e;
+}
+
+.map-library-create-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 8px 2px 0;
+}
+
 .new-map-button {
   display: flex;
   width: calc(100% - 4px);
@@ -749,7 +891,7 @@ select:focus-visible,
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin: 8px 2px 0;
+  margin: 0;
   padding: 11px 10px;
   color: #efb65d;
   font-size: 12px;
@@ -762,6 +904,66 @@ select:focus-visible,
 .new-map-button:hover {
   border-color: rgba(239, 182, 93, 0.62);
   background: rgba(239, 182, 93, 0.08);
+}
+
+.new-folder-button {
+  display: flex;
+  min-height: 43px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 7px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.new-folder-button:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.create-folder-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 2px 0;
+  padding: 8px;
+  color: #efb65d;
+  border: 1px solid rgba(239, 182, 93, 0.25);
+  border-radius: 10px;
+  background: rgba(239, 182, 93, 0.055);
+}
+
+.create-folder-card input {
+  min-width: 0;
+  flex: 1;
+  padding: 7px 8px;
+  color: #fff;
+  font-size: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  outline: 0;
+  background: rgba(0, 24, 20, 0.2);
+}
+
+.create-folder-card input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.create-folder-card button {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.7);
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .map-list::-webkit-scrollbar,
@@ -6753,6 +6955,11 @@ a.ready-source-badge:hover {
     grid-auto-columns: minmax(190px, 230px);
     grid-auto-flow: column;
     overflow-x: auto;
+  }
+
+  .map-folder-library {
+    max-height: none;
+    overflow: visible;
   }
 
   .ready-library {

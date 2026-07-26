@@ -24,6 +24,7 @@ function snapshot(
         updatedAt: "2026-07-26T10:00:00.000Z",
       },
     ],
+    mapFolders: [],
     provinceRecords: [],
     mapMarkers: [],
     mapDrawings: [],

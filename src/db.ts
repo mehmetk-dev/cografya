@@ -2,6 +2,7 @@ import Dexie, { type EntityTable } from "dexie";
 import type {
   DailyProgress,
   MapDrawing,
+  MapFolder,
   MapMarker,
   ProvinceRecord,
   QuizMistake,
@@ -12,6 +13,7 @@ import { createId } from "./id";
 
 class GeographyDatabase extends Dexie {
   studyMaps!: EntityTable<StudyMap, "id">;
+  mapFolders!: EntityTable<MapFolder, "id">;
   provinceRecords!: EntityTable<ProvinceRecord, "id">;
   mapMarkers!: EntityTable<MapMarker, "id">;
   mapDrawings!: EntityTable<MapDrawing, "id">;
@@ -43,6 +45,17 @@ class GeographyDatabase extends Dexie {
 
     this.version(4).stores({
       studyMaps: "id, updatedAt",
+      provinceRecords: "id, mapId, [mapId+provinceCode], updatedAt",
+      mapMarkers: "id, mapId, provinceCode, [mapId+provinceCode], createdAt",
+      mapDrawings: "id, mapId, tool, createdAt",
+      quizStats: "id, mapId, updatedAt",
+      quizMistakes: "id, questionId, mapId, lastAnsweredAt",
+      dailyProgress: "date, completed, updatedAt",
+    });
+
+    this.version(5).stores({
+      studyMaps: "id, folderId, updatedAt",
+      mapFolders: "id, createdAt, updatedAt",
       provinceRecords: "id, mapId, [mapId+provinceCode], updatedAt",
       mapMarkers: "id, mapId, provinceCode, [mapId+provinceCode], createdAt",
       mapDrawings: "id, mapId, tool, createdAt",

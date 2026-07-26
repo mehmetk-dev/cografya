@@ -27,6 +27,7 @@ function writeFlashcardProgress(progress: FlashcardProgress) {
 export async function collectLocalSnapshot(): Promise<AtlasSnapshot> {
   const [
     studyMaps,
+    mapFolders,
     provinceRecords,
     mapMarkers,
     mapDrawings,
@@ -37,6 +38,7 @@ export async function collectLocalSnapshot(): Promise<AtlasSnapshot> {
     "r",
     [
       db.studyMaps,
+      db.mapFolders,
       db.provinceRecords,
       db.mapMarkers,
       db.mapDrawings,
@@ -47,6 +49,7 @@ export async function collectLocalSnapshot(): Promise<AtlasSnapshot> {
     () =>
       Promise.all([
         db.studyMaps.toArray(),
+        db.mapFolders.toArray(),
         db.provinceRecords.toArray(),
         db.mapMarkers.toArray(),
         db.mapDrawings.toArray(),
@@ -61,6 +64,7 @@ export async function collectLocalSnapshot(): Promise<AtlasSnapshot> {
     capturedAt: new Date().toISOString(),
     activeMapId: window.localStorage.getItem(ACTIVE_MAP_KEY),
     studyMaps,
+    mapFolders,
     provinceRecords,
     mapMarkers,
     mapDrawings,
@@ -76,6 +80,7 @@ export async function replaceLocalSnapshot(snapshot: AtlasSnapshot) {
     "rw",
     [
       db.studyMaps,
+      db.mapFolders,
       db.provinceRecords,
       db.mapMarkers,
       db.mapDrawings,
@@ -86,6 +91,7 @@ export async function replaceLocalSnapshot(snapshot: AtlasSnapshot) {
     async () => {
       await Promise.all([
         db.studyMaps.clear(),
+        db.mapFolders.clear(),
         db.provinceRecords.clear(),
         db.mapMarkers.clear(),
         db.mapDrawings.clear(),
@@ -95,6 +101,7 @@ export async function replaceLocalSnapshot(snapshot: AtlasSnapshot) {
       ]);
       await Promise.all([
         db.studyMaps.bulkPut(snapshot.studyMaps),
+        db.mapFolders.bulkPut(snapshot.mapFolders),
         db.provinceRecords.bulkPut(snapshot.provinceRecords),
         db.mapMarkers.bulkPut(snapshot.mapMarkers),
         db.mapDrawings.bulkPut(snapshot.mapDrawings),
@@ -121,6 +128,7 @@ export async function clearLocalWorkspace() {
     "rw",
     [
       db.studyMaps,
+      db.mapFolders,
       db.provinceRecords,
       db.mapMarkers,
       db.mapDrawings,
@@ -131,6 +139,7 @@ export async function clearLocalWorkspace() {
     () =>
       Promise.all([
         db.studyMaps.clear(),
+        db.mapFolders.clear(),
         db.provinceRecords.clear(),
         db.mapMarkers.clear(),
         db.mapDrawings.clear(),
@@ -149,6 +158,7 @@ export async function clearLocalWorkspace() {
 export function hasAtlasContent(snapshot: AtlasSnapshot) {
   return (
     snapshot.studyMaps.length > 0 ||
+    snapshot.mapFolders.length > 0 ||
     snapshot.provinceRecords.length > 0 ||
     snapshot.mapMarkers.length > 0 ||
     snapshot.mapDrawings.length > 0 ||

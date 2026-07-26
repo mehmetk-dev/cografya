@@ -1,11 +1,19 @@
 export type StudyMap = {
   id: string;
   sourceSetId?: string;
+  folderId?: string;
   name: string;
   description: string;
   themeColor: string;
   showLabels: boolean;
   hiddenMarkerKinds?: MarkerKind[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MapFolder = {
+  id: string;
+  name: string;
   createdAt: string;
   updatedAt: string;
 };

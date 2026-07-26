@@ -5,6 +5,10 @@ import {
   ChevronDown,
   CloudAlert,
   Copy,
+  Folder,
+  FolderOpen,
+  FolderPen,
+  FolderPlus,
   Layers3,
   LoaderCircle,
   LogOut,
@@ -17,16 +21,21 @@ import {
 import { useCloudAccount } from "../cloud/CloudAccountContext";
 import { READY_STUDY_SETS, type ReadyStudySet } from "../readySets";
 import { STUDY_NOTE_TOPICS } from "../studyNotes";
-import type { StudyMap } from "../types";
+import type { MapFolder, StudyMap } from "../types";
 import { CatalogIcon } from "./CatalogIcon";
 
 type MapSidebarProps = {
   maps: StudyMap[];
+  folders: MapFolder[];
   activeMapId: string | null;
   activeReadySetId?: string;
   recordCounts: Record<string, number>;
   onSelect: (mapId: string) => void;
   onCreate: (name: string, color: string) => Promise<void>;
+  onCreateFolder: (name: string) => Promise<void>;
+  onRenameFolder: (folder: MapFolder, name: string) => Promise<void>;
+  onDeleteFolder: (folder: MapFolder) => Promise<void>;
+  onMoveMap: (map: StudyMap, folderId: string | undefined) => Promise<void>;
   onDuplicate: (map: StudyMap) => Promise<void>;
   onDelete: (map: StudyMap) => Promise<void>;
   onOpenReadySet: (set: ReadyStudySet) => Promise<void>;
@@ -48,11 +57,16 @@ const MOBILE_SIDEBAR_QUERY = "(max-width: 940px)";
 
 export function MapSidebar({
   maps,
+  folders,
   activeMapId,
   activeReadySetId,
   recordCounts,
   onSelect,
   onCreate,
+  onCreateFolder,
+  onRenameFolder,
+  onDeleteFolder,
+  onMoveMap,
   onDuplicate,
   onDelete,
   onOpenReadySet,
@@ -60,6 +74,7 @@ export function MapSidebar({
 }: MapSidebarProps) {
   const cloudAccount = useCloudAccount();
   const [isCreating, setIsCreating] = useState(false);
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isMobileSidebar, setIsMobileSidebar] = useState(() =>
     window.matchMedia(MOBILE_SIDEBAR_QUERY).matches
   );
@@ -70,7 +85,11 @@ export function MapSidebar({
     () => !window.matchMedia(MOBILE_SIDEBAR_QUERY).matches,
   );
   const [name, setName] = useState("");
+  const [folderName, setFolderName] = useState("");
   const [color, setColor] = useState("#e9a23b");
+  const [collapsedFolderIds, setCollapsedFolderIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(MOBILE_SIDEBAR_QUERY);
@@ -102,6 +121,120 @@ export function MapSidebar({
     setName("");
     setColor("#e9a23b");
     setIsCreating(false);
+  };
+
+  const createFolder = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const cleanName = folderName.trim();
+    if (!cleanName) return;
+    await onCreateFolder(cleanName);
+    setFolderName("");
+    setIsCreatingFolder(false);
+  };
+
+  const toggleFolder = (folderId: string) => {
+    setCollapsedFolderIds((current) => {
+      const next = new Set(current);
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
+      }
+      return next;
+    });
+  };
+
+  const renameFolder = (folder: MapFolder) => {
+    const nextName = window.prompt("Klasörün yeni adı:", folder.name)?.trim();
+    if (!nextName || nextName === folder.name) return;
+    void onRenameFolder(folder, nextName);
+  };
+
+  const moveMap = (map: StudyMap, folderId: string | undefined) => {
+    if (folderId) {
+      setCollapsedFolderIds((current) => {
+        const next = new Set(current);
+        next.delete(folderId);
+        return next;
+      });
+    }
+    void onMoveMap(map, folderId);
+  };
+
+  const knownFolderIds = new Set(folders.map((folder) => folder.id));
+  const unfiledMaps = maps.filter(
+    (map) => !map.folderId || !knownFolderIds.has(map.folderId),
+  );
+
+  const renderMapCard = (map: StudyMap) => {
+    const active = map.id === activeMapId;
+    return (
+      <div
+        className={`map-card ${active ? "map-card--active" : ""}`}
+        key={map.id}
+        style={{ "--map-color": map.themeColor } as React.CSSProperties}
+      >
+        <button
+          className="map-card__main"
+          type="button"
+          onClick={() => onSelect(map.id)}
+          aria-current={active ? "page" : undefined}
+        >
+          <span className="map-card__icon">
+            {active ? <BookOpen size={18} /> : <Layers3 size={18} />}
+          </span>
+          <span className="map-card__copy">
+            <strong>{map.name}</strong>
+            <small>{recordCounts[map.id] ?? 0} ilde not</small>
+          </span>
+          {active && <Check className="map-card__check" size={16} />}
+        </button>
+
+        {active && (
+          <div className="map-card__actions">
+            <label className="map-card__folder-select">
+              <Folder size={13} />
+              <select
+                value={
+                  map.folderId && knownFolderIds.has(map.folderId)
+                    ? map.folderId
+                    : ""
+                }
+                aria-label={`${map.name} haritasının klasörü`}
+                onChange={(event) =>
+                  moveMap(map, event.target.value || undefined)
+                }
+              >
+                <option value="">Klasörsüz</option>
+                {folders.map((folder) => (
+                  <option key={folder.id} value={folder.id}>
+                    {folder.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={() => onDuplicate(map)}
+              title="Haritayı çoğalt"
+              aria-label={`${map.name} haritasını çoğalt`}
+            >
+              <Copy size={14} /> Çoğalt
+            </button>
+            {maps.length > 1 && (
+              <button
+                type="button"
+                onClick={() => onDelete(map)}
+                title="Haritayı sil"
+                aria-label={`${map.name} haritasını sil`}
+              >
+                <Trash2 size={14} /> Sil
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -157,62 +290,110 @@ export function MapSidebar({
       </button>
 
       <div id="my-maps-content" hidden={!isMapsSectionOpen}>
-        <div className="map-list">
-          {maps.map((map) => {
-            const active = map.id === activeMapId;
+        <div className="map-folder-library">
+          {folders.map((folder) => {
+            const folderMaps = maps.filter(
+              (map) => map.folderId === folder.id,
+            );
+            const collapsed = collapsedFolderIds.has(folder.id);
             return (
-              <div
-                className={`map-card ${active ? "map-card--active" : ""}`}
-                key={map.id}
-                style={{ "--map-color": map.themeColor } as React.CSSProperties}
-              >
-                <button
-                  className="map-card__main"
-                  type="button"
-                  onClick={() => onSelect(map.id)}
-                  aria-current={active ? "page" : undefined}
-                >
-                  <span className="map-card__icon">
-                    {active ? <BookOpen size={18} /> : <Layers3 size={18} />}
-                  </span>
-                  <span className="map-card__copy">
-                    <strong>{map.name}</strong>
-                    <small>
-                      {map.sourceSetId
-                        ? `Salt okunur · ${recordCounts[map.id] ?? 0} il`
-                        : `${recordCounts[map.id] ?? 0} ilde not`}
-                    </small>
-                  </span>
-                  {active && <Check className="map-card__check" size={16} />}
-                </button>
-
-                {active && (
-                  <div className="map-card__actions">
+              <section className="map-folder" key={folder.id}>
+                <header className="map-folder__header">
+                  <button
+                    className="map-folder__toggle"
+                    type="button"
+                    aria-expanded={!collapsed}
+                    onClick={() => toggleFolder(folder.id)}
+                  >
+                    {collapsed ? (
+                      <Folder size={15} />
+                    ) : (
+                      <FolderOpen size={15} />
+                    )}
+                    <span>{folder.name}</span>
+                    <small>{folderMaps.length}</small>
+                    <ChevronDown
+                      className={collapsed ? "" : "is-open"}
+                      size={14}
+                    />
+                  </button>
+                  <div className="map-folder__actions">
                     <button
                       type="button"
-                      onClick={() => onDuplicate(map)}
-                      title="Haritayı çoğalt"
-                      aria-label={`${map.name} haritasını çoğalt`}
+                      title="Klasörü yeniden adlandır"
+                      aria-label={`${folder.name} klasörünü yeniden adlandır`}
+                      onClick={() => renameFolder(folder)}
                     >
-                      <Copy size={14} />{" "}
-                      {map.sourceSetId ? "Kopyala ve düzenle" : "Çoğalt"}
+                      <FolderPen size={14} />
                     </button>
-                    {maps.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => onDelete(map)}
-                        title="Haritayı sil"
-                        aria-label={`${map.name} haritasını sil`}
-                      >
-                        <Trash2 size={14} /> Sil
-                      </button>
+                    <button
+                      type="button"
+                      title="Klasörü sil"
+                      aria-label={`${folder.name} klasörünü sil`}
+                      onClick={() => void onDeleteFolder(folder)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </header>
+                {!collapsed && (
+                  <div className="map-list map-list--folder">
+                    {folderMaps.length > 0 ? (
+                      folderMaps.map(renderMapCard)
+                    ) : (
+                      <p className="map-folder__empty">
+                        Bu klasörde henüz harita yok.
+                      </p>
                     )}
                   </div>
                 )}
-              </div>
+              </section>
             );
           })}
+
+          {(folders.length === 0 || unfiledMaps.length > 0) && (
+            <section className="map-folder map-folder--unfiled">
+              {folders.length > 0 && (
+                <header className="map-folder__header">
+                  <div className="map-folder__unfiled-title">
+                    <Layers3 size={15} />
+                    <span>Klasörsüz</span>
+                    <small>{unfiledMaps.length}</small>
+                  </div>
+                </header>
+              )}
+              <div className="map-list map-list--folder">
+                {unfiledMaps.map(renderMapCard)}
+              </div>
+            </section>
+          )}
         </div>
+
+        {isCreatingFolder && (
+          <form className="create-folder-card" onSubmit={createFolder}>
+            <FolderPlus size={17} />
+            <input
+              autoFocus
+              value={folderName}
+              maxLength={40}
+              placeholder="Klasör adı"
+              onChange={(event) => setFolderName(event.target.value)}
+            />
+            <button type="submit" aria-label="Klasörü oluştur">
+              <Check size={15} />
+            </button>
+            <button
+              type="button"
+              aria-label="Klasör oluşturmayı iptal et"
+              onClick={() => {
+                setFolderName("");
+                setIsCreatingFolder(false);
+              }}
+            >
+              <X size={15} />
+            </button>
+          </form>
+        )}
 
         {isCreating ? (
           <form className="create-map-card" onSubmit={create}>
@@ -253,15 +434,27 @@ export function MapSidebar({
               <Plus size={16} /> Haritayı oluştur
             </button>
           </form>
-        ) : (
-          <button
-            className="new-map-button"
-            type="button"
-            onClick={() => setIsCreating(true)}
-          >
-            <Plus size={18} />
-            Yeni çalışma haritası
-          </button>
+        ) : null}
+
+        {!isCreating && !isCreatingFolder && (
+          <div className="map-library-create-actions">
+            <button
+              className="new-map-button"
+              type="button"
+              onClick={() => setIsCreating(true)}
+            >
+              <Plus size={18} />
+              Yeni harita
+            </button>
+            <button
+              className="new-folder-button"
+              type="button"
+              onClick={() => setIsCreatingFolder(true)}
+            >
+              <FolderPlus size={17} />
+              Yeni klasör
+            </button>
+          </div>
         )}
       </div>
 

@@ -44,6 +44,7 @@ import type {
   DrawingMode,
   DrawingTool,
   MapDrawing,
+  MapFolder,
   MapMarker,
   MapBackup,
   MarkerDraft,
@@ -276,6 +277,9 @@ async function refreshReadySetContent(set: ReadyStudySet, mapId: string) {
 
 export default function App() {
   const maps = useLiveQuery(() => db.studyMaps.orderBy("updatedAt").reverse().toArray());
+  const mapFolders = useLiveQuery(() =>
+    db.mapFolders.orderBy("createdAt").toArray(),
+  );
   const allRecords = useLiveQuery(() => db.provinceRecords.toArray());
   const allMarkers = useLiveQuery(() => db.mapMarkers.toArray());
   const allDrawings = useLiveQuery(() => db.mapDrawings.toArray());
@@ -608,6 +612,65 @@ export default function App() {
     setPendingMarker(null);
     setDrawingTool(null);
     setToast(`“${name}” oluşturuldu`);
+  };
+
+  const createMapFolder = async (name: string) => {
+    const now = new Date().toISOString();
+    const folder: MapFolder = {
+      id: createId(),
+      name,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await db.mapFolders.add(folder);
+    setToast(`“${name}” klasörü oluşturuldu`);
+  };
+
+  const renameMapFolder = async (folder: MapFolder, name: string) => {
+    await db.mapFolders.update(folder.id, {
+      name,
+      updatedAt: new Date().toISOString(),
+    });
+    setToast(`Klasörün adı “${name}” oldu`);
+  };
+
+  const deleteMapFolder = async (folder: MapFolder) => {
+    const approved = window.confirm(
+      `“${folder.name}” klasörünü silmek istiyor musun? İçindeki haritalar silinmeyecek.`,
+    );
+    if (!approved) return;
+
+    const now = new Date().toISOString();
+    await db.transaction("rw", db.studyMaps, db.mapFolders, async () => {
+      await db.studyMaps
+        .where("folderId")
+        .equals(folder.id)
+        .modify((map) => {
+          delete map.folderId;
+          map.updatedAt = now;
+        });
+      await db.mapFolders.delete(folder.id);
+    });
+    setToast(`“${folder.name}” klasörü silindi; haritalar Klasörsüz alanına taşındı`);
+  };
+
+  const moveMapToFolder = async (
+    map: StudyMap,
+    folderId: string | undefined,
+  ) => {
+    const updatedMap = { ...map, updatedAt: new Date().toISOString() };
+    if (folderId) {
+      updatedMap.folderId = folderId;
+    } else {
+      delete updatedMap.folderId;
+    }
+    await db.studyMaps.put(updatedMap);
+    const folderName = mapFolders?.find((folder) => folder.id === folderId)?.name;
+    setToast(
+      folderName
+        ? `“${map.name}”, “${folderName}” klasörüne taşındı`
+        : `“${map.name}” Klasörsüz alanına taşındı`,
+    );
   };
 
   const duplicateMap = async (map: StudyMap) => {
@@ -1172,6 +1235,7 @@ export default function App() {
       const importedMap: StudyMap = {
         ...parsed.map,
         id: createId(),
+        folderId: undefined,
         name: `${parsed.map.name} — İçe aktarıldı`,
         createdAt: now,
         updatedAt: now,
@@ -1273,6 +1337,7 @@ export default function App() {
 
   if (
     !maps ||
+    !mapFolders ||
     !allRecords ||
     !allMarkers ||
     !allDrawings ||
@@ -1303,11 +1368,16 @@ export default function App() {
     <div className="app-shell">
       <MapSidebar
         maps={personalMaps}
+        folders={mapFolders}
         activeMapId={activeMapId}
         activeReadySetId={activeReadySet?.id}
         recordCounts={recordCounts}
         onSelect={selectMap}
         onCreate={createMap}
+        onCreateFolder={createMapFolder}
+        onRenameFolder={renameMapFolder}
+        onDeleteFolder={deleteMapFolder}
+        onMoveMap={moveMapToFolder}
         onDuplicate={duplicateMap}
         onDelete={deleteMap}
         onOpenReadySet={openReadySet}

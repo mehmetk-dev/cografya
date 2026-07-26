@@ -2,6 +2,7 @@ import { z } from "zod";
 import type {
   DailyProgress,
   MapDrawing,
+  MapFolder,
   MapMarker,
   ProvinceRecord,
   QuizMistake,
@@ -30,11 +31,18 @@ const mapPointSchema = z.object({
 const studyMapSchema = z.object({
   id: z.string().min(1),
   sourceSetId: z.string().optional(),
+  folderId: z.string().optional(),
   name: z.string(),
   description: z.string(),
   themeColor: z.string(),
   showLabels: z.boolean(),
   hiddenMarkerKinds: z.array(markerKindSchema).optional(),
+  createdAt: isoDateSchema,
+  updatedAt: isoDateSchema,
+});
+const mapFolderSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
 });
@@ -130,6 +138,7 @@ export const atlasSnapshotSchema = z.object({
   capturedAt: isoDateSchema,
   activeMapId: z.string().nullable(),
   studyMaps: z.array(studyMapSchema),
+  mapFolders: z.array(mapFolderSchema).default([]),
   provinceRecords: z.array(provinceRecordSchema),
   mapMarkers: z.array(mapMarkerSchema),
   mapDrawings: z.array(mapDrawingSchema),
@@ -144,6 +153,7 @@ export type AtlasSnapshot = {
   capturedAt: string;
   activeMapId: string | null;
   studyMaps: StudyMap[];
+  mapFolders: MapFolder[];
   provinceRecords: ProvinceRecord[];
   mapMarkers: MapMarker[];
   mapDrawings: MapDrawing[];
@@ -196,6 +206,12 @@ export function mergeAtlasSnapshots(
     studyMaps: mergeByKey(
       cloud.studyMaps,
       local.studyMaps,
+      (item) => item.id,
+      (item) => item.updatedAt,
+    ),
+    mapFolders: mergeByKey(
+      cloud.mapFolders,
+      local.mapFolders,
       (item) => item.id,
       (item) => item.updatedAt,
     ),
