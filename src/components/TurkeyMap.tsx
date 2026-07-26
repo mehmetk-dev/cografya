@@ -159,9 +159,11 @@ type WebkitFullscreenElement = HTMLElement & {
 };
 
 const BASE_VIEWBOX = {
-  x: 0,
+  // Türkiye sınırlarının iki yanında sürüklenebilir etiketler için kalıcı
+  // not cepleri bırakılır. Merkez 525'te sabit kaldığı için harita ortalanır.
+  x: -115,
   y: 80,
-  width: 1050,
+  width: 1280,
   height: 585,
 };
 
@@ -812,10 +814,20 @@ export function TurkeyMap({
       Pick<LabelLayout, "x" | "y" | "width" | "height">
     > = [
       // Lejant, çizim araçları ve yakınlaştırma düğmelerinin kapladığı alanlar.
-      { x: 4, y: 84, width: 142, height: 116 },
-      { x: 830, y: 84, width: 216, height: 58 },
-      { x: 4, y: 598, width: 150, height: 63 },
-      { x: 946, y: 598, width: 100, height: 63 },
+      { x: BASE_VIEWBOX.x + 4, y: 84, width: 142, height: 116 },
+      {
+        x: BASE_VIEWBOX.x + BASE_VIEWBOX.width - 220,
+        y: 84,
+        width: 216,
+        height: 58,
+      },
+      { x: BASE_VIEWBOX.x + 4, y: 598, width: 150, height: 63 },
+      {
+        x: BASE_VIEWBOX.x + BASE_VIEWBOX.width - 104,
+        y: 598,
+        width: 100,
+        height: 63,
+      },
     ];
     const pinBoxes = [...markerPositions.entries()].map(([id, position]) => ({
       id,
