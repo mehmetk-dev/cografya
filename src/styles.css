@@ -1919,7 +1919,7 @@ body.map-fullscreen-open {
 .map-annotation text {
   fill: #193d34;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  font-size: 9px;
+  font-size: var(--label-font-size, 9px);
   font-weight: 800;
   text-anchor: middle;
 }
@@ -1936,6 +1936,10 @@ body.map-fullscreen-open {
 
 .map-annotation__label--interactive.is-moving {
   cursor: grabbing;
+}
+
+.map-annotation__label--interactive.is-resizing {
+  cursor: nwse-resize;
 }
 
 .map-annotation__label--interactive:hover rect,
@@ -2062,6 +2066,12 @@ body.map-fullscreen-open {
   pointer-events: auto !important;
 }
 
+.map-marker__label--interactive.is-resizing {
+  cursor: nwse-resize;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
 .map-marker__label--interactive:hover rect:first-of-type,
 .map-marker__label--interactive.is-moving rect:first-of-type {
   stroke: #173f36;
@@ -2114,9 +2124,29 @@ body.map-fullscreen-open {
 .map-marker__label text {
   fill: #1e4037;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  font-size: 8.5px;
+  font-size: var(--label-font-size, 8.5px);
   font-weight: 800;
   text-anchor: middle;
+}
+
+.map-label-resize-handle {
+  cursor: nwse-resize;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.map-label-resize-handle rect {
+  fill: #fffdf8;
+  stroke: #315e52;
+  stroke-width: 1;
+  filter: none;
+}
+
+.map-label-resize-handle path {
+  fill: none;
+  stroke: #315e52;
+  stroke-width: 0.9;
+  pointer-events: none;
 }
 
 .drawing-layer {
@@ -7604,7 +7634,7 @@ a.ready-source-badge:hover {
   }
 
   .map-marker__label text {
-    font-size: 10.5px;
+    font-size: var(--label-font-size-mobile, 10.5px);
   }
 
   .map-marker__leader {

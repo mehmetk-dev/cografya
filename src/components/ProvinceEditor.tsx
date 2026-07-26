@@ -180,6 +180,7 @@ export function ProvinceEditor({
         color,
         items: cleanItems,
         labelOffset: record?.labelOffset,
+        labelScale: record?.labelScale,
         updatedAt: new Date().toISOString(),
       });
       setItems(cleanItems.length ? cleanItems : [emptyItem()]);

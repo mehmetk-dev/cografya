@@ -137,6 +137,19 @@ type MarkerMoveGesture = {
   moved: boolean;
 };
 
+type MarkerLabelResizeGesture = {
+  pointerId: number;
+  marker: MapMarker;
+  position: Point;
+  start: MapPoint;
+  offset: MapPoint;
+  baseWidth: number;
+  baseHeight: number;
+  initialScale: number;
+  currentScale: number;
+  moved: boolean;
+};
+
 type ProvinceLabelGesture = {
   pointerId: number;
   record: ProvinceRecord;
@@ -146,6 +159,19 @@ type ProvinceLabelGesture = {
   start: MapPoint;
   originalOffset: MapPoint;
   currentOffset: MapPoint;
+  moved: boolean;
+};
+
+type ProvinceLabelResizeGesture = {
+  pointerId: number;
+  record: ProvinceRecord;
+  center: Point;
+  start: MapPoint;
+  offset: MapPoint;
+  baseWidth: number;
+  baseHeight: number;
+  initialScale: number;
+  currentScale: number;
   moved: boolean;
 };
 
@@ -166,6 +192,52 @@ const BASE_VIEWBOX = {
   width: 1280,
   height: 585,
 };
+
+const LABEL_SCALE_MIN = 0.7;
+const LABEL_SCALE_MAX = 1.8;
+const LABEL_RESIZE_HANDLE_SIZE = 8;
+
+function normalizeLabelScale(value?: number) {
+  return Math.max(
+    LABEL_SCALE_MIN,
+    Math.min(LABEL_SCALE_MAX, value ?? 1),
+  );
+}
+
+function resizedLabelScale({
+  initialScale,
+  deltaX,
+  deltaY,
+  baseWidth,
+  baseHeight,
+  absoluteX,
+  absoluteY,
+}: {
+  initialScale: number;
+  deltaX: number;
+  deltaY: number;
+  baseWidth: number;
+  baseHeight: number;
+  absoluteX: number;
+  absoluteY: number;
+}) {
+  const horizontalChange = deltaX / baseWidth;
+  const verticalChange = deltaY / baseHeight;
+  const dominantChange =
+    Math.abs(horizontalChange) >= Math.abs(verticalChange)
+      ? horizontalChange
+      : verticalChange;
+  const maximumForBounds = Math.min(
+    LABEL_SCALE_MAX,
+    (BASE_VIEWBOX.x + BASE_VIEWBOX.width - absoluteX - 8) / baseWidth,
+    (BASE_VIEWBOX.y + BASE_VIEWBOX.height - absoluteY - 8) / baseHeight,
+  );
+
+  return Math.max(
+    LABEL_SCALE_MIN,
+    Math.min(maximumForBounds, initialScale + dominantChange),
+  );
+}
 
 const DENSE_MARKER_LABEL_THRESHOLD = 18;
 const DRAWING_HIT_RADIUS = 12;
@@ -564,8 +636,12 @@ export function TurkeyMap({
   const panGestureRef = useRef<PanGesture | null>(null);
   const drawingGestureRef = useRef<DrawingGesture | null>(null);
   const markerLabelGestureRef = useRef<MarkerLabelGesture | null>(null);
+  const markerLabelResizeGestureRef =
+    useRef<MarkerLabelResizeGesture | null>(null);
   const markerMoveGestureRef = useRef<MarkerMoveGesture | null>(null);
   const provinceLabelGestureRef = useRef<ProvinceLabelGesture | null>(null);
+  const provinceLabelResizeGestureRef =
+    useRef<ProvinceLabelResizeGesture | null>(null);
   const draftDrawingRef = useRef<MapPoint[]>([]);
   const suppressMapClickRef = useRef(false);
   const suppressMarkerClickRef = useRef(false);
@@ -587,6 +663,11 @@ export function TurkeyMap({
     markerId: string;
     offset: MapPoint;
   } | null>(null);
+  const [resizingMarkerLabel, setResizingMarkerLabel] = useState<{
+    markerId: string;
+    offset: MapPoint;
+    scale: number;
+  } | null>(null);
   const [movingMarkerPosition, setMovingMarkerPosition] = useState<{
     markerId: string;
     position: Point;
@@ -594,6 +675,11 @@ export function TurkeyMap({
   const [movingProvinceLabel, setMovingProvinceLabel] = useState<{
     recordId: string;
     offset: MapPoint;
+  } | null>(null);
+  const [resizingProvinceLabel, setResizingProvinceLabel] = useState<{
+    recordId: string;
+    offset: MapPoint;
+    scale: number;
   } | null>(null);
   const [nativeFullscreen, setNativeFullscreen] = useState(false);
   const [fallbackFullscreen, setFallbackFullscreen] = useState(false);
@@ -838,9 +924,13 @@ export function TurkeyMap({
     }));
     const orderedMarkers = [...markers].sort((left, right) => {
       const leftHasCustomPosition =
-        left.labelOffset || movingMarkerLabel?.markerId === left.id;
+        left.labelOffset ||
+        movingMarkerLabel?.markerId === left.id ||
+        resizingMarkerLabel?.markerId === left.id;
       const rightHasCustomPosition =
-        right.labelOffset || movingMarkerLabel?.markerId === right.id;
+        right.labelOffset ||
+        movingMarkerLabel?.markerId === right.id ||
+        resizingMarkerLabel?.markerId === right.id;
       if (Boolean(leftHasCustomPosition) !== Boolean(rightHasCustomPosition)) {
         return leftHasCustomPosition ? -1 : 1;
       }
@@ -857,10 +947,16 @@ export function TurkeyMap({
       const position = markerPositions.get(marker.id);
       if (!position) return;
       const label = shortMarkerLabel(marker.label);
-      const width = Math.max(52, label.length * 6.6 + 17);
-      const height = 21;
+      const scale =
+        resizingMarkerLabel?.markerId === marker.id
+          ? resizingMarkerLabel.scale
+          : normalizeLabelScale(marker.labelScale);
+      const width = Math.max(52, label.length * 6.6 + 17) * scale;
+      const height = 21 * scale;
       const customOffset =
-        movingMarkerLabel?.markerId === marker.id
+        resizingMarkerLabel?.markerId === marker.id
+          ? resizingMarkerLabel.offset
+          : movingMarkerLabel?.markerId === marker.id
           ? movingMarkerLabel.offset
           : marker.labelOffset;
 
@@ -985,7 +1081,12 @@ export function TurkeyMap({
     });
 
     return layouts;
-  }, [markers, markerPositions, movingMarkerLabel]);
+  }, [
+    markers,
+    markerPositions,
+    movingMarkerLabel,
+    resizingMarkerLabel,
+  ]);
 
   useLayoutEffect(() => {
     const svg = svgRef.current;
@@ -1079,6 +1180,7 @@ export function TurkeyMap({
     if (
       drawingTool ||
       placementProvinceCode ||
+      readOnly ||
       !onUpdateMarker ||
       (event.pointerType === "mouse" && event.button !== 0)
     ) {
@@ -1179,6 +1281,115 @@ export function TurkeyMap({
     if (!marker.labelOffset || !onUpdateMarker) return;
     const resetMarker = { ...marker };
     delete resetMarker.labelOffset;
+    onUpdateMarker(resetMarker);
+  };
+
+  const startMarkerLabelResize = (
+    event: React.PointerEvent<SVGGElement>,
+    marker: MapMarker,
+    position: Point,
+    layout: LabelLayout,
+    scale: number,
+  ) => {
+    if (
+      drawingTool ||
+      placementProvinceCode ||
+      readOnly ||
+      !onUpdateMarker ||
+      (event.pointerType === "mouse" && event.button !== 0)
+    ) {
+      return;
+    }
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const offset = {
+      x: layout.x - position.x,
+      y: layout.y - position.y,
+    };
+    markerLabelResizeGestureRef.current = {
+      pointerId: event.pointerId,
+      marker,
+      position,
+      start: point,
+      offset,
+      baseWidth: layout.width / scale,
+      baseHeight: layout.height / scale,
+      initialScale: scale,
+      currentScale: scale,
+      moved: false,
+    };
+    setResizingMarkerLabel({
+      markerId: marker.id,
+      offset,
+      scale,
+    });
+  };
+
+  const resizeMarkerLabel = (event: React.PointerEvent<SVGGElement>) => {
+    const gesture = markerLabelResizeGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const deltaX = point.x - gesture.start.x;
+    const deltaY = point.y - gesture.start.y;
+    const scale = resizedLabelScale({
+      initialScale: gesture.initialScale,
+      deltaX,
+      deltaY,
+      baseWidth: gesture.baseWidth,
+      baseHeight: gesture.baseHeight,
+      absoluteX: gesture.position.x + gesture.offset.x,
+      absoluteY: gesture.position.y + gesture.offset.y,
+    });
+    gesture.currentScale = scale;
+    gesture.moved =
+      gesture.moved || Math.abs(scale - gesture.initialScale) > 0.01;
+    setResizingMarkerLabel({
+      markerId: gesture.marker.id,
+      offset: gesture.offset,
+      scale,
+    });
+  };
+
+  const finishMarkerLabelResize = (
+    event: React.PointerEvent<SVGGElement>,
+    cancelled = false,
+  ) => {
+    const gesture = markerLabelResizeGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!cancelled && gesture.moved) {
+      onUpdateMarker?.({
+        ...gesture.marker,
+        labelOffset: gesture.offset,
+        labelScale: Number(gesture.currentScale.toFixed(2)),
+      });
+    }
+    markerLabelResizeGestureRef.current = null;
+    setResizingMarkerLabel(null);
+  };
+
+  const resetMarkerLabelSize = (
+    event: React.MouseEvent<SVGGElement>,
+    marker: MapMarker,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!marker.labelScale || !onUpdateMarker) return;
+    const resetMarker = { ...marker };
+    delete resetMarker.labelScale;
     onUpdateMarker(resetMarker);
   };
 
@@ -1385,6 +1596,113 @@ export function TurkeyMap({
     if (!record.labelOffset || !onUpdateRecord) return;
     const resetRecord = { ...record };
     delete resetRecord.labelOffset;
+    onUpdateRecord(resetRecord);
+  };
+
+  const startProvinceLabelResize = (
+    event: React.PointerEvent<SVGGElement>,
+    record: ProvinceRecord,
+    center: Point,
+    offset: MapPoint,
+    width: number,
+    height: number,
+    scale: number,
+  ) => {
+    if (
+      drawingTool ||
+      placementProvinceCode ||
+      readOnly ||
+      !onUpdateRecord ||
+      (event.pointerType === "mouse" && event.button !== 0)
+    ) {
+      return;
+    }
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    provinceLabelResizeGestureRef.current = {
+      pointerId: event.pointerId,
+      record,
+      center,
+      start: point,
+      offset,
+      baseWidth: width / scale,
+      baseHeight: height / scale,
+      initialScale: scale,
+      currentScale: scale,
+      moved: false,
+    };
+    setResizingProvinceLabel({
+      recordId: record.id,
+      offset,
+      scale,
+    });
+  };
+
+  const resizeProvinceLabel = (event: React.PointerEvent<SVGGElement>) => {
+    const gesture = provinceLabelResizeGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    const point = eventToPoint(event);
+    if (!point) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const deltaX = point.x - gesture.start.x;
+    const deltaY = point.y - gesture.start.y;
+    const scale = resizedLabelScale({
+      initialScale: gesture.initialScale,
+      deltaX,
+      deltaY,
+      baseWidth: gesture.baseWidth,
+      baseHeight: gesture.baseHeight,
+      absoluteX: gesture.center.x + gesture.offset.x,
+      absoluteY: gesture.center.y + gesture.offset.y,
+    });
+    gesture.currentScale = scale;
+    gesture.moved =
+      gesture.moved || Math.abs(scale - gesture.initialScale) > 0.01;
+    setResizingProvinceLabel({
+      recordId: gesture.record.id,
+      offset: gesture.offset,
+      scale,
+    });
+  };
+
+  const finishProvinceLabelResize = (
+    event: React.PointerEvent<SVGGElement>,
+    cancelled = false,
+  ) => {
+    const gesture = provinceLabelResizeGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (!cancelled && gesture.moved) {
+      onUpdateRecord?.({
+        ...gesture.record,
+        labelOffset: gesture.offset,
+        labelScale: Number(gesture.currentScale.toFixed(2)),
+      });
+    }
+    provinceLabelResizeGestureRef.current = null;
+    setResizingProvinceLabel(null);
+  };
+
+  const resetProvinceLabelSize = (
+    event: React.MouseEvent<SVGGElement>,
+    record: ProvinceRecord,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!record.labelScale || !onUpdateRecord) return;
+    const resetRecord = { ...record };
+    delete resetRecord.labelScale;
     onUpdateRecord(resetRecord);
   };
 
@@ -2058,8 +2376,14 @@ export function TurkeyMap({
                 const longestLine = Math.max(
                   ...labelLines.map((line) => line.length),
                 );
-                const width = Math.max(42, longestLine * 6.5 + 18);
-                const height = 12 + labelLines.length * 10;
+                const scale =
+                  resizingProvinceLabel?.recordId === record.id
+                    ? resizingProvinceLabel.scale
+                    : normalizeLabelScale(record.labelScale);
+                const width =
+                  Math.max(42, longestLine * 6.5 + 18) * scale;
+                const height =
+                  (12 + labelLines.length * 10) * scale;
                 const labelCenterX = Math.min(
                   BASE_VIEWBOX.x + BASE_VIEWBOX.width - width / 2 - 8,
                   Math.max(
@@ -2072,7 +2396,9 @@ export function TurkeyMap({
                   y: 12,
                 };
                 const requestedOffset =
-                  movingProvinceLabel?.recordId === record.id
+                  resizingProvinceLabel?.recordId === record.id
+                    ? resizingProvinceLabel.offset
+                    : movingProvinceLabel?.recordId === record.id
                     ? movingProvinceLabel.offset
                     : record.labelOffset ?? automaticOffset;
                 const rectX =
@@ -2128,7 +2454,15 @@ export function TurkeyMap({
                         movingProvinceLabel?.recordId === record.id
                           ? "is-moving"
                           : "",
+                        resizingProvinceLabel?.recordId === record.id
+                          ? "is-resizing"
+                          : "",
                       ].join(" ")}
+                      style={
+                        {
+                          "--label-font-size": `${9 * scale}px`,
+                        } as React.CSSProperties
+                      }
                       onClick={(event) => event.stopPropagation()}
                       onDoubleClick={(event) =>
                         resetProvinceLabelPosition(event, record)
@@ -2164,19 +2498,71 @@ export function TurkeyMap({
                         y={rectY}
                         width={width}
                         height={height}
-                        rx="7"
+                        rx={7 * scale}
                       />
-                      <text x={localLabelX} y={rectY + 15}>
+                      <text
+                        x={localLabelX}
+                        y={rectY + 15 * scale}
+                      >
                         {labelLines.map((line, index) => (
                           <tspan
                             key={`${line}-${index}`}
                             x={localLabelX}
-                            dy={index === 0 ? 0 : 10}
+                            dy={index === 0 ? 0 : 10 * scale}
                           >
                             {line}
                           </tspan>
                         ))}
                       </text>
+                      {labelInteractive && (
+                        <g
+                          className="map-label-resize-handle"
+                          onDoubleClick={(event) =>
+                            resetProvinceLabelSize(event, record)
+                          }
+                          onPointerDown={(event) =>
+                            startProvinceLabelResize(
+                              event,
+                              record,
+                              center,
+                              { x: rectX, y: rectY },
+                              width,
+                              height,
+                              scale,
+                            )
+                          }
+                          onPointerMove={resizeProvinceLabel}
+                          onPointerUp={(event) =>
+                            finishProvinceLabelResize(event)
+                          }
+                          onPointerCancel={(event) =>
+                            finishProvinceLabelResize(event, true)
+                          }
+                        >
+                          <title>
+                            Köşeyi çekerek boyutlandır · Çift tıklayarak
+                            normal boyuta döndür
+                          </title>
+                          <rect
+                            x={
+                              rectX +
+                              width -
+                              LABEL_RESIZE_HANDLE_SIZE
+                            }
+                            y={
+                              rectY +
+                              height -
+                              LABEL_RESIZE_HANDLE_SIZE
+                            }
+                            width={LABEL_RESIZE_HANDLE_SIZE}
+                            height={LABEL_RESIZE_HANDLE_SIZE}
+                            rx="2"
+                          />
+                          <path
+                            d={`M ${rectX + width - 6} ${rectY + height - 2} L ${rectX + width - 2} ${rectY + height - 6} M ${rectX + width - 3} ${rectY + height - 2} L ${rectX + width - 2} ${rectY + height - 3}`}
+                          />
+                        </g>
+                      )}
                     </g>
                   </g>
                 );
@@ -2191,6 +2577,10 @@ export function TurkeyMap({
               const labelLayout = markerLabelLayouts.get(marker.id);
               const visual = getMarkerVisual(marker);
               const shortLabel = shortMarkerLabel(marker.label);
+              const labelScale =
+                resizingMarkerLabel?.markerId === marker.id
+                  ? resizingMarkerLabel.scale
+                  : normalizeLabelScale(marker.labelScale);
               const markerInteractive =
                 count === 1 &&
                 Boolean(onUpdateMarker) &&
@@ -2358,7 +2748,16 @@ export function TurkeyMap({
                         movingMarkerLabel?.markerId === marker.id
                           ? "is-moving"
                           : "",
+                        resizingMarkerLabel?.markerId === marker.id
+                          ? "is-resizing"
+                          : "",
                       ].join(" ")}
+                      style={
+                        {
+                          "--label-font-size": `${8.5 * labelScale}px`,
+                          "--label-font-size-mobile": `${10.5 * labelScale}px`,
+                        } as React.CSSProperties
+                      }
                       onClick={(event) => event.stopPropagation()}
                       onDoubleClick={(event) =>
                         resetMarkerLabelPosition(event, marker)
@@ -2392,15 +2791,15 @@ export function TurkeyMap({
                         y={labelLayout.y - position.y}
                         width={labelLayout.width}
                         height={labelLayout.height}
-                        rx="6"
+                        rx={6 * labelScale}
                       />
                       <rect
                         className="map-marker__label-accent"
-                        x={labelLayout.x - position.x + 2}
-                        y={labelLayout.y - position.y + 2}
-                        width="4"
-                        height={labelLayout.height - 4}
-                        rx="2"
+                        x={labelLayout.x - position.x + 2 * labelScale}
+                        y={labelLayout.y - position.y + 2 * labelScale}
+                        width={4 * labelScale}
+                        height={labelLayout.height - 4 * labelScale}
+                        rx={2 * labelScale}
                       />
                       <text
                         x={
@@ -2408,10 +2807,63 @@ export function TurkeyMap({
                           position.x +
                           labelLayout.width / 2
                         }
-                        y={labelLayout.y - position.y + 14}
+                        y={
+                          labelLayout.y -
+                          position.y +
+                          14 * labelScale
+                        }
                       >
                         {shortLabel}
                       </text>
+                      {labelInteractive && (
+                        <g
+                          className="map-label-resize-handle"
+                          onDoubleClick={(event) =>
+                            resetMarkerLabelSize(event, marker)
+                          }
+                          onPointerDown={(event) =>
+                            startMarkerLabelResize(
+                              event,
+                              marker,
+                              position,
+                              labelLayout,
+                              labelScale,
+                            )
+                          }
+                          onPointerMove={resizeMarkerLabel}
+                          onPointerUp={(event) =>
+                            finishMarkerLabelResize(event)
+                          }
+                          onPointerCancel={(event) =>
+                            finishMarkerLabelResize(event, true)
+                          }
+                        >
+                          <title>
+                            Köşeyi çekerek boyutlandır · Çift tıklayarak
+                            normal boyuta döndür
+                          </title>
+                          <rect
+                            x={
+                              labelLayout.x -
+                              position.x +
+                              labelLayout.width -
+                              LABEL_RESIZE_HANDLE_SIZE
+                            }
+                            y={
+                              labelLayout.y -
+                              position.y +
+                              labelLayout.height -
+                              LABEL_RESIZE_HANDLE_SIZE
+                            }
+                            width={LABEL_RESIZE_HANDLE_SIZE}
+                            height={LABEL_RESIZE_HANDLE_SIZE}
+                            rx="2"
+                          />
+                          <path
+                            d={`M ${labelLayout.x - position.x + labelLayout.width - 6} ${labelLayout.y - position.y + labelLayout.height - 2} L ${labelLayout.x - position.x + labelLayout.width - 2} ${labelLayout.y - position.y + labelLayout.height - 6} M ${labelLayout.x - position.x + labelLayout.width - 3} ${labelLayout.y - position.y + labelLayout.height - 2} L ${labelLayout.x - position.x + labelLayout.width - 2} ${labelLayout.y - position.y + labelLayout.height - 3}`}
+                          />
+                        </g>
+                      )}
                     </g>
                   )}
                 </g>

@@ -34,6 +34,7 @@ export type ProvinceRecord = {
   color: string;
   items: ProvinceItem[];
   labelOffset?: MapPoint;
+  labelScale?: number;
   updatedAt: string;
 };
 
@@ -72,6 +73,7 @@ export type MapMarker = {
   sourceLabel?: string;
   sourceUrl?: string;
   labelOffset?: MapPoint;
+  labelScale?: number;
   createdAt: string;
 };
 
