@@ -1332,6 +1332,50 @@ select:focus-visible,
     #f2eee5;
 }
 
+body.map-fullscreen-open {
+  overflow: hidden;
+}
+
+.map-stage.map-stage--fullscreen {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  background: #f2eee5;
+}
+
+.map-stage--fullscreen::backdrop {
+  background: #f2eee5;
+}
+
+.map-stage--fullscreen .map-stage__topline,
+.map-stage--fullscreen .map-hint {
+  display: none;
+}
+
+.map-stage--fullscreen .map-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  margin-top: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.map-stage--fullscreen .turkey-map {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: none;
+}
+
 .map-stage__topline {
   display: flex;
   align-items: flex-end;

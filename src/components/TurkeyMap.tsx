@@ -10,12 +10,13 @@ import {
   ChevronDown,
   Circle,
   Eraser,
+  Maximize2,
   Minus,
+  Minimize2,
   MousePointer2,
   MoveRight,
   Pencil,
   Plus,
-  Scan,
   Trash2,
   Type,
   Undo2,
@@ -124,6 +125,15 @@ type MarkerLabelGesture = {
   originalOffset: MapPoint;
   currentOffset: MapPoint;
   moved: boolean;
+};
+
+type WebkitFullscreenDocument = Document & {
+  webkitFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => Promise<void> | void;
+};
+
+type WebkitFullscreenElement = HTMLElement & {
+  webkitRequestFullscreen?: () => Promise<void> | void;
 };
 
 const BASE_VIEWBOX = {
@@ -525,6 +535,7 @@ export function TurkeyMap({
   exportMode = false,
 }: TurkeyMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const mapStageRef = useRef<HTMLElement>(null);
   const panGestureRef = useRef<PanGesture | null>(null);
   const drawingGestureRef = useRef<DrawingGesture | null>(null);
   const markerLabelGestureRef = useRef<MarkerLabelGesture | null>(null);
@@ -548,6 +559,8 @@ export function TurkeyMap({
     markerId: string;
     offset: MapPoint;
   } | null>(null);
+  const [nativeFullscreen, setNativeFullscreen] = useState(false);
+  const [fallbackFullscreen, setFallbackFullscreen] = useState(false);
   const [legendOpen, setLegendOpen] = useState(
     () => !window.matchMedia("(max-width: 640px)").matches,
   );
@@ -560,6 +573,42 @@ export function TurkeyMap({
     mobileQuery.addEventListener("change", syncLegend);
     return () => mobileQuery.removeEventListener("change", syncLegend);
   }, []);
+
+  useEffect(() => {
+    const syncFullscreen = () => {
+      const webkitDocument = document as WebkitFullscreenDocument;
+      const fullscreenElement =
+        document.fullscreenElement ?? webkitDocument.webkitFullscreenElement;
+      setNativeFullscreen(fullscreenElement === mapStageRef.current);
+    };
+
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    document.addEventListener(
+      "webkitfullscreenchange",
+      syncFullscreen as EventListener,
+    );
+    return () => {
+      document.removeEventListener("fullscreenchange", syncFullscreen);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        syncFullscreen as EventListener,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!fallbackFullscreen) return;
+
+    const exitWithEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFallbackFullscreen(false);
+    };
+    document.body.classList.add("map-fullscreen-open");
+    document.addEventListener("keydown", exitWithEscape);
+    return () => {
+      document.body.classList.remove("map-fullscreen-open");
+      document.removeEventListener("keydown", exitWithEscape);
+    };
+  }, [fallbackFullscreen]);
 
   useEffect(() => {
     if (
@@ -922,11 +971,37 @@ export function TurkeyMap({
     setPan((current) => clampPan(current, normalizedZoom));
   };
 
-  const resetViewport = () => {
-    panGestureRef.current = null;
-    setIsPanning(false);
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
+  const toggleFullscreen = async () => {
+    const stage = mapStageRef.current as WebkitFullscreenElement | null;
+    if (!stage) return;
+
+    const webkitDocument = document as WebkitFullscreenDocument;
+    const fullscreenElement =
+      document.fullscreenElement ?? webkitDocument.webkitFullscreenElement;
+    if (fallbackFullscreen) {
+      setFallbackFullscreen(false);
+      return;
+    }
+    if (fullscreenElement === stage) {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else {
+        await Promise.resolve(webkitDocument.webkitExitFullscreen?.());
+      }
+      return;
+    }
+
+    try {
+      if (stage.requestFullscreen) {
+        await stage.requestFullscreen({ navigationUI: "hide" });
+      } else if (stage.webkitRequestFullscreen) {
+        await Promise.resolve(stage.webkitRequestFullscreen());
+      } else {
+        setFallbackFullscreen(true);
+      }
+    } catch {
+      setFallbackFullscreen(true);
+    }
   };
 
   const eventToPoint = (
@@ -1175,7 +1250,14 @@ export function TurkeyMap({
 
   return (
     <section
-      className={`map-stage ${placementProvinceCode ? "map-stage--placing" : ""}`}
+      ref={mapStageRef}
+      className={[
+        "map-stage",
+        placementProvinceCode ? "map-stage--placing" : "",
+        nativeFullscreen || fallbackFullscreen
+          ? "map-stage--fullscreen"
+          : "",
+      ].join(" ")}
       aria-label="Etkileşimli Türkiye haritası"
     >
       {!exportMode && (
@@ -2133,11 +2215,24 @@ export function TurkeyMap({
               </button>
               <button
                 type="button"
-                title="Haritayı ekrana sığdır"
-                aria-label="Haritayı ekrana sığdır"
-                onClick={resetViewport}
+                title={
+                  nativeFullscreen || fallbackFullscreen
+                    ? "Tam ekrandan çık"
+                    : "Haritayı tam ekran yap"
+                }
+                aria-label={
+                  nativeFullscreen || fallbackFullscreen
+                    ? "Tam ekrandan çık"
+                    : "Haritayı tam ekran yap"
+                }
+                aria-pressed={nativeFullscreen || fallbackFullscreen}
+                onClick={() => void toggleFullscreen()}
               >
-                <Scan size={17} />
+                {nativeFullscreen || fallbackFullscreen ? (
+                  <Minimize2 size={17} />
+                ) : (
+                  <Maximize2 size={17} />
+                )}
               </button>
             </div>
 
