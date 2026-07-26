@@ -6,6 +6,7 @@ export type StudyMap = {
   description: string;
   themeColor: string;
   showLabels: boolean;
+  showProvinceNames?: boolean;
   hiddenMarkerKinds?: MarkerKind[];
   createdAt: string;
   updatedAt: string;

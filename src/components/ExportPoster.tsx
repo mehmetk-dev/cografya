@@ -26,9 +26,8 @@ export const ExportPoster = forwardRef<HTMLDivElement, ExportPosterProps>(
           themeColor={map.themeColor}
           showLabels={map.showLabels}
           showProvinceNames={
-            map.showLabels &&
-            Boolean(map.sourceSetId) &&
-            map.sourceSetId !== "rivers"
+            map.showProvinceNames ??
+            (Boolean(map.sourceSetId) && map.sourceSetId !== "rivers")
           }
           onSelect={() => undefined}
           exportMode

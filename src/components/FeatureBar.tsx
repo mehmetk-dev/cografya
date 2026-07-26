@@ -1,12 +1,10 @@
 import { useState } from "react";
 import {
-  BarChart3,
   Brain,
   Ellipsis,
   Layers3,
-  Printer,
+  MapPinned,
   Search,
-  Share2,
   X,
 } from "lucide-react";
 import { MARKER_KINDS } from "../markerKinds";
@@ -19,10 +17,10 @@ type FeatureBarProps = {
   hiddenKinds: MarkerKind[];
   onQueryChange: (query: string) => void;
   onToggleKind: (kind: MarkerKind) => void;
+  showStudyCenter: boolean;
+  showProvinceNames: boolean;
   onQuiz: () => void;
-  onStats: () => void;
-  onPrint: () => void;
-  onShare: () => void;
+  onToggleProvinceNames: () => void;
 };
 
 export function FeatureBar({
@@ -31,10 +29,10 @@ export function FeatureBar({
   hiddenKinds,
   onQueryChange,
   onToggleKind,
+  showStudyCenter,
+  showProvinceNames,
   onQuiz,
-  onStats,
-  onPrint,
-  onShare,
+  onToggleProvinceNames,
 }: FeatureBarProps) {
   const [layersOpen, setLayersOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -64,16 +62,18 @@ export function FeatureBar({
           mobileMenuOpen ? "is-menu-open" : ""
         }`}
       >
-        <button
-          className="feature-bar__quiz-button"
-          type="button"
-          onClick={() => {
-            onQuiz();
-            setMobileMenuOpen(false);
-          }}
-        >
-          <Brain size={16} /> Çalışma merkezi
-        </button>
+        {showStudyCenter && (
+          <button
+            className="feature-bar__quiz-button"
+            type="button"
+            onClick={() => {
+              onQuiz();
+              setMobileMenuOpen(false);
+            }}
+          >
+            <Brain size={16} /> Çalışma merkezi
+          </button>
+        )}
 
         <button
           className="feature-bar__more-button"
@@ -140,30 +140,16 @@ export function FeatureBar({
           </div>
           <button
             type="button"
+            aria-pressed={showProvinceNames}
             onClick={() => {
-              onStats();
+              onToggleProvinceNames();
               setMobileMenuOpen(false);
             }}
           >
-            <BarChart3 size={16} /> İlerleme
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              onPrint();
-              setMobileMenuOpen(false);
-            }}
-          >
-            <Printer size={16} /> PDF / Yazdır
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              onShare();
-              setMobileMenuOpen(false);
-            }}
-          >
-            <Share2 size={16} /> Paylaş
+            <MapPinned size={16} />
+            {showProvinceNames
+              ? "Şehir isimlerini gizle"
+              : "Şehir isimlerini göster"}
           </button>
         </div>
       </div>

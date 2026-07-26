@@ -2,11 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
   CheckCircle2,
-  Download,
   EllipsisVertical,
   Eye,
   EyeOff,
-  FileUp,
   ImageDown,
   LoaderCircle,
   LockKeyhole,
@@ -29,7 +27,6 @@ import { MobileBottomNav } from "./components/MobileBottomNav";
 import { QuizModal } from "./components/QuizModal";
 import { StudyCenterModal } from "./components/StudyCenterModal";
 import { StudyNotesPage } from "./components/StudyNotesPage";
-import { StatsModal } from "./components/StatsModal";
 import { ReadySetOverview } from "./components/ReadySetOverview";
 import { createId } from "./id";
 import { getMarkerVisual } from "./markerKinds";
@@ -314,7 +311,6 @@ export default function App() {
   } | null>(null);
   const [quizOpen, setQuizOpen] = useState(false);
   const [quizMode, setQuizMode] = useState<QuizMode>("standard");
-  const [statsOpen, setStatsOpen] = useState(false);
   const [studyCenterOpen, setStudyCenterOpen] = useState(false);
   const [studyCenterTab, setStudyCenterTab] = useState<
     "overview" | "mistakes"
@@ -338,6 +334,9 @@ export default function App() {
 
   const activeMap = maps?.find((map) => map.id === activeMapId);
   const activeReadySet = getReadySet(activeMap?.sourceSetId);
+  const provinceNamesVisible =
+    activeMap?.showProvinceNames ??
+    Boolean(activeReadySet && activeReadySet.id !== "rivers");
   const personalMaps = useMemo(
     () => (maps ?? []).filter((map) => !map.sourceSetId),
     [maps],
@@ -681,6 +680,9 @@ export default function App() {
       ...map,
       id: createId(),
       sourceSetId: undefined,
+      showProvinceNames:
+        map.showProvinceNames ??
+        Boolean(map.sourceSetId && map.sourceSetId !== "rivers"),
       name: `${map.name} — Kopya`,
       createdAt: now,
       updatedAt: now,
@@ -1514,28 +1516,6 @@ export default function App() {
               </button>
 
               <button
-                className="header-button"
-                type="button"
-                onClick={() => {
-                  importInputRef.current?.click();
-                  setMobileActionsOpen(false);
-                }}
-              >
-                <FileUp size={17} />
-                <span>İçe aktar</span>
-              </button>
-              <input
-                ref={importInputRef}
-                className="visually-hidden"
-                type="file"
-                accept="application/json,.json"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) void importMap(file);
-                }}
-              />
-
-              <button
                 className="header-button header-button--image"
                 type="button"
                 disabled={isExportingImage}
@@ -1551,18 +1531,6 @@ export default function App() {
                 )}
                 <span>{isExportingImage ? "Hazırlanıyor" : "Görsel al"}</span>
               </button>
-
-              <button
-                className="header-button header-button--dark"
-                type="button"
-                onClick={() => {
-                  void exportMap();
-                  setMobileActionsOpen(false);
-                }}
-              >
-                <Download size={17} />
-                <span>Yedekle</span>
-              </button>
             </div>
           </div>
         </header>
@@ -1573,10 +1541,14 @@ export default function App() {
           hiddenKinds={activeMap.hiddenMarkerKinds ?? []}
           onQueryChange={setQuery}
           onToggleKind={(kind) => void toggleMarkerKind(kind)}
+          showStudyCenter={Boolean(activeReadySet)}
+          showProvinceNames={provinceNamesVisible}
           onQuiz={() => openStudyCenter("overview")}
-          onStats={() => setStatsOpen(true)}
-          onPrint={printMap}
-          onShare={() => void shareMap()}
+          onToggleProvinceNames={() =>
+            void updateActiveMap({
+              showProvinceNames: !provinceNamesVisible,
+            })
+          }
         />
 
         <div className="workspace-body">
@@ -1587,11 +1559,7 @@ export default function App() {
             drawings={activeDrawings}
             themeColor={activeMap.themeColor}
             showLabels={activeMap.showLabels}
-            showProvinceNames={
-              activeReadySet !== undefined &&
-              activeReadySet.id !== "rivers" &&
-              activeMap.showLabels
-            }
+            showProvinceNames={provinceNamesVisible}
             readOnly={Boolean(activeReadySet)}
             matchingProvinceCodes={matchingProvinceCodes}
             provinceColorPreview={provinceColorPreview}
@@ -1734,32 +1702,24 @@ export default function App() {
         onClearMistakes={() => void clearMistakes()}
       />
 
-      <StatsModal
-        open={statsOpen}
-        mapName={activeMap.name}
-        records={activeRecords}
-        markers={activeMarkers}
-        drawings={activeDrawings}
-        quizStats={activeQuizStats}
-        onClose={() => setStatsOpen(false)}
-      />
-
-      <MobileBottomNav
-        mistakeCount={quizMistakes.length}
-        dailyCompleted={Boolean(todayProgress?.completed)}
-        onMap={() =>
-          document
-            .querySelector("#map-workspace")
-            ?.scrollIntoView({ behavior: "smooth", block: "start" })
-        }
-        onSets={() =>
-          document
-            .querySelector("#ready-library")
-            ?.scrollIntoView({ behavior: "smooth", block: "start" })
-        }
-        onDaily={() => void startQuiz("daily")}
-        onMistakes={() => openStudyCenter("mistakes")}
-      />
+      {activeReadySet && (
+        <MobileBottomNav
+          mistakeCount={quizMistakes.length}
+          dailyCompleted={Boolean(todayProgress?.completed)}
+          onMap={() =>
+            document
+              .querySelector("#map-workspace")
+              ?.scrollIntoView({ behavior: "smooth", block: "start" })
+          }
+          onSets={() =>
+            document
+              .querySelector("#ready-library")
+              ?.scrollIntoView({ behavior: "smooth", block: "start" })
+          }
+          onDaily={() => void startQuiz("daily")}
+          onMistakes={() => openStudyCenter("mistakes")}
+        />
+      )}
 
       {toast && (
         <div className="toast" role="status">
