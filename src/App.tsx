@@ -27,6 +27,7 @@ import { MobileBottomNav } from "./components/MobileBottomNav";
 import { QuizModal } from "./components/QuizModal";
 import { StudyCenterModal } from "./components/StudyCenterModal";
 import { StudyNotesPage } from "./components/StudyNotesPage";
+import { HistoryStudyPage } from "./components/HistoryStudyPage";
 import { ReadySetOverview } from "./components/ReadySetOverview";
 import { createId } from "./id";
 import { getMarkerVisual } from "./markerKinds";
@@ -55,6 +56,7 @@ import type {
 
 const ACTIVE_MAP_KEY = "cografya-atlasim-active-map";
 const STUDY_NOTES_HASH = "#konu-notlari";
+const HISTORY_STUDY_HASH = "#tarih-zinciri";
 
 function dateKey(date = new Date()) {
   const year = date.getFullYear();
@@ -317,6 +319,9 @@ export default function App() {
   >("overview");
   const [notesPageOpen, setNotesPageOpen] = useState(
     () => window.location.hash === STUDY_NOTES_HASH,
+  );
+  const [historyPageOpen, setHistoryPageOpen] = useState(
+    () => window.location.hash === HISTORY_STUDY_HASH,
   );
   const [initializationError, setInitializationError] = useState("");
   const [pendingMarker, setPendingMarker] = useState<{
@@ -609,15 +614,16 @@ export default function App() {
   }, [activeMapId]);
 
   useEffect(() => {
-    const syncNotesPage = () => {
+    const syncStudyPage = () => {
       setNotesPageOpen(window.location.hash === STUDY_NOTES_HASH);
+      setHistoryPageOpen(window.location.hash === HISTORY_STUDY_HASH);
     };
 
-    window.addEventListener("hashchange", syncNotesPage);
-    window.addEventListener("popstate", syncNotesPage);
+    window.addEventListener("hashchange", syncStudyPage);
+    window.addEventListener("popstate", syncStudyPage);
     return () => {
-      window.removeEventListener("hashchange", syncNotesPage);
-      window.removeEventListener("popstate", syncNotesPage);
+      window.removeEventListener("hashchange", syncStudyPage);
+      window.removeEventListener("popstate", syncStudyPage);
     };
   }, []);
 
@@ -1130,6 +1136,7 @@ export default function App() {
         STUDY_NOTES_HASH,
       );
     }
+    setHistoryPageOpen(false);
     setNotesPageOpen(true);
   };
 
@@ -1145,6 +1152,32 @@ export default function App() {
       `${window.location.pathname}${window.location.search}`,
     );
     setNotesPageOpen(false);
+  };
+
+  const openHistoryPage = () => {
+    if (window.location.hash !== HISTORY_STUDY_HASH) {
+      window.history.pushState(
+        { ...window.history.state, historyPage: true },
+        "",
+        HISTORY_STUDY_HASH,
+      );
+    }
+    setNotesPageOpen(false);
+    setHistoryPageOpen(true);
+  };
+
+  const closeHistoryPage = () => {
+    if (window.history.state?.historyPage) {
+      window.history.back();
+      return;
+    }
+
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${window.location.pathname}${window.location.search}`,
+    );
+    setHistoryPageOpen(false);
   };
 
   const openStudyCenterFromNotes = () => {
@@ -1453,6 +1486,10 @@ export default function App() {
     );
   }
 
+  if (historyPageOpen) {
+    return <HistoryStudyPage onBack={closeHistoryPage} />;
+  }
+
   return (
     <div className="app-shell">
       <MapSidebar
@@ -1471,6 +1508,7 @@ export default function App() {
         onDelete={deleteMap}
         onOpenReadySet={openReadySet}
         onOpenNotes={openNotesPage}
+        onOpenHistory={openHistoryPage}
       />
 
       <main className="workspace" id="map-workspace">

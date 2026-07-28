@@ -11,6 +11,13 @@ import type {
 } from "./types";
 import { createId } from "./id";
 
+export type CloudSyncState = {
+  userId: string;
+  snapshot: unknown;
+  revision: number;
+  updatedAt: string;
+};
+
 class GeographyDatabase extends Dexie {
   studyMaps!: EntityTable<StudyMap, "id">;
   mapFolders!: EntityTable<MapFolder, "id">;
@@ -20,6 +27,7 @@ class GeographyDatabase extends Dexie {
   quizStats!: EntityTable<QuizStats, "id">;
   quizMistakes!: EntityTable<QuizMistake, "id">;
   dailyProgress!: EntityTable<DailyProgress, "date">;
+  cloudSyncState!: EntityTable<CloudSyncState, "userId">;
 
   constructor() {
     super("cografya-atlasim");
@@ -62,6 +70,18 @@ class GeographyDatabase extends Dexie {
       quizStats: "id, mapId, updatedAt",
       quizMistakes: "id, questionId, mapId, lastAnsweredAt",
       dailyProgress: "date, completed, updatedAt",
+    });
+
+    this.version(6).stores({
+      studyMaps: "id, folderId, updatedAt",
+      mapFolders: "id, createdAt, updatedAt",
+      provinceRecords: "id, mapId, [mapId+provinceCode], updatedAt",
+      mapMarkers: "id, mapId, provinceCode, [mapId+provinceCode], createdAt",
+      mapDrawings: "id, mapId, tool, createdAt",
+      quizStats: "id, mapId, updatedAt",
+      quizMistakes: "id, questionId, mapId, lastAnsweredAt",
+      dailyProgress: "date, completed, updatedAt",
+      cloudSyncState: "userId, revision, updatedAt",
     });
   }
 }

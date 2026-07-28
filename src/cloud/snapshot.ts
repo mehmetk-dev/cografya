@@ -10,6 +10,7 @@ import type {
   StudyMap,
 } from "../types";
 import type { FlashcardProgress } from "../flashcards";
+import type { HistoryProgress } from "../historyStudy";
 
 const markerKindSchema = z.enum([
   "mountain",
@@ -140,6 +141,14 @@ const flashcardReviewSchema = z.object({
   lastRating: z.enum(["known", "again"]),
   lastReviewedAt: isoDateSchema,
 });
+const historyProgressSchema = z.object({
+  visitedEventIds: z.array(z.string()),
+  chronologyAttempts: z.number().int().nonnegative(),
+  chronologyCorrect: z.number().int().nonnegative(),
+  outcomeAttempts: z.number().int().nonnegative(),
+  outcomeCorrect: z.number().int().nonnegative(),
+  updatedAt: isoDateSchema,
+});
 
 export const atlasSnapshotSchema = z.object({
   version: z.literal(1),
@@ -154,6 +163,7 @@ export const atlasSnapshotSchema = z.object({
   quizMistakes: z.array(quizMistakeSchema),
   dailyProgress: z.array(dailyProgressSchema),
   flashcardProgress: z.record(z.string(), flashcardReviewSchema),
+  historyProgress: historyProgressSchema.optional(),
 });
 
 export type AtlasSnapshot = {
@@ -169,6 +179,7 @@ export type AtlasSnapshot = {
   quizMistakes: QuizMistake[];
   dailyProgress: DailyProgress[];
   flashcardProgress: FlashcardProgress;
+  historyProgress?: HistoryProgress;
 };
 
 export function parseAtlasSnapshot(value: unknown) {
@@ -193,6 +204,65 @@ function mergeByKey<T>(
   return [...merged.values()];
 }
 
+function valuesMatch(left: unknown, right: unknown) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function mergeByKeyThreeWay<T>(
+  baseItems: T[],
+  cloudItems: T[],
+  localItems: T[],
+  keyOf: (item: T) => string,
+  timestampOf: (item: T) => string,
+) {
+  const base = new Map(baseItems.map((item) => [keyOf(item), item]));
+  const cloud = new Map(cloudItems.map((item) => [keyOf(item), item]));
+  const local = new Map(localItems.map((item) => [keyOf(item), item]));
+  const keys = new Set([
+    ...cloud.keys(),
+    ...local.keys(),
+    ...base.keys(),
+  ]);
+  const merged: T[] = [];
+
+  keys.forEach((key) => {
+    const baseItem = base.get(key);
+    const cloudItem = cloud.get(key);
+    const localItem = local.get(key);
+    const localChanged = !valuesMatch(localItem, baseItem);
+    const cloudChanged = !valuesMatch(cloudItem, baseItem);
+
+    if (!localChanged) {
+      if (cloudItem) merged.push(cloudItem);
+      return;
+    }
+    if (!cloudChanged) {
+      if (localItem) merged.push(localItem);
+      return;
+    }
+
+    if (!localItem && cloudItem) {
+      merged.push(cloudItem);
+      return;
+    }
+    if (localItem && !cloudItem) {
+      merged.push(localItem);
+      return;
+    }
+    if (
+      localItem &&
+      cloudItem &&
+      timestampOf(localItem) >= timestampOf(cloudItem)
+    ) {
+      merged.push(localItem);
+    } else if (cloudItem) {
+      merged.push(cloudItem);
+    }
+  });
+
+  return merged;
+}
+
 export function mergeAtlasSnapshots(
   cloud: AtlasSnapshot,
   local: AtlasSnapshot,
@@ -206,6 +276,25 @@ export function mergeAtlasSnapshots(
       flashcardProgress[cardId] = review;
     }
   });
+  const cloudHistory = cloud.historyProgress;
+  const localHistory = local.historyProgress;
+  const latestHistory =
+    !cloudHistory ||
+    (localHistory &&
+      localHistory.updatedAt >= cloudHistory.updatedAt)
+      ? localHistory
+      : cloudHistory;
+  const historyProgress = latestHistory
+    ? {
+        ...latestHistory,
+        visitedEventIds: [
+          ...new Set([
+            ...(cloudHistory?.visitedEventIds ?? []),
+            ...(localHistory?.visitedEventIds ?? []),
+          ]),
+        ],
+      }
+    : undefined;
 
   return {
     version: 1,
@@ -260,6 +349,82 @@ export function mergeAtlasSnapshots(
       (item) => item.updatedAt,
     ),
     flashcardProgress,
+    historyProgress,
+  };
+}
+
+export function mergeAtlasSnapshotsThreeWay(
+  base: AtlasSnapshot,
+  cloud: AtlasSnapshot,
+  local: AtlasSnapshot,
+): AtlasSnapshot {
+  const twoWayStudyProgress = mergeAtlasSnapshots(cloud, local);
+  const localActiveMapChanged = local.activeMapId !== base.activeMapId;
+
+  return {
+    version: 1,
+    capturedAt: new Date().toISOString(),
+    activeMapId: localActiveMapChanged
+      ? local.activeMapId
+      : cloud.activeMapId,
+    studyMaps: mergeByKeyThreeWay(
+      base.studyMaps,
+      cloud.studyMaps,
+      local.studyMaps,
+      (item) => item.id,
+      (item) => item.updatedAt,
+    ),
+    mapFolders: mergeByKeyThreeWay(
+      base.mapFolders,
+      cloud.mapFolders,
+      local.mapFolders,
+      (item) => item.id,
+      (item) => item.updatedAt,
+    ),
+    provinceRecords: mergeByKeyThreeWay(
+      base.provinceRecords,
+      cloud.provinceRecords,
+      local.provinceRecords,
+      (item) => item.id,
+      (item) => item.updatedAt,
+    ),
+    mapMarkers: mergeByKeyThreeWay(
+      base.mapMarkers,
+      cloud.mapMarkers,
+      local.mapMarkers,
+      (item) => item.id,
+      (item) => item.createdAt,
+    ),
+    mapDrawings: mergeByKeyThreeWay(
+      base.mapDrawings,
+      cloud.mapDrawings,
+      local.mapDrawings,
+      (item) => item.id,
+      (item) => item.createdAt,
+    ),
+    quizStats: mergeByKeyThreeWay(
+      base.quizStats,
+      cloud.quizStats,
+      local.quizStats,
+      (item) => item.id,
+      (item) => item.updatedAt,
+    ),
+    quizMistakes: mergeByKeyThreeWay(
+      base.quizMistakes,
+      cloud.quizMistakes,
+      local.quizMistakes,
+      (item) => item.id,
+      (item) => item.lastAnsweredAt,
+    ),
+    dailyProgress: mergeByKeyThreeWay(
+      base.dailyProgress,
+      cloud.dailyProgress,
+      local.dailyProgress,
+      (item) => item.date,
+      (item) => item.updatedAt,
+    ),
+    flashcardProgress: twoWayStudyProgress.flashcardProgress,
+    historyProgress: twoWayStudyProgress.historyProgress,
   };
 }
 

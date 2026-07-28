@@ -5,6 +5,11 @@ import {
   type FlashcardProgress,
 } from "../flashcards";
 import type { AtlasSnapshot } from "./snapshot";
+import {
+  HISTORY_PROGRESS_KEY,
+  loadHistoryProgress,
+  type HistoryProgress,
+} from "../historyStudy";
 
 const ACTIVE_MAP_KEY = "cografya-atlasim-active-map";
 export const LOCAL_WORKSPACE_OWNER_KEY =
@@ -20,6 +25,17 @@ function writeFlashcardProgress(progress: FlashcardProgress) {
   }
   window.localStorage.setItem(
     FLASHCARD_PROGRESS_KEY,
+    JSON.stringify(progress),
+  );
+}
+
+function writeHistoryProgress(progress?: HistoryProgress) {
+  if (!progress) {
+    window.localStorage.removeItem(HISTORY_PROGRESS_KEY);
+    return;
+  }
+  window.localStorage.setItem(
+    HISTORY_PROGRESS_KEY,
     JSON.stringify(progress),
   );
 }
@@ -72,6 +88,7 @@ export async function collectLocalSnapshot(): Promise<AtlasSnapshot> {
     quizMistakes,
     dailyProgress,
     flashcardProgress: loadFlashcardProgress(),
+    historyProgress: loadHistoryProgress(),
   };
 }
 
@@ -121,6 +138,25 @@ export async function replaceLocalSnapshot(snapshot: AtlasSnapshot) {
     window.localStorage.removeItem(ACTIVE_MAP_KEY);
   }
   writeFlashcardProgress(snapshot.flashcardProgress);
+  writeHistoryProgress(snapshot.historyProgress);
+}
+
+export async function loadLocalSyncState(userId: string) {
+  return db.cloudSyncState.get(userId);
+}
+
+export async function saveLocalSyncState(
+  userId: string,
+  snapshot: AtlasSnapshot,
+  revision: number,
+  updatedAt: string,
+) {
+  await db.cloudSyncState.put({
+    userId,
+    snapshot,
+    revision,
+    updatedAt,
+  });
 }
 
 export async function clearLocalWorkspace() {
@@ -135,6 +171,7 @@ export async function clearLocalWorkspace() {
       db.quizStats,
       db.quizMistakes,
       db.dailyProgress,
+      db.cloudSyncState,
     ],
     () =>
       Promise.all([
@@ -146,10 +183,12 @@ export async function clearLocalWorkspace() {
         db.quizStats.clear(),
         db.quizMistakes.clear(),
         db.dailyProgress.clear(),
+        db.cloudSyncState.clear(),
       ]),
   );
   window.localStorage.removeItem(ACTIVE_MAP_KEY);
   window.localStorage.removeItem(FLASHCARD_PROGRESS_KEY);
+  window.localStorage.removeItem(HISTORY_PROGRESS_KEY);
   window.localStorage.removeItem(LOCAL_WORKSPACE_OWNER_KEY);
   window.localStorage.removeItem(LAST_SYNC_SIGNATURE_KEY);
   window.localStorage.removeItem(LAST_SYNC_AT_KEY);
@@ -165,6 +204,9 @@ export function hasAtlasContent(snapshot: AtlasSnapshot) {
     snapshot.quizStats.length > 0 ||
     snapshot.quizMistakes.length > 0 ||
     snapshot.dailyProgress.length > 0 ||
-    Object.keys(snapshot.flashcardProgress).length > 0
+    Object.keys(snapshot.flashcardProgress).length > 0 ||
+    Boolean(snapshot.historyProgress?.visitedEventIds.length) ||
+    Boolean(snapshot.historyProgress?.chronologyAttempts) ||
+    Boolean(snapshot.historyProgress?.outcomeAttempts)
   );
 }

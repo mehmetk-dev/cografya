@@ -1,11 +1,12 @@
 <div align="center">
 
-# 🗺️ Coğrafya Atlasım
+# 🗺️ KPSS Atlasım
 
-### Türkiye haritası üzerinde çalış, işaretle, ezberle ve kendi atlasını oluştur.
+### Coğrafyayı haritada, tarihi neden–sonuç zincirinde çalış.
 
 81 ili seçilebilir gerçek Türkiye haritası, MEB/KPSS odaklı hazır ders setleri,
-kişisel notlar, konum işaretleri ve açıklamalı quizler tek bir uygulamada.
+kişisel notlar, etkileşimli tarih zincirleri ve açıklamalı çalışma oyunları tek
+bir uygulamada.
 
 <p>
   <img alt="React 19" src="https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white">
@@ -24,17 +25,35 @@ kişisel notlar, konum işaretleri ve açıklamalı quizler tek bir uygulamada.
 
 ## Proje hakkında
 
-Coğrafya Atlasım; Türkiye coğrafyasını yalnızca okuyarak değil, harita üzerinde
-görerek ve tekrar ederek çalışmak için geliştirilen etkileşimli bir çalışma
-uygulamasıdır.
+KPSS Atlasım; Türkiye coğrafyasını harita üzerinde, tarihi ise olaylar arasındaki
+neden–sonuç ve kronoloji bağlarını kurarak çalışmak için geliştirilen
+etkileşimli bir çalışma uygulamasıdır.
 
 Hazır ders setlerini inceleyebilir, şehirlerin üzerine dokunarak sınavlık
 bilgilere ulaşabilir veya hazır seti kopyalayıp kendi notlarınla kişisel bir
 çalışma haritasına dönüştürebilirsin.
 
-| 81 il | 7 hazır set | 331 bilgi işareti | 56 açıklamalı soru |
+| 81 il | 7 coğrafya seti | 20 tarih olayı | 3 tarih çalışma biçimi |
 |:---:|:---:|:---:|:---:|
-| Seçilebilir gerçek sınırlar | MEB/KPSS odaklı içerik | İlçe, havza ve tesis ayrıntıları | Bilgi + harita quizi |
+| Seçilebilir gerçek sınırlar | MEB/KPSS odaklı içerik | Kaynaklı neden–sonuç kartları | Zincir, kronoloji ve sonuç |
+
+## Tarih Zinciri
+
+Tarih bölümü salt not kütüphanesi değildir. Her olay; tarihi, nedeni, sonucu,
+ilgili kişi ve devletleri, KPSS ayırıcı bilgisi ve doğrudan MEBİ kaynak
+bağlantısıyla birlikte gösterilir.
+
+İlk sürümde iki pilot konu bulunur:
+
+- Osmanlı Dağılma Dönemi: Tanzimat Fermanı'ndan Mondros Ateşkes
+  Antlaşması'na uzanan 10 olay.
+- Atatürk Dönemi Türk Dış Politikası: Lozan'dan Hatay'ın Türkiye'ye
+  katılmasına uzanan 10 olay.
+
+Öğrenci olay zincirini inceleyebilir, kartları kronolojik sıraya koyabilir ve
+bir gelişmenin sonucunu diğer olayların sonuçlarından ayırt etmeye çalışabilir.
+İncelenen olaylar ile oyun başarısı yerel kayda ve hesaplı kullanımda bulut
+snapshot'ına eklenir.
 
 ## Hazır ders kütüphanesi
 
@@ -178,6 +197,14 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 
 `secret` veya `service_role` anahtarı hiçbir zaman Vite ortam değişkenine
 eklenmemelidir.
+
+Haritalar çevrimdışı kullanım için IndexedDB’de önbelleğe alınır; asıl cihazlar
+arası kayıt Supabase’de tutulur. Her bulut yazımı artan bir `revision` değeriyle
+karşılaştırılır, eşzamanlı telefon/bilgisayar değişiklikleri üç yönlü
+birleştirilir ve önceki JSON sürümü `user_atlas_data_versions` tablosunda
+değiştirilemez yedek olarak saklanır. `user_atlas_data` Realtime yayınına
+eklendiği için açık cihazlar değişiklikleri anlık alır; bağlantı koparsa
+30 saniyelik denetim ve odaklanma kontrolü devreye girer.
 
 ## Kullanılabilir komutlar
 

@@ -9,6 +9,7 @@ import {
   FolderOpen,
   FolderPen,
   FolderPlus,
+  GitBranch,
   Layers3,
   LoaderCircle,
   LogOut,
@@ -40,6 +41,7 @@ type MapSidebarProps = {
   onDelete: (map: StudyMap) => Promise<void>;
   onOpenReadySet: (set: ReadyStudySet) => Promise<void>;
   onOpenNotes: () => void;
+  onOpenHistory: () => void;
 };
 
 const PRESETS = [
@@ -71,6 +73,7 @@ export function MapSidebar({
   onDelete,
   onOpenReadySet,
   onOpenNotes,
+  onOpenHistory,
 }: MapSidebarProps) {
   const cloudAccount = useCloudAccount();
   const [isCreating, setIsCreating] = useState(false);
@@ -113,6 +116,17 @@ export function MapSidebar({
     (count, topic) => count + topic.sections.length,
     0,
   );
+  const cloudStatus = cloudAccount?.status ?? "synced";
+  const cloudStatusTitle =
+    cloudStatus === "error"
+      ? "Bulut kaydı bekliyor"
+      : cloudStatus === "syncing" || cloudStatus === "loading"
+        ? "Buluta kaydediliyor"
+        : "Buluta kaydedildi";
+  const cloudStatusDetail =
+    cloudStatus === "error"
+      ? "Bu cihazdaki kopya korunuyor"
+      : "Telefon ve bilgisayarda aynı";
 
   const create = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -248,6 +262,18 @@ export function MapSidebar({
           <strong>Coğrafya</strong>
           <span>Atlasım</span>
         </div>
+      </div>
+
+      <div className="sidebar-subject-switcher" aria-label="Ders seç">
+        <button className="is-active" type="button" aria-current="page">
+          <Map size={16} />
+          <span>Coğrafya</span>
+        </button>
+        <button type="button" onClick={onOpenHistory}>
+          <GitBranch size={16} />
+          <span>Tarih</span>
+          <small>Yeni</small>
+        </button>
       </div>
 
       <button
@@ -518,11 +544,14 @@ export function MapSidebar({
       </div>
 
       <div className="sidebar-footer">
-        <div className="autosave-indicator">
+        <div
+          className={`autosave-indicator autosave-indicator--${cloudStatus}`}
+          aria-live="polite"
+        >
           <span />
           <div>
-            <strong>Çevrimdışı çalışır</strong>
-            <small>Notların bu cihazda saklanır</small>
+            <strong>{cloudStatusTitle}</strong>
+            <small>{cloudStatusDetail}</small>
           </div>
         </div>
         {cloudAccount && (
