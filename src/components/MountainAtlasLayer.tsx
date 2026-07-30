@@ -29,7 +29,7 @@ function mapLabel(label: string) {
   return label
     .replace(/ Dağları$/, " D.")
     .replace(/ Dağı$/, " D.")
-    .replace(/ Volkanları$/, " Volk.");
+    .replace(/ Volkanları$/, " Vol.");
 }
 
 function MountainGlyph({

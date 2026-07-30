@@ -54,7 +54,7 @@ const MOUNTAIN_ATLAS_POINTS: Record<string, MapPoint> = {
   "aladaglar": { x: 474, y: 473 },
   "allahuekber-daglari": { x: 900, y: 257 },
   "amanos-daglari": { x: 556, y: 562 },
-  "aras-daglari": { x: 948, y: 292 },
+  "aras-daglari": { x: 900, y: 315 },
   "aydin-daglari": { x: 115, y: 449 },
   "barla-dagi": { x: 275, y: 446 },
   "beydaglari": { x: 201, y: 541 },
@@ -181,7 +181,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Trakya'nın güneybatısındaki dağlık kuşağı temsil eder.",
     4,
     18,
-    { x: 4, y: 18 },
+    { x: 0, y: -20 },
     { symbolScale: 0.78 },
   ),
   mountain(
@@ -280,7 +280,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Doğu Karadeniz Dağları'nın Giresun gerisindeki bölümüdür.",
     55,
     23,
-    { x: -7, y: 22 },
+    { x: 0, y: 18 },
     { symbolScale: 0.9 },
   ),
   mountain(
@@ -291,7 +291,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Doğu Karadeniz'in yüksek, kıyıya paralel ve buzullaşmış sırasıdır.",
     66,
     19,
-    { x: -18, y: -28 },
+    { x: 0, y: -22 },
     { image: "/images/sets/kackar.jpg", symbolScale: 1.12 },
   ),
   mountain(
@@ -302,7 +302,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Artvin'in kuzeydoğusunda Gürcistan sınırına yakın yükselir.",
     77,
     8,
-    { x: 18, y: -22 },
+    { x: 12, y: -20 },
     { symbolScale: 0.86 },
   ),
   mountain(
@@ -313,7 +313,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Artvin ile Ardahan arasında kuzeydoğu-güneybatı doğrultusunda uzanır.",
     81,
     17,
-    { x: 10, y: -24 },
+    { x: 0, y: -20 },
     { symbolScale: 0.9 },
   ),
   mountain(
@@ -324,7 +324,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Kars ile Erzurum arasında uzanan yüksek dağ sırasıdır.",
     85,
     18,
-    { x: 22, y: -24 },
+    { x: 0, y: 18 },
     { symbolScale: 0.9 },
   ),
   mountain(
@@ -335,7 +335,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Bakırçay ile Edremit çevresindeki çöküntü alanları arasında kalan horsttur.",
     5,
     50,
-    { x: 0, y: -30 },
+    { x: 0, y: -20 },
     { symbolScale: 0.78 },
   ),
   mountain(
@@ -379,7 +379,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Güneybatı Anadolu'da faylarla parçalanmış dağlık kütledir.",
     7,
     85,
-    { x: -18, y: 20 },
+    { x: -25, y: -4 },
     { symbolScale: 1.06 },
   ),
   mountain(
@@ -390,7 +390,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Kütahya'nın batısında İç Batı Anadolu eşiğinde yükselir.",
     11,
     41,
-    { x: -18, y: 18 },
+    { x: -24, y: -4 },
     { symbolScale: 0.78 },
   ),
   mountain(
@@ -423,7 +423,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Manisa'nın Kula çevresindeki genç volkan konileri ve lav alanlarıdır.",
     14,
     61,
-    { x: -4, y: 24 },
+    { x: 0, y: 13 },
     { symbolScale: 0.82 },
   ),
   mountain(
@@ -434,7 +434,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Eskişehir'in kuzeyinde Sakarya havzasına paralel uzanır.",
     22,
     46,
-    { x: 0, y: 18 },
+    { x: 0, y: 14 },
     { symbolScale: 0.82 },
   ),
   mountain(
@@ -456,7 +456,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Eskişehir'in güneydoğusunda İç Anadolu'nun batı kenarında yer alır.",
     26,
     54,
-    { x: 18, y: 20 },
+    { x: 22, y: 8 },
     { symbolScale: 0.82 },
   ),
   mountain(
@@ -467,7 +467,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Ankara'nın doğusunda İç Anadolu platosu üzerinde yükselir.",
     32,
     46,
-    { x: 22, y: 42 },
+    { x: 0, y: -20 },
     { symbolScale: 0.78 },
   ),
   mountain(
@@ -478,7 +478,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Afyonkarahisar'ın güneyinde İç Batı Anadolu'da uzanır.",
     18,
     69,
-    { x: -18, y: 22 },
+    { x: 0, y: 9 },
     { symbolScale: 0.82 },
   ),
   mountain(
@@ -489,7 +489,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Denizli'nin güneydoğusunda Batı Anadolu'nun yüksek kütlelerinden biridir.",
     14,
     75,
-    { x: -18, y: 18 },
+    { x: -24, y: -4 },
     { symbolScale: 0.82 },
   ),
   mountain(
@@ -500,7 +500,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Denizli'nin güneyinde Batı Toroslar'a yaklaşan dağ sırasıdır.",
     11,
     88,
-    { x: -20, y: 18 },
+    { x: -18, y: 14 },
     { symbolScale: 0.82 },
   ),
   mountain(
@@ -511,7 +511,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Muğla ile Antalya arasında Batı Toroslar'ın batı ucunda uzanır.",
     15,
     91,
-    { x: -18, y: 20 },
+    { x: -25, y: -4 },
     { symbolScale: 0.88 },
   ),
   mountain(
@@ -522,7 +522,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Antalya Körfezi'nin batısında Batı Toroslar'ın yüksek bölümüdür.",
     17,
     97,
-    { x: 20, y: 18 },
+    { x: 25, y: -4 },
     { symbolScale: 0.9 },
   ),
   mountain(
@@ -533,7 +533,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Burdur ile Antalya arasındaki Batı Toros kuşağında yer alır.",
     19,
     87,
-    { x: 0, y: 22 },
+    { x: 22, y: 13 },
     { symbolScale: 0.85 },
   ),
   mountain(
@@ -544,7 +544,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Afyonkarahisar ile Konya arasında kuzeybatı-güneydoğu uzanır.",
     22,
     69,
-    { x: 18, y: 18 },
+    { x: 24, y: -4 },
     { symbolScale: 0.92 },
   ),
   mountain(
@@ -555,7 +555,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Isparta'nın kuzeyinde Eğirdir Gölü çevresinde yükselir.",
     24,
     76,
-    { x: -18, y: -32 },
+    { x: 0, y: -20 },
     { symbolScale: 0.88 },
   ),
   mountain(
@@ -566,7 +566,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Isparta'dan Antalya ve Konya yönüne uzanan Batı Toros sıralarıdır.",
     30,
     86,
-    { x: -12, y: 22 },
+    { x: 0, y: 13 },
     { symbolScale: 1.05 },
   ),
   mountain(
@@ -632,7 +632,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Karaman'ın kuzeyinde sönmüş bir volkanik kütledir.",
     32,
     84,
-    { x: -23, y: 18 },
+    { x: -26, y: -4 },
     { symbolScale: 0.8 },
   ),
   mountain(
@@ -643,7 +643,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Mersin ile Niğde arasında Orta Toroslar'ın batı bölümünü oluşturur.",
     33,
     90,
-    { x: -4, y: 21 },
+    { x: 0, y: 13 },
     { symbolScale: 0.94 },
   ),
   mountain(
@@ -709,7 +709,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Tunceli ile Erzincan arasında yüksek ve engebeli bir sıra oluşturur.",
     60,
     52,
-    { x: 18, y: 24 },
+    { x: 0, y: 22 },
     { symbolScale: 0.98 },
   ),
   mountain(
@@ -742,7 +742,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Erzurum çevresinde Karasu ve Aras havzalarını ayıran sıradır.",
     67,
     47,
-    { x: 18, y: -20 },
+    { x: 0, y: -22 },
     { symbolScale: 0.92 },
   ),
   mountain(
@@ -753,7 +753,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Erzurum'un kuzeyinde Çoruh ve Aras havzaları arasında yükselir.",
     76,
     28,
-    { x: -18, y: 20 },
+    { x: 10, y: -18 },
     { symbolScale: 0.84 },
   ),
   mountain(
@@ -764,18 +764,18 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Erzurum kentinin güneyinde kuzeydoğu-güneybatı doğrultusunda uzanır.",
     76,
     44,
-    { x: -18, y: 20 },
+    { x: 0, y: 20 },
     { symbolScale: 0.9 },
   ),
   mountain(
     "aras-daglari",
     "Aras Dağları",
-    76,
+    4,
     "mountain-fold",
     "Aras Vadisi'nin güneyinde Ağrı ve Iğdır yönünde uzanır.",
     84,
     48,
-    { x: -20, y: 18 },
+    { x: 0, y: -20 },
     { symbolScale: 0.92 },
   ),
   mountain(
@@ -808,7 +808,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Diyarbakır ile Şanlıurfa arasında geniş tabanlı bir kalkan volkandır.",
     69,
     79,
-    { x: -20, y: -22 },
+    { x: 0, y: -22 },
     { symbolScale: 0.86 },
   ),
   mountain(
@@ -830,7 +830,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Van Gölü'nün batısında kalderası ve kaldera gölüyle tanınır.",
     81,
     56,
-    { x: -18, y: 22 },
+    { x: 0, y: 22 },
     { symbolScale: 0.84 },
   ),
   mountain(
@@ -841,7 +841,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Van Gölü'nün kuzeyinde yükselen sönmüş volkan konisidir.",
     86,
     46,
-    { x: -18, y: -22 },
+    { x: 0, y: -22 },
     { symbolScale: 0.86 },
   ),
   mountain(
@@ -863,7 +863,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Türkiye'nin en yüksek noktası olan büyük stratovolkan konisidir.",
     95,
     31,
-    { x: 18, y: -24 },
+    { x: 0, y: -22 },
     { image: "/images/sets/agri-dagi.jpg", symbolScale: 0.76 },
   ),
   mountain(
@@ -874,7 +874,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Büyük Ağrı'nın güneydoğusunda yükselen daha küçük volkan konisidir.",
     93,
     37,
-    { x: 0, y: 62 },
+    { x: 0, y: 18 },
     { symbolScale: 0.78 },
   ),
   mountain(
@@ -885,7 +885,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Van Gölü'nün güneyinde doğu-batı doğrultusunda uzanan sıradır.",
     84,
     69,
-    { x: -24, y: 20 },
+    { x: 0, y: -22 },
     { symbolScale: 0.9 },
   ),
   mountain(
@@ -896,7 +896,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Türkiye'nin güneydoğusunda çok yüksek ve engebeli sıralar oluşturur.",
     87,
     80,
-    { x: -8, y: -22 },
+    { x: 0, y: -22 },
     { symbolScale: 0.96 },
   ),
   mountain(
@@ -907,7 +907,7 @@ const MOUNTAIN_ATLAS_SEEDS: MountainAtlasSeed[] = [
     "Hakkâri'nin doğusunda güncel buzul izlerinin görüldüğü yüksek kütledir.",
     93,
     77,
-    { x: 20, y: 24 },
+    { x: 0, y: 22 },
     { symbolScale: 0.9 },
   ),
 ];
