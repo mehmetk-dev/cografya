@@ -2,6 +2,22 @@ import { describe, expect, it } from "vitest";
 import { READY_STUDY_SETS, getReadySet } from "./readySets";
 
 describe("KPSS odaklı hazır coğrafya setleri", () => {
+  it("Türkiye dağlarını 68 kayıtlık özel atlas görünümüyle sunar", () => {
+    const set = getReadySet("mountains");
+
+    expect(set).toBeDefined();
+    expect(set?.items).toHaveLength(68);
+    expect(set?.presentation).toBe("mountain-atlas");
+    expect(new Set(set?.items.map((entry) => entry.id)).size).toBe(68);
+    expect(
+      set?.items.every(
+        (entry) =>
+          entry.sourceLabel?.includes("MEB") &&
+          entry.sourceUrl?.includes("meb.gov.tr"),
+      ),
+    ).toBe(true);
+  });
+
   it("MEB haritasındaki 15 önemli platoyu kaynaklarıyla sunar", () => {
     const set = getReadySet("plateaus");
 
