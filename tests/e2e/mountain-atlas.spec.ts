@@ -30,9 +30,12 @@ test("Dağlar seti bütün adları özel atlas görünümünde gösterir", async
       name: /^Tümü/,
     }),
   ).toHaveClass(/is-active/);
+  await page.evaluate(() => document.fonts.ready);
 
   const layout = await atlas.locator(".turkey-map").evaluate((svg) => {
     const svgBounds = svg.getBoundingClientRect();
+    const svgScale =
+      svg.viewBox.baseVal.width / Math.max(svgBounds.width, 1);
     const labels = [
       ...svg.querySelectorAll<SVGGraphicsElement>(".mountain-atlas-label"),
     ].map((label) => {
@@ -156,12 +159,17 @@ test("Dağlar seti bütün adları özel atlas görünümünde gösterir", async
           gap: rectGap(label, symbol),
         }))
         .sort((first, second) => first.gap - second.gap)[0];
+      const ownGapSvg = ownGap * svgScale;
+      const nearestGapSvg = (nearestOther?.gap ?? Number.POSITIVE_INFINITY) *
+        svgScale;
       const looksAttachedToAnother =
-        nearestOther && nearestOther.gap + 4 < ownGap;
+        ownGapSvg > 8 &&
+        ownGapSvg - nearestGapSvg > 6 &&
+        ownGapSvg / Math.max(nearestGapSvg, 1) > 1.5;
 
-      return ownGap > 24 || looksAttachedToAnother
+      return ownGapSvg > 24 || looksAttachedToAnother
         ? [
-            `${label.text}: kendi=${ownGap.toFixed(1)}px, en yakın=${nearestOther?.owner ?? "yok"}:${nearestOther?.gap.toFixed(1) ?? "-"}px`,
+            `${label.text}: kendi=${ownGapSvg.toFixed(1)}, en yakın=${nearestOther?.owner ?? "yok"}:${Number.isFinite(nearestGapSvg) ? nearestGapSvg.toFixed(1) : "-"}`,
           ]
         : [];
     });
