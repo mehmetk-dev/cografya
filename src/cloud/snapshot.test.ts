@@ -49,6 +49,23 @@ describe("parseAtlasSnapshot", () => {
       }).success,
     ).toBe(false);
   });
+
+  it("özel dağ atlası sunumunu cihazlar arasında korur", () => {
+    const parsed = parseAtlasSnapshot(
+      snapshot({
+        studyMaps: [
+          {
+            ...snapshot().studyMaps[0],
+            presentation: "mountain-atlas",
+          },
+        ],
+      }),
+    );
+
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.studyMaps[0].presentation).toBe("mountain-atlas");
+  });
 });
 
 describe("mergeAtlasSnapshots", () => {

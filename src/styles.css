@@ -1342,6 +1342,18 @@ select:focus-visible,
   grid-template-columns: minmax(0, 1fr) 326px;
 }
 
+.workspace-body--mountain-atlas {
+  display: block;
+}
+
+.workspace-body--mountain-atlas > .ready-set-panel {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  border-top: 1px solid var(--line);
+  border-left: 0;
+}
+
 .feature-bar {
   position: relative;
   z-index: 7;
@@ -1719,6 +1731,142 @@ body.map-fullscreen-open {
   max-height: 570px;
   overflow: visible;
   filter: drop-shadow(0 8px 8px rgba(32, 58, 51, 0.1));
+}
+
+.map-stage--mountain-atlas {
+  min-height: calc(100vh - 139px);
+  padding-inline: clamp(20px, 2.5vw, 38px);
+  background:
+    linear-gradient(180deg, rgba(222, 227, 210, 0.74), transparent 38%),
+    #e9e5d9;
+}
+
+.map-stage--mountain-atlas .map-canvas {
+  min-height: clamp(540px, calc(100vh - 245px), 680px);
+  border-color: rgba(91, 97, 76, 0.42);
+  background:
+    radial-gradient(circle at 48% 40%, rgba(239, 241, 225, 0.55), transparent 58%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 46%),
+    #aebba2;
+  box-shadow:
+    0 18px 38px rgba(47, 63, 48, 0.17),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.map-stage--mountain-atlas .map-canvas::before,
+.map-stage--mountain-atlas .map-canvas::after {
+  border-color: rgba(54, 70, 55, 0.32);
+}
+
+.map-stage--mountain-atlas .map-texture {
+  opacity: 0.34;
+  background-image:
+    radial-gradient(circle at 18% 24%, rgba(55, 75, 58, 0.15) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 76% 68%, rgba(255, 255, 255, 0.2) 0 1px, transparent 1.6px),
+    repeating-linear-gradient(117deg, rgba(54, 72, 56, 0.035) 0 1px, transparent 1px 13px);
+  background-size: 25px 25px, 33px 33px, auto;
+  mask-image: none;
+}
+
+.turkey-map--mountain-atlas {
+  width: 100%;
+  max-height: 680px;
+  filter: drop-shadow(0 7px 8px rgba(49, 59, 43, 0.2));
+}
+
+.map-stage--mountain-atlas .province path {
+  fill: #eeeade;
+  stroke: #b2aea1;
+  stroke-width: 0.58;
+}
+
+.map-stage--mountain-atlas .province:hover path,
+.map-stage--mountain-atlas .province:focus path {
+  fill: #f4efe2;
+  filter: brightness(1.01);
+}
+
+.map-stage--mountain-atlas .province--selected path {
+  fill: #e7d7bd;
+  stroke: #5d5b4f;
+  stroke-width: 1.6;
+  filter: drop-shadow(0 1px 1px rgba(52, 56, 42, 0.2));
+}
+
+.mountain-atlas-layer {
+  isolation: isolate;
+}
+
+.mountain-atlas-title {
+  fill: #51483f;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.035em;
+  paint-order: stroke;
+  pointer-events: none;
+  stroke: rgba(244, 239, 226, 0.96);
+  stroke-linejoin: round;
+  stroke-width: 7px;
+}
+
+.mountain-atlas-legend {
+  pointer-events: none;
+}
+
+.mountain-atlas-legend__background {
+  fill: rgba(239, 235, 222, 0.96);
+  stroke: rgba(87, 78, 66, 0.42);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 3px 3px rgba(49, 50, 40, 0.16));
+}
+
+.mountain-atlas-legend__item text {
+  fill: #4b453d;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 8.5px;
+  font-weight: 800;
+}
+
+.mountain-atlas-marker {
+  cursor: pointer;
+  outline: none;
+}
+
+.mountain-atlas-symbol {
+  filter: drop-shadow(0 1.5px 1px rgba(67, 48, 38, 0.28));
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  transition: filter 140ms ease;
+}
+
+.mountain-atlas-label {
+  fill: #38362f;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 8.6px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  paint-order: stroke;
+  pointer-events: none;
+  stroke: rgba(246, 241, 228, 0.98);
+  stroke-linejoin: round;
+  stroke-width: 2.35px;
+}
+
+.mountain-atlas-marker:hover .mountain-atlas-symbol,
+.mountain-atlas-marker:focus-visible .mountain-atlas-symbol,
+.mountain-atlas-marker.is-selected .mountain-atlas-symbol {
+  filter:
+    drop-shadow(0 0 1px rgba(255, 249, 230, 0.96))
+    drop-shadow(0 2px 2px rgba(50, 41, 33, 0.5));
+}
+
+.mountain-atlas-marker:hover .mountain-atlas-label,
+.mountain-atlas-marker:focus-visible .mountain-atlas-label,
+.mountain-atlas-marker.is-selected .mountain-atlas-label {
+  fill: #173f36;
+  font-weight: 900;
+  stroke-width: 4.2px;
 }
 
 .turkey-map--pannable {
@@ -5588,6 +5736,17 @@ a.ready-source-badge:hover {
 .export-poster .turkey-map {
   width: 98%;
   max-height: 100%;
+}
+
+.export-poster .map-stage--mountain-atlas .map-canvas {
+  background:
+    radial-gradient(circle at 48% 40%, rgba(239, 241, 225, 0.55), transparent 58%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 46%),
+    #aebba2;
+}
+
+.export-poster .map-stage--mountain-atlas .map-texture {
+  display: block;
 }
 
 .poster-notes {

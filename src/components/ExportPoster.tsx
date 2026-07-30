@@ -24,11 +24,14 @@ export const ExportPoster = forwardRef<HTMLDivElement, ExportPosterProps>(
           markers={markers}
           drawings={drawings}
           themeColor={map.themeColor}
+          presentation={map.presentation}
           provinceFills={map.regionFills ?? {}}
           showLabels={map.showLabels}
           showProvinceNames={
             map.showProvinceNames ??
-            (Boolean(map.sourceSetId) && map.sourceSetId !== "rivers")
+            (Boolean(map.sourceSetId) &&
+              map.sourceSetId !== "rivers" &&
+              map.sourceSetId !== "mountains")
           }
           onSelect={() => undefined}
           exportMode

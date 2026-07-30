@@ -32,6 +32,7 @@ const mapPointSchema = z.object({
 const studyMapSchema = z.object({
   id: z.string().min(1),
   sourceSetId: z.string().optional(),
+  presentation: z.enum(["default", "mountain-atlas"]).optional(),
   folderId: z.string().optional(),
   name: z.string(),
   description: z.string(),

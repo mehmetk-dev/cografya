@@ -1,6 +1,9 @@
+export type MapPresentation = "default" | "mountain-atlas";
+
 export type StudyMap = {
   id: string;
   sourceSetId?: string;
+  presentation?: MapPresentation;
   folderId?: string;
   name: string;
   description: string;

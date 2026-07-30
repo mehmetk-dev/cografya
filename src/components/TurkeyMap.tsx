@@ -26,9 +26,11 @@ import { cities as mapCities } from "turkey-map-react/lib/data";
 import { getArrowGeometry } from "../drawingGeometry";
 import { createId } from "../id";
 import { getMarkerVisual } from "../markerKinds";
+import { MOUNTAIN_ATLAS_LAYOUTS } from "../mountainAtlas";
 import { applyProvinceFill } from "../regionPainting";
 import { RIVER_ROUTES } from "../riverRoutes";
 import { CatalogIcon } from "./CatalogIcon";
+import { MountainAtlasLayer } from "./MountainAtlasLayer";
 import {
   RegionPainterPanel,
   type RegionPainterMode,
@@ -40,6 +42,7 @@ import type {
   MapDrawing,
   MapMarker,
   MapPoint,
+  MapPresentation,
   ProvinceRecord,
 } from "../types";
 
@@ -51,6 +54,7 @@ type TurkeyMapProps = {
   themeColor: string;
   showLabels: boolean;
   showProvinceNames?: boolean;
+  presentation?: MapPresentation;
   readOnly?: boolean;
   onSelect: (city: City) => void;
   placementProvinceCode?: number | null;
@@ -259,6 +263,13 @@ const MOBILE_VIEWBOX = {
   y: 80,
   width: 1120,
   height: 585,
+};
+
+const MOUNTAIN_ATLAS_VIEWBOX = {
+  x: 0,
+  y: 96,
+  width: 1050,
+  height: 510,
 };
 
 const LABEL_SCALE_MIN = 0.7;
@@ -748,6 +759,7 @@ export function TurkeyMap({
   themeColor,
   showLabels,
   showProvinceNames = false,
+  presentation = "default",
   readOnly = false,
   onSelect,
   placementProvinceCode = null,
@@ -772,6 +784,7 @@ export function TurkeyMap({
   onClearDrawings,
   exportMode = false,
 }: TurkeyMapProps) {
+  const isMountainAtlas = presentation === "mountain-atlas";
   const svgRef = useRef<SVGSVGElement>(null);
   const mapStageRef = useRef<HTMLElement>(null);
   const panGestureRef = useRef<PanGesture | null>(null);
@@ -856,7 +869,11 @@ export function TurkeyMap({
   const [isNarrowViewport, setIsNarrowViewport] = useState(
     () => window.matchMedia("(max-width: 640px)").matches,
   );
-  const viewBounds = isNarrowViewport ? MOBILE_VIEWBOX : BASE_VIEWBOX;
+  const viewBounds = isMountainAtlas
+    ? MOUNTAIN_ATLAS_VIEWBOX
+    : isNarrowViewport
+      ? MOBILE_VIEWBOX
+      : BASE_VIEWBOX;
   const maximumZoom = isNarrowViewport ? 2.6 : 1.8;
   const rotateHandleDistance = isNarrowViewport
     ? 44
@@ -877,6 +894,11 @@ export function TurkeyMap({
     if (normalizedZoom !== zoom) setZoom(normalizedZoom);
     setPan((current) => clampPan(current, normalizedZoom, viewBounds));
   }, [maximumZoom, viewBounds, zoom]);
+
+  useEffect(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, [presentation]);
 
   useEffect(() => {
     const syncFullscreen = () => {
@@ -967,6 +989,21 @@ export function TurkeyMap({
 
     return [...groups.values()];
   }, [markers]);
+  const mountainAtlasMarkers = useMemo(
+    () =>
+      isMountainAtlas
+        ? markers.filter(
+            (marker) =>
+              marker.presetItemId &&
+              Boolean(MOUNTAIN_ATLAS_LAYOUTS[marker.presetItemId]),
+          )
+        : [],
+    [isMountainAtlas, markers],
+  );
+  const mountainAtlasMarkerIds = useMemo(
+    () => new Set(mountainAtlasMarkers.map((marker) => marker.id)),
+    [mountainAtlasMarkers],
+  );
   const routedRivers = useMemo(
     () => {
       const seenRouteIds = new Set<string>();
@@ -1009,10 +1046,15 @@ export function TurkeyMap({
     return counts;
   }, [routedRivers]);
   const denseMarkerLabels =
-    markers.length - routedRiverMarkerIds.size > DENSE_MARKER_LABEL_THRESHOLD;
+    markers.length -
+      routedRiverMarkerIds.size -
+      mountainAtlasMarkerIds.size >
+    DENSE_MARKER_LABEL_THRESHOLD;
   const displayedMarkers = useMemo(() => {
     const pointMarkers = markers.filter(
-      (marker) => !routedRiverMarkerIds.has(marker.id),
+      (marker) =>
+        !routedRiverMarkerIds.has(marker.id) &&
+        !mountainAtlasMarkerIds.has(marker.id),
     );
     if (!denseMarkerLabels || zoom >= 1.35) {
       return pointMarkers.map((marker) => ({ marker, count: 1 }));
@@ -1041,6 +1083,7 @@ export function TurkeyMap({
     denseMarkerLabels,
     centers,
     markers,
+    mountainAtlasMarkerIds,
     routedRiverMarkerIds,
     zoom,
   ]);
@@ -1058,7 +1101,12 @@ export function TurkeyMap({
     const positions = new Map<string, Point>();
 
     markers.forEach((marker) => {
-      if (routedRiverMarkerIds.has(marker.id)) return;
+      if (
+        routedRiverMarkerIds.has(marker.id) ||
+        mountainAtlasMarkerIds.has(marker.id)
+      ) {
+        return;
+      }
       if (movingMarkerPosition?.markerId === marker.id) {
         positions.set(marker.id, movingMarkerPosition.position);
         return;
@@ -1081,7 +1129,13 @@ export function TurkeyMap({
     });
 
     return positions;
-  }, [markers, centers, movingMarkerPosition, routedRiverMarkerIds]);
+  }, [
+    markers,
+    centers,
+    movingMarkerPosition,
+    routedRiverMarkerIds,
+    mountainAtlasMarkerIds,
+  ]);
   const markerLabelLayouts = useMemo(() => {
     const layouts = new Map<string, LabelLayout>();
     const placed: Array<
@@ -2543,30 +2597,43 @@ export function TurkeyMap({
       ref={mapStageRef}
       className={[
         "map-stage",
+        isMountainAtlas ? "map-stage--mountain-atlas" : "",
         placementProvinceCode ? "map-stage--placing" : "",
         nativeFullscreen || fallbackFullscreen
           ? "map-stage--fullscreen"
           : "",
       ].join(" ")}
-      aria-label="Etkileşimli Türkiye haritası"
+      aria-label={
+        isMountainAtlas
+          ? "Etkileşimli Türkiye dağları atlası"
+          : "Etkileşimli Türkiye haritası"
+      }
     >
       {!exportMode && (
         <div className="map-stage__topline">
           <div>
-            <span className="eyebrow">ÇALIŞMA ALANI</span>
-            <h2>Türkiye&apos;nin 81 ili</h2>
+            <span className="eyebrow">
+              {isMountainAtlas ? "FİZİKİ COĞRAFYA ATLASI" : "ÇALIŞMA ALANI"}
+            </span>
+            <h2>
+              {isMountainAtlas
+                ? "Türkiye'nin dağ haritası"
+                : "Türkiye'nin 81 ili"}
+            </h2>
           </div>
 
-          <div className="map-legend" aria-label="Harita açıklaması">
-            <span><i className="legend-dot legend-dot--empty" /> Boş</span>
-            <span><i className="legend-dot legend-dot--saved" /> Not eklendi</span>
-            {Object.keys(displayProvinceFills).length > 0 && (
-              <span>
-                <i className="legend-dot legend-dot--region" /> Bölge rengi
-              </span>
-            )}
-            <span><i className="legend-dot legend-dot--selected" /> Seçili</span>
-          </div>
+          {!isMountainAtlas && (
+            <div className="map-legend" aria-label="Harita açıklaması">
+              <span><i className="legend-dot legend-dot--empty" /> Boş</span>
+              <span><i className="legend-dot legend-dot--saved" /> Not eklendi</span>
+              {Object.keys(displayProvinceFills).length > 0 && (
+                <span>
+                  <i className="legend-dot legend-dot--region" /> Bölge rengi
+                </span>
+              )}
+              <span><i className="legend-dot legend-dot--selected" /> Seçili</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -2582,6 +2649,7 @@ export function TurkeyMap({
           ref={svgRef}
           className={[
             "turkey-map",
+            isMountainAtlas ? "turkey-map--mountain-atlas" : "",
             zoom > 1 && !drawingTool ? "turkey-map--pannable" : "",
             isPanning ? "turkey-map--panning" : "",
             drawingTool === "select" ? "turkey-map--selecting-drawing" : "",
@@ -2591,7 +2659,11 @@ export function TurkeyMap({
           ].join(" ")}
           viewBox={`${viewX} ${viewY} ${viewWidth} ${viewHeight}`}
           role="group"
-          aria-label="81 ilden oluşan Türkiye haritası"
+          aria-label={
+            isMountainAtlas
+              ? "Türkiye'nin dağlarını gösteren atlas haritası"
+              : "81 ilden oluşan Türkiye haritası"
+          }
           onPointerDown={(event) => {
             if (exportMode) return;
             if (regionPainterActive) {
@@ -3601,6 +3673,20 @@ export function TurkeyMap({
             </g>
           )}
 
+          {isMountainAtlas && (
+            <MountainAtlasLayer
+              markers={mountainAtlasMarkers}
+              selectedCode={selectedCode}
+              showLabels={showLabels}
+              onSelectMarker={(marker) => {
+                const city = cities.find(
+                  (candidate) => candidate.plateNumber === marker.provinceCode,
+                );
+                if (city) onSelect(city);
+              }}
+            />
+          )}
+
           <g className="marker-layer">
             {displayedMarkers.map(({ marker, count }) => {
               const position = markerPositions.get(marker.id);
@@ -4178,7 +4264,7 @@ export function TurkeyMap({
           </div>
         )}
 
-        {!exportMode && markerLegend.length > 0 && (
+        {!exportMode && !isMountainAtlas && markerLegend.length > 0 && (
           <div
             className={[
               "marker-legend",

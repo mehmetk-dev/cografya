@@ -85,6 +85,34 @@ describe("Türkiye dağları atlas verisi", () => {
     });
   });
 
+  it("kuzeydoğu dağlarını gerçek illerinin harita kuşağına yerleştirir", () => {
+    expect(MOUNTAIN_ATLAS_LAYOUTS["rize-kackar-daglari"].point).toEqual(
+      expect.objectContaining({
+        x: expect.any(Number),
+        y: expect.any(Number),
+      }),
+    );
+
+    const karcal = MOUNTAIN_ATLAS_LAYOUTS["karcal-daglari"].point;
+    const kackar = MOUNTAIN_ATLAS_LAYOUTS["rize-kackar-daglari"].point;
+    const yalnizcam = MOUNTAIN_ATLAS_LAYOUTS["yalnizcam-daglari"].point;
+
+    expect(karcal.x).toBeGreaterThanOrEqual(840);
+    expect(karcal.x).toBeLessThanOrEqual(890);
+    expect(karcal.y).toBeGreaterThanOrEqual(195);
+    expect(karcal.y).toBeLessThanOrEqual(250);
+
+    expect(kackar.x).toBeGreaterThanOrEqual(778);
+    expect(kackar.x).toBeLessThanOrEqual(833);
+    expect(kackar.y).toBeGreaterThanOrEqual(210);
+    expect(kackar.y).toBeLessThanOrEqual(265);
+
+    expect(yalnizcam.x).toBeGreaterThanOrEqual(878);
+    expect(yalnizcam.x).toBeLessThanOrEqual(935);
+    expect(yalnizcam.y).toBeGreaterThanOrEqual(186);
+    expect(yalnizcam.y).toBeLessThanOrEqual(248);
+  });
+
   it("MEB kaynağını her kayıtta taşır", () => {
     expect(
       MOUNTAIN_ATLAS_ENTRIES.every(

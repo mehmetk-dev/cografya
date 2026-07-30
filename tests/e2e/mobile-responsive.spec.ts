@@ -36,6 +36,16 @@ async function expectNoHorizontalScroll(page: Page, selectors = responsiveSurfac
   }
 }
 
+async function openReadySet(page: Page, name: RegExp) {
+  const button = page
+    .locator(".ready-library__list")
+    .getByRole("button", { name });
+  if (!(await button.isVisible())) {
+    await page.getByRole("button", { name: /Hazır setler/ }).click();
+  }
+  await button.click();
+}
+
 async function visibleMarkerLabelCount(page: Page) {
   return page
     .locator(
@@ -60,10 +70,7 @@ test("ana çalışma ekranı mobil genişliğe sığar", async ({ page }) => {
 
 test("hazır set ekranı mobil genişliğe sığar", async ({ page }) => {
   await page.goto("/");
-  await page
-    .locator(".ready-library__list")
-    .getByRole("button", { name: /Dağlar/ })
-    .click();
+  await openReadySet(page, /Dağlar/);
   await expect(
     page.getByRole("heading", { name: "Türkiye'nin Dağları", exact: true }),
   ).toBeVisible();
@@ -86,10 +93,7 @@ test("plato ve millî park setleri mobilde açılır", async ({ page }) => {
       count: "50 işaret",
     },
   ]) {
-    await page
-      .locator(".ready-library__list")
-      .getByRole("button", { name: readySet.button })
-      .click();
+    await openReadySet(page, readySet.button);
     await expect(
       page.getByRole("heading", { name: readySet.heading, exact: true }),
     ).toBeVisible();
@@ -116,10 +120,7 @@ test("plato ve millî park setleri mobilde açılır", async ({ page }) => {
 test("millî parklar haritası PNG olarak indirilir", async ({ page }) => {
   await page.setViewportSize({ width: 1365, height: 820 });
   await page.goto("/");
-  await page
-    .locator(".ready-library__list")
-    .getByRole("button", { name: /Millî Parklar/ })
-    .click();
+  await openReadySet(page, /Millî Parklar/);
   await expect(
     page.getByRole("heading", {
       name: "Türkiye'nin Millî Parkları",

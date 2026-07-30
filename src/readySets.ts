@@ -1,4 +1,9 @@
-import type { MarkerKind, MarkerSubtype } from "./types";
+import { MOUNTAIN_ATLAS_ENTRIES } from "./mountainAtlas";
+import type {
+  MapPresentation,
+  MarkerKind,
+  MarkerSubtype,
+} from "./types";
 import { QUIZ_BANKS, type ReadyQuizQuestion } from "./quizBanks";
 
 export type ReadySetItem = {
@@ -25,6 +30,7 @@ export type ReadyStudySet = {
   description: string;
   color: string;
   icon: string;
+  presentation?: MapPresentation;
   quizLabel: string;
   quizQuestions: ReadyQuizQuestion[];
   keyFacts: string[];
@@ -133,47 +139,27 @@ const mebAgricultureItems = (
     { label, url: page },
   );
 
-const mountains: ReadySetItem[] = [
-  item("agri", "Ağrı Dağı", 4, "mountain", "mountain-volcanic", "Türkiye'nin en yüksek dağıdır (5.137 m). Büyük Ağrı ve Küçük Ağrı konilerinden oluşur.", { image: "/images/sets/agri-dagi.jpg" }),
-  item("tendurek", "Tendürek Dağı", 4, "mountain", "mountain-volcanic", "Doğu Anadolu'da Ağrı ile Van arasında bulunan volkanik dağdır."),
-  item("suphan", "Süphan Dağı", 13, "mountain", "mountain-volcanic", "Van Gölü'nün kuzeyinde bulunan sönmüş volkanik dağdır."),
-  item("nemrut", "Nemrut Dağı", 13, "mountain", "mountain-volcanic", "Bitlis'te kalderası ve kaldera gölüyle tanınan volkanik dağdır."),
-  item("erciyes", "Erciyes Dağı", 38, "mountain", "mountain-volcanic", "İç Anadolu'nun en yüksek volkanik dağıdır (3.917 m).", { image: "/images/sets/erciyes.jpg" }),
-  item("hasan", "Hasan Dağı", 68, "mountain", "mountain-volcanic", "Aksaray-Niğde çevresinde yükselen volkanik dağdır."),
-  item("melendiz", "Melendiz Dağı", 51, "mountain", "mountain-volcanic", "Niğde çevresindeki volkanik dağ sırasıdır."),
-  item("karadag", "Karadağ", 70, "mountain", "mountain-volcanic", "Karaman'ın kuzeyinde bulunan sönmüş volkanik dağdır."),
-  item("karacadag", "Karacadağ", 21, "mountain", "mountain-volcanic", "Diyarbakır-Şanlıurfa arasında geniş tabanlı kalkan volkandır."),
-  item("kackar", "Kaçkar Dağları", 53, "mountain", "mountain-fold", "Doğu Karadeniz Dağları'nın en yüksek bölümüdür; buzul şekilleri yaygındır.", { image: "/images/sets/kackar.jpg" }),
-  item("kure", "Küre Dağları", 37, "mountain", "mountain-fold", "Batı Karadeniz'de kıyıya paralel uzanan Kuzey Anadolu Dağları bölümüdür."),
-  item("ilgaz", "Ilgaz Dağları", 18, "mountain", "mountain-fold", "Kastamonu ile Çankırı arasında uzanan Kuzey Anadolu Dağları bölümüdür."),
-  item("canik", "Canik Dağları", 52, "mountain", "mountain-fold", "Orta Karadeniz'de kıyıya paralel uzanır; yükseltisi Doğu Karadeniz'e göre daha azdır."),
-  item("giresun", "Giresun Dağları", 28, "mountain", "mountain-fold", "Doğu Karadeniz Dağları'nın batı bölümünde kıyıya paralel uzanır."),
-  item("yildiz", "Yıldız Dağları", 39, "mountain", "mountain-fold", "Trakya'nın kuzeyinde bulunan eski kütledir; Istranca adıyla da bilinir."),
-  item("toros", "Toros Dağları", 7, "mountain", "mountain-fold", "Akdeniz kıyılarına paralel uzanan Alp-Himalaya kıvrım sisteminin Türkiye'deki ana koludur."),
-  item("bolkar", "Bolkar Dağları", 33, "mountain", "mountain-fold", "Orta Toroslar'da Mersin-Niğde arasında uzanan kıvrım dağlarıdır."),
-  item("aladaglar", "Aladağlar", 51, "mountain", "mountain-fold", "Kayseri-Niğde-Adana arasında, Orta Toroslar'ın yüksek bölümüdür."),
-  item("bey", "Bey Dağları", 7, "mountain", "mountain-fold", "Batı Toroslar'ın Antalya çevresindeki bölümüdür."),
-  item("geyik", "Geyik Dağları", 7, "mountain", "mountain-fold", "Batı ve Orta Toroslar arasında uzanan kıvrım dağ sırasıdır."),
-  item("sultan", "Sultan Dağları", 3, "mountain", "mountain-fold", "Afyonkarahisar-Konya sınırında uzanan kıvrım dağlarıdır."),
-  item("sundiken", "Sündiken Dağları", 26, "mountain", "mountain-fold", "Eskişehir'in kuzeyinde bulunan kıvrım dağlarıdır."),
-  item("munzur", "Munzur Dağları", 62, "mountain", "mountain-fold", "Tunceli-Erzincan arasında Doğu Anadolu'nun yüksek kıvrım dağlarındandır."),
-  item("mercan", "Mercan Dağları", 24, "mountain", "mountain-fold", "Erzincan-Tunceli çevresindeki kıvrım dağ sırasıdır."),
-  item("kaz", "Kaz Dağı", 10, "mountain", "mountain-fault-block", "Edremit Körfezi'nin kuzeyinde yükselen kırık dağdır."),
-  item("madra", "Madra Dağları", 10, "mountain", "mountain-fault-block", "Bakırçay ile Edremit ovaları arasında bulunan Ege horstudur."),
-  item("yunt", "Yunt Dağı", 45, "mountain", "mountain-fault-block", "Bakırçay ve Gediz grabenleri arasında kalan kırık dağdır."),
-  item("bozdaglar", "Bozdağlar", 35, "mountain", "mountain-fault-block", "Gediz ile Küçük Menderes grabenleri arasında uzanan horsttur."),
-  item("aydin", "Aydın Dağları", 9, "mountain", "mountain-fault-block", "Küçük ve Büyük Menderes grabenleri arasında uzanan kırık dağlardır."),
-  item("mentese", "Menteşe Dağları", 48, "mountain", "mountain-fault-block", "Güneybatı Anadolu'da faylanmayla belirginleşen dağlık kütledir."),
-  item("amanos", "Amanos Dağları", 31, "mountain", "mountain-fault-block", "İskenderun Körfezi'nin doğusunda uzanan kırık dağlardır; Nur Dağları da denir."),
-].map((entry) => ({
-  ...entry,
-  topic:
-    entry.subtype === "mountain-volcanic"
-      ? "Volkanik Dağlar"
-      : entry.subtype === "mountain-fault-block"
-        ? "Kırık Dağlar (Horst)"
-        : "Kıvrım Dağları",
-}));
+const mountains: ReadySetItem[] = MOUNTAIN_ATLAS_ENTRIES.map((entry) =>
+  item(
+    entry.id,
+    entry.label,
+    entry.provinceCode,
+    "mountain",
+    entry.subtype,
+    entry.description,
+    {
+      image: entry.image,
+      topic:
+        entry.subtype === "mountain-volcanic"
+          ? "Volkanik Dağlar"
+          : entry.subtype === "mountain-fault-block"
+            ? "Kırık Dağlar (Horst)"
+            : "Kıvrım Dağları",
+      sourceLabel: entry.sourceLabel,
+      sourceUrl: entry.sourceUrl,
+    },
+  ),
+);
 
 const plateau = (
   id: string,
@@ -759,9 +745,10 @@ export const READY_STUDY_SETS: ReadyStudySet[] = [
     title: "Türkiye'nin Dağları",
     shortTitle: "Dağlar",
     subject: "Yeryüzü şekilleri",
-    description: "KPSS ve TYT için başlıca dağlar; kıvrım, kırık (horst) ve volkanik grupları ayrı ayrı çalışılabilir. İşaretler dağın sınavlarda eşleştirilen başlıca ilini temsil eder; dağ sıraları birden fazla ile uzanabilir.",
+    description: "KPSS ve TYT için Türkiye'nin 68 önemli dağı; referans atlas düzeninde, kıvrım, kırık (horst) ve volkanik gruplarıyla birlikte gösterilir. Dağ sıraları birden fazla ile uzanabilir.",
     color: "#a85d42",
     icon: "mountain",
+    presentation: "mountain-atlas",
     quizLabel: "Dağın bulunduğu ili bul",
     quizQuestions: QUIZ_BANKS.mountains,
     keyFacts: [

@@ -225,6 +225,7 @@ function readyMarkerSignature(marker: MapMarker) {
 }
 
 async function refreshReadySetContent(set: ReadyStudySet, mapId: string) {
+  const currentMap = await db.studyMaps.get(mapId);
   const currentMarkers = await db.mapMarkers
     .where("mapId")
     .equals(mapId)
@@ -237,6 +238,7 @@ async function refreshReadySetContent(set: ReadyStudySet, mapId: string) {
     presetMarkers.map((marker) => [marker.presetItemId, marker]),
   );
   const needsRefresh =
+    currentMap?.presentation !== set.presentation ||
     currentMarkers.length !== set.items.length ||
     presetMarkers.length !== set.items.length ||
     expectedMarkers.some((expected) => {
@@ -270,6 +272,7 @@ async function refreshReadySetContent(set: ReadyStudySet, mapId: string) {
       name: set.title,
       description: set.description,
       themeColor: set.color,
+      presentation: set.presentation,
       updatedAt: new Date().toISOString(),
     });
   });
@@ -341,7 +344,11 @@ export default function App() {
   const activeReadySet = getReadySet(activeMap?.sourceSetId);
   const provinceNamesVisible =
     activeMap?.showProvinceNames ??
-    Boolean(activeReadySet && activeReadySet.id !== "rivers");
+    Boolean(
+      activeReadySet &&
+      activeReadySet.id !== "rivers" &&
+      activeReadySet.id !== "mountains",
+    );
   const personalMaps = useMemo(
     () => (maps ?? []).filter((map) => !map.sourceSetId),
     [maps],
@@ -633,7 +640,9 @@ export default function App() {
 
   useEffect(() => {
     setReadyTopicFilter(
-      activeReadySet?.items.find((entry) => entry.topic)?.topic ?? null,
+      activeReadySet?.id === "mountains"
+        ? null
+        : activeReadySet?.items.find((entry) => entry.topic)?.topic ?? null,
     );
   }, [activeReadySet?.id]);
 
@@ -748,7 +757,11 @@ export default function App() {
       sourceSetId: undefined,
       showProvinceNames:
         map.showProvinceNames ??
-        Boolean(map.sourceSetId && map.sourceSetId !== "rivers"),
+        Boolean(
+          map.sourceSetId &&
+          map.sourceSetId !== "rivers" &&
+          map.sourceSetId !== "mountains",
+        ),
       name: `${map.name} — Kopya`,
       createdAt: now,
       updatedAt: now,
@@ -829,6 +842,7 @@ export default function App() {
     const map: StudyMap = {
       ...createBlankMap(set.title, set.color),
       sourceSetId: set.id,
+      presentation: set.presentation,
       description: set.description,
     };
     const markers = buildReadySetMarkers(set, map.id);
@@ -1668,7 +1682,16 @@ export default function App() {
           }
         />
 
-        <div className="workspace-body">
+        <div
+          className={[
+            "workspace-body",
+            activeMap.presentation === "mountain-atlas"
+              ? "workspace-body--mountain-atlas"
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
           <TurkeyMap
             selectedCode={selectedCity?.plateNumber ?? null}
             records={activeRecords}
@@ -1677,6 +1700,7 @@ export default function App() {
             themeColor={activeMap.themeColor}
             showLabels={activeMap.showLabels}
             showProvinceNames={provinceNamesVisible}
+            presentation={activeMap.presentation}
             readOnly={Boolean(activeReadySet)}
             matchingProvinceCodes={matchingProvinceCodes}
             provinceColorPreview={provinceColorPreview}
