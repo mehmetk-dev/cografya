@@ -82,6 +82,10 @@ describe("Türkiye dağları atlas verisi", () => {
         layout.point.y + layout.labelOffset.y,
         `${entry.label} etiket y`,
       ).toBeLessThanOrEqual(600);
+      expect(
+        Math.hypot(layout.labelOffset.x, layout.labelOffset.y),
+        `${entry.label} etiketi kendi simgesinden kopmamalı`,
+      ).toBeLessThanOrEqual(36);
     });
   });
 

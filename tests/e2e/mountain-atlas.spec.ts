@@ -82,6 +82,29 @@ test("Dağlar seti bütün adları özel atlas görünümünde gösterir", async
       return Math.max(0, width) * Math.max(0, height);
     };
 
+    const rectGap = (
+      first: Pick<
+        (typeof labels)[number],
+        "left" | "right" | "top" | "bottom"
+      >,
+      second: Pick<
+        (typeof labels)[number],
+        "left" | "right" | "top" | "bottom"
+      >,
+    ) => {
+      const horizontal = Math.max(
+        0,
+        first.left - second.right,
+        second.left - first.right,
+      );
+      const vertical = Math.max(
+        0,
+        first.top - second.bottom,
+        second.top - first.bottom,
+      );
+      return Math.hypot(horizontal, vertical);
+    };
+
     const significantOverlaps: Array<{
       first: string;
       second: string;
@@ -121,6 +144,28 @@ test("Dağlar seti bütün adları özel atlas görünümünde gösterir", async
       });
     });
 
+    const detachedLabels = labels.flatMap((label) => {
+      const ownSymbol = symbols.find((symbol) => symbol.owner === label.owner);
+      if (!ownSymbol) return [`${label.text}: kendi simgesi bulunamadı`];
+
+      const ownGap = rectGap(label, ownSymbol);
+      const nearestOther = symbols
+        .filter((symbol) => symbol.owner !== label.owner)
+        .map((symbol) => ({
+          owner: symbol.owner,
+          gap: rectGap(label, symbol),
+        }))
+        .sort((first, second) => first.gap - second.gap)[0];
+      const looksAttachedToAnother =
+        nearestOther && nearestOther.gap + 4 < ownGap;
+
+      return ownGap > 24 || looksAttachedToAnother
+        ? [
+            `${label.text}: kendi=${ownGap.toFixed(1)}px, en yakın=${nearestOther?.owner ?? "yok"}:${nearestOther?.gap.toFixed(1) ?? "-"}px`,
+          ]
+        : [];
+    });
+
     const outsideProvince = [
       ...svg.querySelectorAll<SVGGElement>(".mountain-atlas-marker"),
     ].flatMap((marker) => {
@@ -155,6 +200,7 @@ test("Dağlar seti bütün adları özel atlas görünümünde gösterir", async
       significantOverlaps,
       symbolOverlaps,
       labelSymbolOverlaps,
+      detachedLabels,
       outsideProvince,
     };
   });
@@ -165,6 +211,7 @@ test("Dağlar seti bütün adları özel atlas görünümünde gösterir", async
   expect(layout.significantOverlaps).toEqual([]);
   expect(layout.symbolOverlaps).toEqual([]);
   expect(layout.labelSymbolOverlaps).toEqual([]);
+  expect(layout.detachedLabels).toEqual([]);
   expect(layout.outsideProvince).toEqual([]);
 });
 
