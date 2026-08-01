@@ -533,7 +533,11 @@ export function MapSidebar({
                   </i>
                   <span>
                     <strong>{set.shortTitle}</strong>
-                    <small>{set.items.length} hazır bilgi</small>
+                    <small>
+                      {set.workspaceMode === "manual"
+                        ? "Simgeleri kendin ekle"
+                        : `${set.items.length} hazır bilgi`}
+                    </small>
                   </span>
                   <BookOpen size={14} />
                 </button>

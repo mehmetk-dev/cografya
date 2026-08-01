@@ -33,7 +33,9 @@ import { createId } from "./id";
 import { getMarkerVisual } from "./markerKinds";
 import {
   getReadySet,
+  getReadySetWorkspaceItems,
   READY_STUDY_SETS,
+  type ReadySetItem,
   type ReadyStudySet,
 } from "./readySets";
 import type {
@@ -163,9 +165,13 @@ function freezeExportSvgStyles(root: HTMLElement) {
   };
 }
 
-function buildReadySetMarkers(set: ReadyStudySet, mapId: string) {
+function buildReadySetMarkers(
+  set: ReadyStudySet,
+  mapId: string,
+  items: ReadySetItem[] = set.items,
+) {
   const now = new Date().toISOString();
-  return set.items.map<MapMarker>((entry) => {
+  return items.map<MapMarker>((entry) => {
     const city = turkeyCities.find(
       (candidate) => candidate.plateNumber === entry.provinceCode,
     );
@@ -230,9 +236,33 @@ async function refreshReadySetContent(set: ReadyStudySet, mapId: string) {
     .where("mapId")
     .equals(mapId)
     .toArray();
-  const expectedMarkers = buildReadySetMarkers(set, mapId);
   const presetMarkers = currentMarkers.filter(
     (marker) => Boolean(marker.presetItemId),
+  );
+  if (set.workspaceMode === "manual") {
+    const needsMigration =
+      currentMap?.presentation !== set.presentation ||
+      presetMarkers.length > 0;
+    if (!needsMigration) return false;
+
+    await db.transaction("rw", db.studyMaps, db.mapMarkers, async () => {
+      if (presetMarkers.length > 0) {
+        await db.mapMarkers.bulkDelete(
+          presetMarkers.map((marker) => marker.id),
+        );
+      }
+      await db.studyMaps.update(mapId, {
+        presentation: set.presentation,
+        updatedAt: new Date().toISOString(),
+      });
+    });
+    return true;
+  }
+
+  const expectedMarkers = buildReadySetMarkers(
+    set,
+    mapId,
+    getReadySetWorkspaceItems(set),
   );
   const currentByPresetId = new Map(
     presetMarkers.map((marker) => [marker.presetItemId, marker]),
@@ -342,6 +372,9 @@ export default function App() {
 
   const activeMap = maps?.find((map) => map.id === activeMapId);
   const activeReadySet = getReadySet(activeMap?.sourceSetId);
+  const activeMapIsReadOnly = Boolean(
+    activeReadySet && activeReadySet.workspaceMode !== "manual",
+  );
   const provinceNamesVisible =
     activeMap?.showProvinceNames ??
     Boolean(
@@ -487,7 +520,7 @@ export default function App() {
         : undefined,
     [activeReadySet, visibleMarkers],
   );
-  const standardQuizMarkers = activeReadySet
+  const standardQuizMarkers = activeMapIsReadOnly
     ? activeSetQuizMarkers
     : personalQuizMarkers;
   const selectedRecord = selectedCity
@@ -832,9 +865,13 @@ export default function App() {
       );
       selectMap(existing.id);
       setToast(
-        needsContentRefresh
-          ? `“${set.shortTitle}” ayrıntılı MEB içeriğiyle güncellendi`
-          : `“${set.shortTitle}” hazır seti açıldı`,
+        set.workspaceMode === "manual"
+          ? needsContentRefresh
+            ? `“${set.shortTitle}” normal ve düzenlenebilir haritaya geçirildi`
+            : `“${set.shortTitle}” çalışma haritan açıldı`
+          : needsContentRefresh
+            ? `“${set.shortTitle}” ayrıntılı MEB içeriğiyle güncellendi`
+            : `“${set.shortTitle}” hazır seti açıldı`,
       );
       return;
     }
@@ -845,7 +882,11 @@ export default function App() {
       presentation: set.presentation,
       description: set.description,
     };
-    const markers = buildReadySetMarkers(set, map.id);
+    const markers = buildReadySetMarkers(
+      set,
+      map.id,
+      getReadySetWorkspaceItems(set),
+    );
 
     await db.transaction("rw", db.studyMaps, db.mapMarkers, async () => {
       await db.studyMaps.add(map);
@@ -853,7 +894,11 @@ export default function App() {
     });
     pendingMapActivationRef.current = map.id;
     selectMap(map.id);
-    setToast(`${set.items.length} bilgiyle “${set.shortTitle}” seti hazır`);
+    setToast(
+      set.workspaceMode === "manual"
+        ? `“${set.shortTitle}” haritan hazır; simgeleri sen ekleyebilirsin`
+        : `${set.items.length} bilgiyle “${set.shortTitle}” seti hazır`,
+    );
   };
 
   const deleteMap = async (map: StudyMap) => {
@@ -899,7 +944,7 @@ export default function App() {
   };
 
   const saveProvince = async (record: ProvinceRecord) => {
-    if (activeReadySet) {
+    if (activeMapIsReadOnly) {
       setToast("Hazır seti düzenlemek için önce kişisel kopyasını oluştur");
       return;
     }
@@ -920,7 +965,7 @@ export default function App() {
   };
 
   const deleteProvince = async (record: ProvinceRecord) => {
-    if (activeReadySet) return;
+    if (activeMapIsReadOnly) return;
     const approved = window.confirm(
       `${record.provinceName} için eklediğin notları silmek istiyor musun?`,
     );
@@ -934,7 +979,7 @@ export default function App() {
     city: City,
     point: { x: number; y: number },
   ) => {
-    if (!activeMap || !pendingMarker || activeReadySet) return;
+    if (!activeMap || !pendingMarker || activeMapIsReadOnly) return;
 
     const marker: MapMarker = {
       id: createId(),
@@ -958,7 +1003,7 @@ export default function App() {
   };
 
   const deleteMarker = async (marker: MapMarker) => {
-    if (activeReadySet) return;
+    if (activeMapIsReadOnly) return;
     const approved = window.confirm(
       `“${marker.label}” işaretini haritadan silmek istiyor musun?`,
     );
@@ -980,7 +1025,7 @@ export default function App() {
   const updateProvincePresentation = async (record: ProvinceRecord) => {
     if (
       !activeMap ||
-      activeReadySet ||
+      activeMapIsReadOnly ||
       record.mapId !== activeMap.id
     ) {
       return;
@@ -1001,7 +1046,7 @@ export default function App() {
     text?: string,
     size?: number,
   ) => {
-    if (!activeMap || activeReadySet) return;
+    if (!activeMap || activeMapIsReadOnly) return;
     const drawing: MapDrawing = {
       id: createId(),
       mapId: activeMap.id,
@@ -1016,7 +1061,13 @@ export default function App() {
   };
 
   const updateDrawing = async (drawing: MapDrawing) => {
-    if (!activeMap || activeReadySet || drawing.mapId !== activeMap.id) return;
+    if (
+      !activeMap ||
+      activeMapIsReadOnly ||
+      drawing.mapId !== activeMap.id
+    ) {
+      return;
+    }
     await db.transaction("rw", db.studyMaps, db.mapDrawings, async () => {
       await db.mapDrawings.put(drawing);
       await db.studyMaps.update(activeMap.id, {
@@ -1029,7 +1080,7 @@ export default function App() {
     removedIds: string[],
     replacements: MapDrawing[],
   ) => {
-    if (!activeMap || activeReadySet || removedIds.length === 0) return;
+    if (!activeMap || activeMapIsReadOnly || removedIds.length === 0) return;
     await db.transaction("rw", db.studyMaps, db.mapDrawings, async () => {
       await db.mapDrawings.bulkDelete(removedIds);
       if (replacements.length > 0) {
@@ -1534,19 +1585,19 @@ export default function App() {
             />
             <div>
               <span className="eyebrow">
-                {activeReadySet ? "SALT OKUNUR DERS SETİ" : "AÇIK HARİTA"}
+                {activeMapIsReadOnly ? "SALT OKUNUR DERS SETİ" : "AÇIK HARİTA"}
               </span>
               <div
-                className={`editable-title ${activeReadySet ? "editable-title--locked" : ""}`}
+                className={`editable-title ${activeMapIsReadOnly ? "editable-title--locked" : ""}`}
               >
                 <input
                   value={mapName}
-                  readOnly={Boolean(activeReadySet)}
+                  readOnly={activeMapIsReadOnly}
                   maxLength={60}
                   aria-label="Harita adı"
                   onChange={(event) => setMapName(event.target.value)}
                   onBlur={() => {
-                    if (activeReadySet) return;
+                    if (activeMapIsReadOnly) return;
                     const name = mapName.trim();
                     if (name && name !== activeMap.name) {
                       void updateActiveMap({ name });
@@ -1558,7 +1609,7 @@ export default function App() {
                     if (event.key === "Enter") event.currentTarget.blur();
                   }}
                 />
-                {activeReadySet ? (
+                {activeMapIsReadOnly ? (
                   <LockKeyhole size={15} aria-label="Salt okunur hazır set" />
                 ) : (
                   <PencilLine size={15} />
@@ -1661,7 +1712,7 @@ export default function App() {
           onQueryChange={setQuery}
           onToggleKind={(kind) => void toggleMarkerKind(kind)}
           studyActionLabel={
-            activeReadySet
+            activeMapIsReadOnly
               ? "Çalışma merkezi"
               : personalQuizMarkers.length > 0
                 ? "Haritamı test et"
@@ -1669,7 +1720,7 @@ export default function App() {
           }
           showProvinceNames={provinceNamesVisible}
           onQuiz={() => {
-            if (activeReadySet) {
+            if (activeMapIsReadOnly) {
               openStudyCenter("overview");
             } else {
               void startQuiz("standard");
@@ -1701,7 +1752,7 @@ export default function App() {
             showLabels={activeMap.showLabels}
             showProvinceNames={provinceNamesVisible}
             presentation={activeMap.presentation}
-            readOnly={Boolean(activeReadySet)}
+            readOnly={activeMapIsReadOnly}
             matchingProvinceCodes={matchingProvinceCodes}
             provinceColorPreview={provinceColorPreview}
             provinceFills={activeMap.regionFills ?? {}}
@@ -1751,7 +1802,7 @@ export default function App() {
             }
           />
 
-          {activeReadySet ? (
+          {activeMapIsReadOnly && activeReadySet ? (
             <ReadySetOverview
               set={activeReadySet}
               selectedCity={selectedCity}

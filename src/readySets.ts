@@ -31,6 +31,7 @@ export type ReadyStudySet = {
   color: string;
   icon: string;
   presentation?: MapPresentation;
+  workspaceMode?: "reference" | "manual";
   quizLabel: string;
   quizQuestions: ReadyQuizQuestion[];
   keyFacts: string[];
@@ -745,10 +746,11 @@ export const READY_STUDY_SETS: ReadyStudySet[] = [
     title: "Türkiye'nin Dağları",
     shortTitle: "Dağlar",
     subject: "Yeryüzü şekilleri",
-    description: "KPSS ve TYT için Türkiye'nin 68 önemli dağı; referans atlas düzeninde, kıvrım, kırık (horst) ve volkanik gruplarıyla birlikte gösterilir. Dağ sıraları birden fazla ile uzanabilir.",
+    description: "Türkiye'nin dağlarını kendi çalışma düzeninle oluştur; kıvrım, kırık (horst) ve volkanik dağ simgelerini seçip gerçek konumlarına elle yerleştir.",
     color: "#a85d42",
     icon: "mountain",
-    presentation: "mountain-atlas",
+    presentation: "default",
+    workspaceMode: "manual",
     quizLabel: "Dağın bulunduğu ili bul",
     quizQuestions: QUIZ_BANKS.mountains,
     keyFacts: [
@@ -908,4 +910,8 @@ export const READY_STUDY_SETS: ReadyStudySet[] = [
 
 export function getReadySet(id?: string) {
   return READY_STUDY_SETS.find((set) => set.id === id);
+}
+
+export function getReadySetWorkspaceItems(set: ReadyStudySet) {
+  return set.workspaceMode === "manual" ? [] : set.items;
 }
