@@ -147,4 +147,17 @@ describe("snapshotSignature", () => {
 
     expect(snapshotSignature(first)).toBe(snapshotSignature(second));
   });
+
+  it("treats collection order differences as the same atlas content", () => {
+    const mapA = snapshot().studyMaps[0];
+    const mapB = {
+      ...mapA,
+      id: "map-b",
+      name: "İkinci harita",
+    };
+    const cloud = snapshot({ studyMaps: [mapB, mapA] });
+    const indexedDb = snapshot({ studyMaps: [mapA, mapB] });
+
+    expect(snapshotSignature(cloud)).toBe(snapshotSignature(indexedDb));
+  });
 });
