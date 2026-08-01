@@ -86,6 +86,26 @@ describe("parseAtlasSnapshot", () => {
 
     expect(parsed.success).toBe(true);
   });
+
+  it("0.5x boyutundaki yazıyı bulut verisinde doğrular", () => {
+    const parsed = parseAtlasSnapshot({
+      ...snapshot(),
+      mapDrawings: [
+        {
+          id: "small-text-1",
+          mapId: "map-a",
+          tool: "text",
+          color: "#17463b",
+          size: 0.5,
+          points: [{ x: 440, y: 280 }],
+          text: "Minik yazı",
+          createdAt: "2026-08-01T13:00:00.000Z",
+        },
+      ],
+    });
+
+    expect(parsed.success).toBe(true);
+  });
 });
 
 describe("mergeAtlasSnapshots", () => {
