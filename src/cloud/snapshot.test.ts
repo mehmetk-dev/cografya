@@ -160,4 +160,21 @@ describe("snapshotSignature", () => {
 
     expect(snapshotSignature(cloud)).toBe(snapshotSignature(indexedDb));
   });
+
+  it("ignores object property insertion order", () => {
+    const original = snapshot().studyMaps[0];
+    const reordered = {
+      updatedAt: original.updatedAt,
+      createdAt: original.createdAt,
+      showLabels: original.showLabels,
+      themeColor: original.themeColor,
+      description: original.description,
+      name: original.name,
+      id: original.id,
+    };
+
+    expect(snapshotSignature(snapshot({ studyMaps: [original] }))).toBe(
+      snapshotSignature(snapshot({ studyMaps: [reordered] })),
+    );
+  });
 });
