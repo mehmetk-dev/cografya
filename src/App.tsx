@@ -337,6 +337,7 @@ export default function App() {
   const [readyTopicFilter, setReadyTopicFilter] = useState<string | null>(null);
   const [drawingTool, setDrawingTool] = useState<DrawingMode | null>(null);
   const [drawingColor, setDrawingColor] = useState("#d05f64");
+  const [drawingFilled, setDrawingFilled] = useState(false);
   const [drawingSizes, setDrawingSizes] = useState({
     pen: 1,
     text: 1,
@@ -1047,6 +1048,7 @@ export default function App() {
     points: { x: number; y: number }[],
     text?: string,
     size?: number,
+    filled?: boolean,
   ) => {
     if (!activeMap || activeMapIsReadOnly) return;
     const drawing: MapDrawing = {
@@ -1060,6 +1062,7 @@ export default function App() {
           : undefined,
       points,
       text,
+      filled: tool === "circle" ? filled : undefined,
       createdAt: new Date().toISOString(),
     };
     await db.mapDrawings.add(drawing);
@@ -1767,6 +1770,7 @@ export default function App() {
             }
             drawingTool={drawingTool}
             drawingColor={drawingColor}
+            drawingFilled={drawingFilled}
             drawingSize={
               drawingTool && isMountainFormation(drawingTool)
                 ? drawingSizes.mountain
@@ -1779,6 +1783,7 @@ export default function App() {
               if (tool) setPendingMarker(null);
             }}
             onDrawingColorChange={setDrawingColor}
+            onDrawingFilledChange={setDrawingFilled}
             onDrawingSizeChange={(size) => {
               const sizeTool =
                 drawingTool && isMountainFormation(drawingTool)
@@ -1791,8 +1796,8 @@ export default function App() {
                 [sizeTool]: size,
               }));
             }}
-            onAddDrawing={(tool, points, text, size) =>
-              void addDrawing(tool, points, text, size)
+            onAddDrawing={(tool, points, text, size, filled) =>
+              void addDrawing(tool, points, text, size, filled)
             }
             onUpdateDrawing={(drawing) => void updateDrawing(drawing)}
             onUpdateMarker={(marker) => void updateMarkerPresentation(marker)}

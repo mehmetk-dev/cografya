@@ -100,6 +100,7 @@ const mapDrawingSchema = z.object({
   mapId: z.string().min(1),
   tool: z.enum([
     "pen",
+    "line",
     "arrow",
     "circle",
     "text",
@@ -109,6 +110,7 @@ const mapDrawingSchema = z.object({
   ]),
   color: z.string(),
   size: z.number().min(0.5).max(3).optional(),
+  filled: z.boolean().optional(),
   rotation: z.number().min(-180).max(180).optional(),
   points: z.array(mapPointSchema).min(1),
   text: z.string().optional(),

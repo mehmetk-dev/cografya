@@ -96,6 +96,7 @@ export type MountainShapeTool =
 
 export type DrawingTool =
   | "pen"
+  | "line"
   | "arrow"
   | "circle"
   | "text"
@@ -113,6 +114,7 @@ export type MapDrawing = {
   tool: DrawingTool;
   color: string;
   size?: number;
+  filled?: boolean;
   rotation?: number;
   points: MapPoint[];
   text?: string;

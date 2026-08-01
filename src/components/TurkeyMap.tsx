@@ -77,14 +77,17 @@ type TurkeyMapProps = {
   drawingTool?: DrawingMode | null;
   drawingColor?: string;
   drawingSize?: number;
+  drawingFilled?: boolean;
   onDrawingToolChange?: (tool: DrawingMode | null) => void;
   onDrawingColorChange?: (color: string) => void;
   onDrawingSizeChange?: (size: number) => void;
+  onDrawingFilledChange?: (filled: boolean) => void;
   onAddDrawing?: (
     tool: DrawingTool,
     points: MapPoint[],
     text?: string,
     size?: number,
+    filled?: boolean,
   ) => void;
   onUpdateRecord?: (record: ProvinceRecord) => void;
   onUpdateMarker?: (marker: MapMarker) => void;
@@ -445,6 +448,7 @@ function smoothPath(points: MapPoint[]) {
 function isDrawingTool(mode: DrawingMode | null): mode is DrawingTool {
   return (
     mode === "pen" ||
+    mode === "line" ||
     mode === "arrow" ||
     mode === "circle" ||
     mode === "text" ||
@@ -626,7 +630,12 @@ function drawingHitDistance(drawing: MapDrawing, point: MapPoint) {
   }
   if (drawing.tool === "circle") {
     const radius = Math.hypot(last.x - first.x, last.y - first.y);
-    return Math.abs(Math.hypot(point.x - first.x, point.y - first.y) - radius);
+    const distanceFromCenter = Math.hypot(
+      point.x - first.x,
+      point.y - first.y,
+    );
+    if (drawing.filled && distanceFromCenter <= radius) return 0;
+    return Math.abs(distanceFromCenter - radius);
   }
   if (drawing.tool === "arrow") {
     const { tip, baseCenter, left, right } = getArrowGeometry(first, last);
@@ -774,7 +783,11 @@ function eraseDrawings(
   const replacements: MapDrawing[] = [];
 
   drawings.forEach((drawing) => {
-    if (drawing.tool === "text" || isMountainFormation(drawing.tool)) {
+    if (
+      drawing.tool === "text" ||
+      isMountainFormation(drawing.tool) ||
+      (drawing.tool === "circle" && drawing.filled)
+    ) {
       const touched = eraserPath.some(
         (point) => drawingHitDistance(drawing, point) <= radius,
       );
@@ -846,9 +859,11 @@ export function TurkeyMap({
   drawingTool = null,
   drawingColor = "#d05f64",
   drawingSize = 1,
+  drawingFilled = false,
   onDrawingToolChange,
   onDrawingColorChange,
   onDrawingSizeChange,
+  onDrawingFilledChange,
   onAddDrawing,
   onUpdateRecord,
   onUpdateMarker,
@@ -2586,7 +2601,14 @@ export function TurkeyMap({
   const renderDrawing = (
     drawing: Pick<
       MapDrawing,
-      "id" | "tool" | "color" | "size" | "rotation" | "points" | "text"
+      | "id"
+      | "tool"
+      | "color"
+      | "size"
+      | "filled"
+      | "rotation"
+      | "points"
+      | "text"
     >,
     draft = false,
   ) => {
@@ -2613,6 +2635,19 @@ export function TurkeyMap({
         />
       );
     }
+    if (drawing.tool === "line") {
+      return (
+        <line
+          key={drawing.id}
+          {...common}
+          className={`${common.className} drawing-shape--line`}
+          x1={first.x}
+          y1={first.y}
+          x2={last.x}
+          y2={last.y}
+        />
+      );
+    }
     if (drawing.tool === "circle") {
       const radius = Math.hypot(last.x - first.x, last.y - first.y);
       return (
@@ -2622,7 +2657,11 @@ export function TurkeyMap({
           cx={first.x}
           cy={first.y}
           r={radius}
-          fill="none"
+          className={`${common.className} ${
+            drawing.filled ? "drawing-shape--filled-circle" : ""
+          }`}
+          fill={drawing.filled ? drawing.color : "none"}
+          fillOpacity={drawing.filled ? 0.28 : undefined}
         />
       );
     }
@@ -3055,6 +3094,7 @@ export function TurkeyMap({
                   completed,
                   undefined,
                   normalizeDrawingSize(drawingSize),
+                  drawingTool === "circle" ? drawingFilled : undefined,
                 );
               }
               draftDrawingRef.current = [];
@@ -3496,6 +3536,8 @@ export function TurkeyMap({
                   tool: drawingTool,
                   color: drawingColor,
                   size: normalizeDrawingSize(drawingSize),
+                  filled:
+                    drawingTool === "circle" ? drawingFilled : undefined,
                   points: draftDrawing,
                 },
                 true,
@@ -4300,6 +4342,7 @@ export function TurkeyMap({
                 icon: MousePointer2,
               },
               { tool: "pen" as const, label: "Kalem", icon: Pencil },
+              { tool: "line" as const, label: "Düz çizgi", icon: Minus },
               { tool: "arrow" as const, label: "Ok", icon: MoveRight },
               { tool: "circle" as const, label: "Daire", icon: Circle },
               { tool: "text" as const, label: "Metin", icon: Type },
@@ -4428,6 +4471,29 @@ export function TurkeyMap({
                     }
                   />
                 </label>
+                {drawingTool === "circle" && (
+                  <button
+                    type="button"
+                    className={drawingFilled ? "is-active" : ""}
+                    title={
+                      drawingFilled
+                        ? "Daire dolgusunu kapat"
+                        : "Daire dolgusunu aç"
+                    }
+                    aria-label={
+                      drawingFilled
+                        ? "Daire dolgusunu kapat"
+                        : "Daire dolgusunu aç"
+                    }
+                    aria-pressed={drawingFilled}
+                    onClick={() => onDrawingFilledChange?.(!drawingFilled)}
+                  >
+                    <Circle
+                      size={15}
+                      fill={drawingFilled ? "currentColor" : "none"}
+                    />
+                  </button>
+                )}
                 <button
                   type="button"
                   title="Son çizimi geri al"
