@@ -80,6 +80,15 @@ test("kısa masaüstünde hazır setler görünür ve kenar çubuğu boşluk bı
     name: /Hazır setler/,
   });
   await expect(readySetsHeading).toBeVisible();
+  await expect(readySetsHeading).toHaveAttribute("aria-expanded", "true");
+  await expect(
+    page.getByRole("button", { name: /Haritalarım/ }),
+  ).toHaveAttribute("aria-expanded", "false");
+  await expect(
+    page.locator(".ready-library__list").getByRole("button", {
+      name: /Dağlar/,
+    }),
+  ).toBeVisible();
 
   await page.evaluate(() => window.scrollTo(0, 80));
   await expect(readySetsHeading).toBeVisible();

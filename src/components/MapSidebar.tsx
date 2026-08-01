@@ -56,6 +56,8 @@ const PRESETS = [
 ];
 
 const MOBILE_SIDEBAR_QUERY = "(max-width: 940px)";
+const COLLAPSIBLE_SIDEBAR_QUERY =
+  "(max-width: 940px), (min-width: 941px) and (max-height: 720px)";
 
 export function MapSidebar({
   maps,
@@ -78,11 +80,11 @@ export function MapSidebar({
   const cloudAccount = useCloudAccount();
   const [isCreating, setIsCreating] = useState(false);
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
-  const [isMobileSidebar, setIsMobileSidebar] = useState(() =>
-    window.matchMedia(MOBILE_SIDEBAR_QUERY).matches
+  const [isCollapsibleSidebar, setIsCollapsibleSidebar] = useState(() =>
+    window.matchMedia(COLLAPSIBLE_SIDEBAR_QUERY).matches
   );
   const [isMapsExpanded, setIsMapsExpanded] = useState(
-    () => !window.matchMedia(MOBILE_SIDEBAR_QUERY).matches,
+    () => !window.matchMedia(COLLAPSIBLE_SIDEBAR_QUERY).matches,
   );
   const [isReadySetsExpanded, setIsReadySetsExpanded] = useState(
     () => !window.matchMedia(MOBILE_SIDEBAR_QUERY).matches,
@@ -95,20 +97,25 @@ export function MapSidebar({
   );
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia(MOBILE_SIDEBAR_QUERY);
-    const handleChange = (event: MediaQueryListEvent) => {
-      setIsMobileSidebar(event.matches);
-      setIsMapsExpanded(!event.matches);
-      setIsReadySetsExpanded(!event.matches);
+    const mediaQuery = window.matchMedia(COLLAPSIBLE_SIDEBAR_QUERY);
+    const mobileMediaQuery = window.matchMedia(MOBILE_SIDEBAR_QUERY);
+    const handleChange = () => {
+      setIsCollapsibleSidebar(mediaQuery.matches);
+      setIsMapsExpanded(!mediaQuery.matches);
+      setIsReadySetsExpanded(!mobileMediaQuery.matches);
     };
 
     mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    mobileMediaQuery.addEventListener("change", handleChange);
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+      mobileMediaQuery.removeEventListener("change", handleChange);
+    };
   }, []);
 
-  const isMapsSectionOpen = !isMobileSidebar || isMapsExpanded;
+  const isMapsSectionOpen = !isCollapsibleSidebar || isMapsExpanded;
   const isReadySetsSectionOpen =
-    !isMobileSidebar || isReadySetsExpanded;
+    !isCollapsibleSidebar || isReadySetsExpanded;
   const readyNoteTopics = STUDY_NOTE_TOPICS.filter(
     (topic) => topic.status === "ready",
   );
@@ -295,9 +302,9 @@ export function MapSidebar({
       <button
         className="sidebar-heading sidebar-heading--toggle"
         type="button"
-        disabled={!isMobileSidebar}
-        aria-expanded={isMobileSidebar ? isMapsExpanded : undefined}
-        aria-controls={isMobileSidebar ? "my-maps-content" : undefined}
+        disabled={!isCollapsibleSidebar}
+        aria-expanded={isCollapsibleSidebar ? isMapsExpanded : undefined}
+        aria-controls={isCollapsibleSidebar ? "my-maps-content" : undefined}
         onClick={() => setIsMapsExpanded((expanded) => !expanded)}
       >
         <div>
@@ -488,10 +495,12 @@ export function MapSidebar({
         <button
           className="ready-library__heading ready-library__heading--toggle"
           type="button"
-          disabled={!isMobileSidebar}
-          aria-expanded={isMobileSidebar ? isReadySetsExpanded : undefined}
+          disabled={!isCollapsibleSidebar}
+          aria-expanded={
+            isCollapsibleSidebar ? isReadySetsExpanded : undefined
+          }
           aria-controls={
-            isMobileSidebar ? "ready-library-content" : undefined
+            isCollapsibleSidebar ? "ready-library-content" : undefined
           }
           onClick={() => setIsReadySetsExpanded((expanded) => !expanded)}
         >
@@ -525,7 +534,7 @@ export function MapSidebar({
                   style={{ "--set-color": set.color } as React.CSSProperties}
                   onClick={() => {
                     void onOpenReadySet(set);
-                    if (isMobileSidebar) setIsReadySetsExpanded(false);
+                    if (isCollapsibleSidebar) setIsReadySetsExpanded(false);
                   }}
                 >
                   <i>
