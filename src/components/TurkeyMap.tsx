@@ -2804,7 +2804,9 @@ export function TurkeyMap({
           className={[
             "turkey-map",
             isMountainAtlas ? "turkey-map--mountain-atlas" : "",
-            zoom > 1 && !drawingTool ? "turkey-map--pannable" : "",
+            zoom > 1 && !drawingTool && !placementProvinceCode
+              ? "turkey-map--pannable"
+              : "",
             isPanning ? "turkey-map--panning" : "",
             drawingTool === "select" ? "turkey-map--selecting-drawing" : "",
             drawingTool === "eraser" ? "turkey-map--erasing" : "",
@@ -2906,7 +2908,11 @@ export function TurkeyMap({
               return;
             }
 
-            if (zoom <= 1 || (event.pointerType === "mouse" && event.button !== 0)) {
+            if (
+              placementProvinceCode ||
+              zoom <= 1 ||
+              (event.pointerType === "mouse" && event.button !== 0)
+            ) {
               return;
             }
             event.currentTarget.setPointerCapture(event.pointerId);
