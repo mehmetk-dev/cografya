@@ -26,3 +26,20 @@ test("kısa masaüstünde ile özel not paneli görünür ve not kaydedilir", as
   await page.getByLabel("İl ara ve seç").selectOption("6");
   await expect(privateNote).toHaveValue("Ankara'ya özel çalışma notum");
 });
+
+test("mobilde ile özel not seçimi ekrana sığar", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-390");
+  await page.goto("/");
+
+  const cityPicker = page.getByLabel("Not eklenecek il");
+  await cityPicker.scrollIntoViewIfNeeded();
+  await expect(cityPicker).toBeInViewport();
+  await cityPicker.selectOption("34");
+
+  await expect(
+    page.getByRole("heading", { name: "İstanbul", exact: true }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(390);
+});

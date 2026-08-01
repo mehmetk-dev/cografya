@@ -1842,6 +1842,7 @@ export default function App() {
           ) : (
             <ProvinceEditor
               city={selectedCity}
+              cities={turkeyCities}
               record={selectedRecord}
               markers={selectedMarkers}
               generalNote={activeMap.description}
@@ -1851,6 +1852,11 @@ export default function App() {
               onClose={() => {
                 setSelectedCity(null);
                 setPendingMarker(null);
+              }}
+              onSelectCity={(city) => {
+                setSelectedCity(city);
+                setPendingMarker(null);
+                setDrawingTool(null);
               }}
               onSaveGeneralNote={saveGeneralNote}
               onSave={saveProvince}

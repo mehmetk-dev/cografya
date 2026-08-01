@@ -36,10 +36,12 @@ import type {
 
 type ProvinceEditorProps = {
   city: City | null;
+  cities: City[];
   record?: ProvinceRecord;
   generalNote: string;
   themeColor: string;
   onClose: () => void;
+  onSelectCity: (city: City) => void;
   onSaveGeneralNote: (note: string) => Promise<void>;
   onSave: (record: ProvinceRecord) => Promise<void>;
   onDelete: (record: ProvinceRecord) => Promise<void>;
@@ -76,10 +78,12 @@ function emptyItem(): ProvinceItem {
 
 export function ProvinceEditor({
   city,
+  cities,
   record,
   generalNote,
   themeColor,
   onClose,
+  onSelectCity,
   onSaveGeneralNote,
   onSave,
   onDelete,
@@ -198,7 +202,37 @@ export function ProvinceEditor({
 
         <div className="general-note-city-hint">
           <strong>İl bazlı bilgi mi ekleyeceksin?</strong>
-          <span>Haritadan bir il seçerek o ile özel notlarını açabilirsin.</span>
+          <span>
+            Aşağıdan ili seç; o ile özel başlık, bilgi maddesi ve ayrıntılı not
+            alanı hemen açılır.
+          </span>
+          <label className="general-note-city-picker">
+            <span>İle özel not ekle</span>
+            <select
+              aria-label="Not eklenecek il"
+              defaultValue=""
+              onChange={(event) => {
+                const selectedCity = cities.find(
+                  (candidate) =>
+                    candidate.plateNumber === Number(event.target.value),
+                );
+                if (selectedCity) onSelectCity(selectedCity);
+              }}
+            >
+              <option value="" disabled>
+                İl seç
+              </option>
+              {cities.map((candidate) => (
+                <option
+                  key={candidate.plateNumber}
+                  value={candidate.plateNumber}
+                >
+                  {candidate.plateNumber.toString().padStart(2, "0")} ·{" "}
+                  {candidate.name}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </aside>
     );

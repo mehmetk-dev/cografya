@@ -4910,6 +4910,39 @@ a.ready-source-badge:hover {
   font-size: 10px;
 }
 
+.general-note-city-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  text-align: left;
+}
+
+.general-note-city-picker > span {
+  color: #53615c;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.general-note-city-picker select {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  color: #2c433d;
+  font-size: 11px;
+  border: 1px solid #d8d1c4;
+  border-radius: 9px;
+  outline: 0;
+  background: #fffefa;
+}
+
+.general-note-city-picker select:focus {
+  border-color: #9aaa9f;
+  box-shadow: 0 0 0 3px rgba(85, 140, 121, 0.09);
+}
+
 .province-panel__header {
   display: flex;
   align-items: flex-start;
