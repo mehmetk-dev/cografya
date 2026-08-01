@@ -341,6 +341,7 @@ const DENSE_MARKER_LABEL_THRESHOLD = 18;
 const DRAWING_HIT_RADIUS = 12;
 const ERASER_RADIUS = 14;
 const DRAWING_SIZE_MIN = 1;
+const DRAWING_TEXT_SIZE_MIN = 0.5;
 const DRAWING_SIZE_MAX = 3;
 const DRAWING_SIZE_STEP = 0.5;
 const DEFAULT_DRAWING_STROKE_WIDTH = 4;
@@ -494,10 +495,17 @@ function distanceToPolyline(point: MapPoint, points: MapPoint[]) {
   return nearest;
 }
 
-function normalizeDrawingSize(size?: number) {
-  if (!Number.isFinite(size)) return DRAWING_SIZE_MIN;
+function minimumDrawingSize(tool?: DrawingMode | null) {
+  return tool === "text" ? DRAWING_TEXT_SIZE_MIN : DRAWING_SIZE_MIN;
+}
+
+function normalizeDrawingSize(
+  size?: number,
+  minimum = DRAWING_SIZE_MIN,
+) {
+  if (!Number.isFinite(size)) return Math.max(DRAWING_SIZE_MIN, minimum);
   return Math.max(
-    DRAWING_SIZE_MIN,
+    minimum,
     Math.min(DRAWING_SIZE_MAX, size as number),
   );
 }
@@ -506,7 +514,10 @@ function getTextBounds(
   drawing: Pick<MapDrawing, "points" | "size" | "text">,
 ) {
   const origin = drawing.points[0];
-  const size = normalizeDrawingSize(drawing.size);
+  const size = normalizeDrawingSize(
+    drawing.size,
+    minimumDrawingSize("text"),
+  );
   const width = Math.max(18 * size, (drawing.text?.length ?? 1) * 11 * size);
   return {
     x: origin.x - 3 * size,
@@ -1502,7 +1513,10 @@ export function TurkeyMap({
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
-    const initialSize = normalizeDrawingSize(drawing.size);
+    const initialSize = normalizeDrawingSize(
+      drawing.size,
+      minimumDrawingSize(drawing.tool),
+    );
     drawingTextResizeGestureRef.current = {
       pointerId: event.pointerId,
       original: drawing,
@@ -1553,7 +1567,7 @@ export function TurkeyMap({
         baseHeight,
     );
     const size = Math.max(
-      DRAWING_SIZE_MIN,
+      minimumDrawingSize(gesture.original.tool),
       Math.min(
         maximumForBounds,
         gesture.initialSize + dominantChange,
@@ -1593,7 +1607,12 @@ export function TurkeyMap({
     if (!cancelled && gesture.moved) {
       onUpdateDrawing?.({
         ...gesture.current,
-        size: Number(normalizeDrawingSize(gesture.current.size).toFixed(2)),
+        size: Number(
+          normalizeDrawingSize(
+            gesture.current.size,
+            minimumDrawingSize(gesture.current.tool),
+          ).toFixed(2),
+        ),
       });
     }
     drawingTextResizeGestureRef.current = null;
@@ -2658,10 +2677,17 @@ export function TurkeyMap({
         }
         style={{
           fontSize:
-            DEFAULT_DRAWING_TEXT_SIZE * normalizeDrawingSize(drawing.size),
+            DEFAULT_DRAWING_TEXT_SIZE *
+            normalizeDrawingSize(
+              drawing.size,
+              minimumDrawingSize(drawing.tool),
+            ),
           strokeWidth:
             DEFAULT_DRAWING_STROKE_WIDTH *
-            normalizeDrawingSize(drawing.size),
+            normalizeDrawingSize(
+              drawing.size,
+              minimumDrawingSize(drawing.tool),
+            ),
         }}
       >
         {drawing.text}
@@ -2818,7 +2844,10 @@ export function TurkeyMap({
                     "text",
                     [point],
                     text.trim(),
-                    normalizeDrawingSize(drawingSize),
+                    normalizeDrawingSize(
+                      drawingSize,
+                      minimumDrawingSize("text"),
+                    ),
                   );
                 }
                 return;
@@ -4322,13 +4351,19 @@ export function TurkeyMap({
                               : "Dağ şeklini küçült"
                         }
                         disabled={
-                          normalizeDrawingSize(drawingSize) <= DRAWING_SIZE_MIN
+                          normalizeDrawingSize(
+                            drawingSize,
+                            minimumDrawingSize(drawingTool),
+                          ) <= minimumDrawingSize(drawingTool)
                         }
                         onClick={() =>
                           onDrawingSizeChange?.(
                             Math.max(
-                              DRAWING_SIZE_MIN,
-                              normalizeDrawingSize(drawingSize) -
+                              minimumDrawingSize(drawingTool),
+                              normalizeDrawingSize(
+                                drawingSize,
+                                minimumDrawingSize(drawingTool),
+                              ) -
                                 DRAWING_SIZE_STEP,
                             ),
                           )
@@ -4345,7 +4380,10 @@ export function TurkeyMap({
                               : "Seçili dağ şekli boyutu"
                         }
                       >
-                        {normalizeDrawingSize(drawingSize)}×
+                        {normalizeDrawingSize(
+                          drawingSize,
+                          minimumDrawingSize(drawingTool),
+                        )}×
                       </output>
                       <button
                         type="button"
@@ -4357,13 +4395,19 @@ export function TurkeyMap({
                               : "Dağ şeklini büyüt"
                         }
                         disabled={
-                          normalizeDrawingSize(drawingSize) >= DRAWING_SIZE_MAX
+                          normalizeDrawingSize(
+                            drawingSize,
+                            minimumDrawingSize(drawingTool),
+                          ) >= DRAWING_SIZE_MAX
                         }
                         onClick={() =>
                           onDrawingSizeChange?.(
                             Math.min(
                               DRAWING_SIZE_MAX,
-                              normalizeDrawingSize(drawingSize) +
+                              normalizeDrawingSize(
+                                drawingSize,
+                                minimumDrawingSize(drawingTool),
+                              ) +
                                 DRAWING_SIZE_STEP,
                             ),
                           )

@@ -108,7 +108,7 @@ const mapDrawingSchema = z.object({
     "mountain-volcanic",
   ]),
   color: z.string(),
-  size: z.number().min(1).max(3).optional(),
+  size: z.number().min(0.5).max(3).optional(),
   rotation: z.number().min(-180).max(180).optional(),
   points: z.array(mapPointSchema).min(1),
   text: z.string().optional(),

@@ -20,9 +20,10 @@ test("metin aracıyla haritaya 0.5x boyutunda yazı eklenir", async ({
   const map = page.locator(".workspace-body > .map-stage .turkey-map");
   await map.click({ position: { x: 420, y: 240 } });
 
-  const drawing = page.locator(".drawing-layer .drawing-text", {
-    hasText: "Minik yazı",
-  });
+  const drawing = page.locator(
+    ".workspace-body > .map-stage .drawing-layer .drawing-text",
+    { hasText: "Minik yazı" },
+  );
   await expect(drawing).toBeVisible();
   await expect(drawing).toHaveCSS("font-size", "9.5px");
 });
