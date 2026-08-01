@@ -2412,6 +2412,10 @@ body.map-fullscreen-open {
   stroke-linejoin: round;
 }
 
+.drawing-mountain-symbol {
+  pointer-events: none;
+}
+
 .drawing-selection {
   fill: rgba(23, 70, 59, 0.08);
   stroke: #17463b;
@@ -2473,6 +2477,23 @@ body.map-fullscreen-open {
   color: #c6cbc8;
   cursor: not-allowed;
   background: transparent;
+}
+
+.mountain-shape-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.drawing-toolbar .mountain-shape-tools button {
+  width: 38px;
+}
+
+.mountain-shape-tools svg {
+  width: 31px;
+  height: 24px;
+  overflow: visible;
+  pointer-events: none;
 }
 
 .drawing-toolbar__divider {

@@ -89,7 +89,17 @@ export type MarkerDraft = Pick<
   "label" | "description" | "kind" | "subtype" | "color"
 >;
 
-export type DrawingTool = "pen" | "arrow" | "circle" | "text";
+export type MountainShapeTool =
+  | "mountain-fold"
+  | "mountain-fault-block"
+  | "mountain-volcanic";
+
+export type DrawingTool =
+  | "pen"
+  | "arrow"
+  | "circle"
+  | "text"
+  | MountainShapeTool;
 export type DrawingMode = DrawingTool | "select" | "eraser";
 
 export type MapPoint = {

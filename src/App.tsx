@@ -20,6 +20,7 @@ import {
   TurkeyMap,
   turkeyCities,
 } from "./components/TurkeyMap";
+import { isMountainFormation } from "./components/MountainAtlasLayer";
 import { ProvinceEditor } from "./components/ProvinceEditor";
 import { ExportPoster } from "./components/ExportPoster";
 import { FeatureBar } from "./components/FeatureBar";
@@ -339,6 +340,7 @@ export default function App() {
   const [drawingSizes, setDrawingSizes] = useState({
     pen: 1,
     text: 1,
+    mountain: 1,
   });
   const [provinceColorPreview, setProvinceColorPreview] = useState<{
     provinceCode: number;
@@ -1052,7 +1054,10 @@ export default function App() {
       mapId: activeMap.id,
       tool,
       color: drawingColor,
-      size: tool === "pen" || tool === "text" ? size : undefined,
+      size:
+        tool === "pen" || tool === "text" || isMountainFormation(tool)
+          ? size
+          : undefined,
       points,
       text,
       createdAt: new Date().toISOString(),
@@ -1753,6 +1758,7 @@ export default function App() {
             showProvinceNames={provinceNamesVisible}
             presentation={activeMap.presentation}
             readOnly={activeMapIsReadOnly}
+            mountainToolsEnabled={activeReadySet?.id === "mountains"}
             matchingProvinceCodes={matchingProvinceCodes}
             provinceColorPreview={provinceColorPreview}
             provinceFills={activeMap.regionFills ?? {}}
@@ -1762,7 +1768,11 @@ export default function App() {
             drawingTool={drawingTool}
             drawingColor={drawingColor}
             drawingSize={
-              drawingTool === "text" ? drawingSizes.text : drawingSizes.pen
+              drawingTool && isMountainFormation(drawingTool)
+                ? drawingSizes.mountain
+                : drawingTool === "text"
+                  ? drawingSizes.text
+                  : drawingSizes.pen
             }
             onDrawingToolChange={(tool) => {
               setDrawingTool(tool);
@@ -1770,7 +1780,12 @@ export default function App() {
             }}
             onDrawingColorChange={setDrawingColor}
             onDrawingSizeChange={(size) => {
-              const sizeTool = drawingTool === "text" ? "text" : "pen";
+              const sizeTool =
+                drawingTool && isMountainFormation(drawingTool)
+                  ? "mountain"
+                  : drawingTool === "text"
+                    ? "text"
+                    : "pen";
               setDrawingSizes((current) => ({
                 ...current,
                 [sizeTool]: size,

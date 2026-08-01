@@ -125,6 +125,25 @@ test("Dağlar çalışma alanı mobilde normal harita olarak açılır", async (
   await expect(page.getByLabel("Harita adı")).toHaveValue(
     "Türkiye'nin Dağları",
   );
+  const volcanicTool = page.getByRole("button", {
+    name: "Volkanik dağ şekli",
+  });
+  await volcanicTool.scrollIntoViewIfNeeded();
+  await expect(volcanicTool).toBeVisible();
+  await volcanicTool.tap();
+
+  const svg = map.locator(".turkey-map");
+  const svgBounds = await svg.boundingBox();
+  expect(svgBounds).not.toBeNull();
+  await svg.tap({
+    position: {
+      x: svgBounds!.width * 0.55,
+      y: svgBounds!.height * 0.5,
+    },
+  });
+  await expect(
+    map.locator(".drawing-mountain-symbol--mountain-volcanic"),
+  ).toHaveCount(1);
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(390);

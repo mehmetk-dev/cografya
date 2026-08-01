@@ -1,5 +1,5 @@
 import { MOUNTAIN_ATLAS_LAYOUTS } from "../mountainAtlas";
-import type { MapMarker } from "../types";
+import type { MapMarker, MountainShapeTool } from "../types";
 
 type MountainAtlasLayerProps = {
   markers: MapMarker[];
@@ -8,10 +8,17 @@ type MountainAtlasLayerProps = {
   onSelectMarker: (marker: MapMarker) => void;
 };
 
-type MountainFormation =
-  | "mountain-fold"
-  | "mountain-fault-block"
-  | "mountain-volcanic";
+export type MountainFormation = MountainShapeTool;
+
+export function isMountainFormation(
+  value: string,
+): value is MountainFormation {
+  return (
+    value === "mountain-fold" ||
+    value === "mountain-fault-block" ||
+    value === "mountain-volcanic"
+  );
+}
 
 function mountainFormation(subtype?: string): MountainFormation {
   if (subtype === "mountain-fault-block") return subtype;
@@ -19,7 +26,7 @@ function mountainFormation(subtype?: string): MountainFormation {
   return "mountain-fold";
 }
 
-function formationLabel(formation: MountainFormation) {
+export function formationLabel(formation: MountainFormation) {
   if (formation === "mountain-fault-block") return "Kırık Dağ";
   if (formation === "mountain-volcanic") return "Volkanik Dağ";
   return "Kıvrım Dağı";
@@ -32,7 +39,7 @@ function mapLabel(label: string) {
     .replace(/ Volkanları$/, " Vol.");
 }
 
-function MountainGlyph({
+export function MountainGlyph({
   formation,
 }: {
   formation: MountainFormation;

@@ -98,7 +98,15 @@ const mapMarkerSchema = z.object({
 const mapDrawingSchema = z.object({
   id: z.string().min(1),
   mapId: z.string().min(1),
-  tool: z.enum(["pen", "arrow", "circle", "text"]),
+  tool: z.enum([
+    "pen",
+    "arrow",
+    "circle",
+    "text",
+    "mountain-fold",
+    "mountain-fault-block",
+    "mountain-volcanic",
+  ]),
   color: z.string(),
   size: z.number().min(1).max(3).optional(),
   rotation: z.number().min(-180).max(180).optional(),

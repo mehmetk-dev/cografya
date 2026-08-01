@@ -30,7 +30,13 @@ import { MOUNTAIN_ATLAS_LAYOUTS } from "../mountainAtlas";
 import { applyProvinceFill } from "../regionPainting";
 import { RIVER_ROUTES } from "../riverRoutes";
 import { CatalogIcon } from "./CatalogIcon";
-import { MountainAtlasLayer } from "./MountainAtlasLayer";
+import {
+  formationLabel,
+  isMountainFormation,
+  MountainAtlasLayer,
+  MountainGlyph,
+  type MountainFormation,
+} from "./MountainAtlasLayer";
 import {
   RegionPainterPanel,
   type RegionPainterMode,
@@ -56,6 +62,7 @@ type TurkeyMapProps = {
   showProvinceNames?: boolean;
   presentation?: MapPresentation;
   readOnly?: boolean;
+  mountainToolsEnabled?: boolean;
   onSelect: (city: City) => void;
   placementProvinceCode?: number | null;
   onPlaceMarker?: (city: City, point: Point) => void;
@@ -338,6 +345,17 @@ const DRAWING_SIZE_MAX = 3;
 const DRAWING_SIZE_STEP = 0.5;
 const DEFAULT_DRAWING_STROKE_WIDTH = 4;
 const DEFAULT_DRAWING_TEXT_SIZE = 19;
+const MOUNTAIN_SHAPE_WIDTH = 64;
+const MOUNTAIN_SHAPE_HEIGHT = 48;
+
+const MOUNTAIN_SHAPE_TOOLS: Array<{
+  tool: MountainFormation;
+  label: string;
+}> = [
+  { tool: "mountain-fold", label: "Kıvrım dağ şekli" },
+  { tool: "mountain-fault-block", label: "Kırık dağ şekli" },
+  { tool: "mountain-volcanic", label: "Volkanik dağ şekli" },
+];
 
 const cities = [...(mapCities as City[])].sort(
   (left, right) => left.plateNumber - right.plateNumber,
@@ -428,8 +446,13 @@ function isDrawingTool(mode: DrawingMode | null): mode is DrawingTool {
     mode === "pen" ||
     mode === "arrow" ||
     mode === "circle" ||
-    mode === "text"
+    mode === "text" ||
+    Boolean(mode && isMountainFormation(mode))
   );
+}
+
+function isTransformableDrawing(drawing: Pick<MapDrawing, "tool">) {
+  return drawing.tool === "text" || isMountainFormation(drawing.tool);
 }
 
 function distanceToSegment(
@@ -490,6 +513,21 @@ function getTextBounds(
     y: origin.y - 23 * size,
     width,
     height: 30 * size,
+  };
+}
+
+function getMountainShapeBounds(
+  drawing: Pick<MapDrawing, "points" | "size">,
+) {
+  const center = drawing.points[0];
+  const size = normalizeDrawingSize(drawing.size);
+  const width = MOUNTAIN_SHAPE_WIDTH * size;
+  const height = MOUNTAIN_SHAPE_HEIGHT * size;
+  return {
+    x: center.x - width / 2,
+    y: center.y - height / 2,
+    width,
+    height,
   };
 }
 
@@ -560,6 +598,21 @@ function drawingHitDistance(drawing: MapDrawing, point: MapPoint) {
       ? 0
       : Number.POSITIVE_INFINITY;
   }
+  if (isMountainFormation(drawing.tool)) {
+    const bounds = getMountainShapeBounds(drawing);
+    const center = first;
+    const localPoint = rotatePointAround(
+      point,
+      center,
+      -normalizeLabelRotation(drawing.rotation),
+    );
+    return localPoint.x >= bounds.x &&
+      localPoint.x <= bounds.x + bounds.width &&
+      localPoint.y >= bounds.y &&
+      localPoint.y <= bounds.y + bounds.height
+      ? 0
+      : Number.POSITIVE_INFINITY;
+  }
   if (drawing.tool === "circle") {
     const radius = Math.hypot(last.x - first.x, last.y - first.y);
     return Math.abs(Math.hypot(point.x - first.x, point.y - first.y) - radius);
@@ -602,6 +655,9 @@ function translateDrawing(
 
 function drawingBounds(drawing: MapDrawing) {
   if (drawing.tool === "text") return rotatedTextBounds(drawing);
+  if (isMountainFormation(drawing.tool)) {
+    return getMountainShapeBounds(drawing);
+  }
   const first = drawing.points[0];
   const last = drawing.points[drawing.points.length - 1];
   if (drawing.tool === "circle") {
@@ -651,7 +707,13 @@ function densifyPolyline(points: MapPoint[], maxStep = 4) {
 }
 
 function drawingPolylines(drawing: MapDrawing) {
-  if (drawing.points.length === 0 || drawing.tool === "text") return [];
+  if (
+    drawing.points.length === 0 ||
+    drawing.tool === "text" ||
+    isMountainFormation(drawing.tool)
+  ) {
+    return [];
+  }
   const first = drawing.points[0];
   const last = drawing.points[drawing.points.length - 1];
   if (drawing.tool === "circle") {
@@ -701,7 +763,7 @@ function eraseDrawings(
   const replacements: MapDrawing[] = [];
 
   drawings.forEach((drawing) => {
-    if (drawing.tool === "text") {
+    if (drawing.tool === "text" || isMountainFormation(drawing.tool)) {
       const touched = eraserPath.some(
         (point) => drawingHitDistance(drawing, point) <= radius,
       );
@@ -761,6 +823,7 @@ export function TurkeyMap({
   showProvinceNames = false,
   presentation = "default",
   readOnly = false,
+  mountainToolsEnabled = false,
   onSelect,
   placementProvinceCode = null,
   onPlaceMarker,
@@ -1426,7 +1489,7 @@ export function TurkeyMap({
   ) => {
     if (
       drawingTool !== "select" ||
-      drawing.tool !== "text" ||
+      !isTransformableDrawing(drawing) ||
       readOnly ||
       !onUpdateDrawing ||
       (event.pointerType === "mouse" && event.button !== 0)
@@ -1499,12 +1562,15 @@ export function TurkeyMap({
     const current = {
       ...gesture.original,
       size,
-      points: [
-        {
-          x: gesture.bounds.x + 3 * size,
-          y: gesture.bounds.y + 23 * size,
-        },
-      ],
+      points:
+        gesture.original.tool === "text"
+          ? [
+              {
+                x: gesture.bounds.x + 3 * size,
+                y: gesture.bounds.y + 23 * size,
+              },
+            ]
+          : gesture.original.points,
     };
     gesture.current = current;
     gesture.moved =
@@ -1540,17 +1606,20 @@ export function TurkeyMap({
   ) => {
     event.preventDefault();
     event.stopPropagation();
-    if (drawing.tool !== "text" || !onUpdateDrawing) return;
-    const bounds = getTextBounds(drawing);
+    if (!isTransformableDrawing(drawing) || !onUpdateDrawing) return;
+    const bounds =
+      drawing.tool === "text" ? getTextBounds(drawing) : undefined;
     onUpdateDrawing({
       ...drawing,
       size: DRAWING_SIZE_MIN,
-      points: [
-        {
-          x: bounds.x + 3 * DRAWING_SIZE_MIN,
-          y: bounds.y + 23 * DRAWING_SIZE_MIN,
-        },
-      ],
+      points: bounds
+        ? [
+            {
+              x: bounds.x + 3 * DRAWING_SIZE_MIN,
+              y: bounds.y + 23 * DRAWING_SIZE_MIN,
+            },
+          ]
+        : drawing.points,
     });
   };
 
@@ -1561,7 +1630,7 @@ export function TurkeyMap({
   ) => {
     if (
       drawingTool !== "select" ||
-      drawing.tool !== "text" ||
+      !isTransformableDrawing(drawing) ||
       readOnly ||
       !onUpdateDrawing ||
       (event.pointerType === "mouse" && event.button !== 0)
@@ -1646,7 +1715,11 @@ export function TurkeyMap({
   ) => {
     event.preventDefault();
     event.stopPropagation();
-    if (drawing.tool !== "text" || !drawing.rotation || !onUpdateDrawing) {
+    if (
+      !isTransformableDrawing(drawing) ||
+      !drawing.rotation ||
+      !onUpdateDrawing
+    ) {
       return;
     }
     const resetDrawing = { ...drawing };
@@ -2553,6 +2626,22 @@ export function TurkeyMap({
         </g>
       );
     }
+    if (isMountainFormation(drawing.tool)) {
+      const rotation = normalizeLabelRotation(drawing.rotation);
+      const size = normalizeDrawingSize(drawing.size);
+      return (
+        <g
+          key={drawing.id}
+          className={`drawing-mountain-symbol drawing-mountain-symbol--${drawing.tool}`}
+          data-rotation={rotation}
+          transform={`translate(${first.x} ${first.y}) rotate(${rotation}) scale(${size})`}
+        >
+          <g transform="translate(0 20)">
+            <MountainGlyph formation={drawing.tool} />
+          </g>
+        </g>
+      );
+    }
     const bounds = getTextBounds(drawing);
     const rotation = normalizeLabelRotation(drawing.rotation);
     return (
@@ -2732,6 +2821,15 @@ export function TurkeyMap({
                     normalizeDrawingSize(drawingSize),
                   );
                 }
+                return;
+              }
+              if (isMountainFormation(drawingTool)) {
+                onAddDrawing?.(
+                  drawingTool,
+                  [point],
+                  undefined,
+                  normalizeDrawingSize(drawingSize),
+                );
                 return;
               }
               event.currentTarget.setPointerCapture(event.pointerId);
@@ -3207,9 +3305,9 @@ export function TurkeyMap({
           <g className="drawing-layer">
             {displayedDrawings.map((drawing) => renderDrawing(drawing))}
             {selectedDrawingBounds &&
-              (selectedDrawing?.tool === "text" ? (
+              (selectedDrawing && isTransformableDrawing(selectedDrawing) ? (
                 <g
-                  className="drawing-text-controls"
+                  className="drawing-transform-controls"
                   transform={`rotate(${normalizeLabelRotation(selectedDrawing.rotation)} ${selectedDrawingBounds.x + selectedDrawingBounds.width / 2} ${selectedDrawingBounds.y + selectedDrawingBounds.height / 2})`}
                 >
                   <rect
@@ -4136,6 +4234,36 @@ export function TurkeyMap({
               <Paintbrush size={15} />
             </button>
             <span className="drawing-toolbar__divider" />
+            {mountainToolsEnabled && (
+              <>
+                <div
+                  className="mountain-shape-tools"
+                  role="group"
+                  aria-label="Dağ şekilleri"
+                >
+                  {MOUNTAIN_SHAPE_TOOLS.map(({ tool, label }) => (
+                    <button
+                      key={tool}
+                      type="button"
+                      className={drawingTool === tool ? "is-active" : ""}
+                      title={`${formationLabel(tool)} yerleştir`}
+                      aria-label={label}
+                      onClick={() => {
+                        setRegionPainterActive(false);
+                        onDrawingToolChange?.(
+                          drawingTool === tool ? null : tool,
+                        );
+                      }}
+                    >
+                      <svg viewBox="-34 -43 68 48" aria-hidden="true">
+                        <MountainGlyph formation={tool} />
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+                <span className="drawing-toolbar__divider" />
+              </>
+            )}
             {[
               {
                 tool: "select" as const,
@@ -4169,14 +4297,19 @@ export function TurkeyMap({
             {!regionPainterActive && (
               <>
                 <span className="drawing-toolbar__divider" />
-                {(drawingTool === "pen" || drawingTool === "text") && (
+                {(drawingTool === "pen" ||
+                  drawingTool === "text" ||
+                  (drawingTool !== null &&
+                    isMountainFormation(drawingTool))) && (
                   <>
                     <div
                       className="drawing-toolbar__size"
                       title={
                         drawingTool === "pen"
                           ? "Kalem kalınlığı"
-                          : "Yazı boyutu"
+                          : drawingTool === "text"
+                            ? "Yazı boyutu"
+                            : "Dağ şekli boyutu"
                       }
                     >
                       <button
@@ -4184,7 +4317,9 @@ export function TurkeyMap({
                         aria-label={
                           drawingTool === "pen"
                             ? "Kalemi incelt"
-                            : "Yazıyı küçült"
+                            : drawingTool === "text"
+                              ? "Yazıyı küçült"
+                              : "Dağ şeklini küçült"
                         }
                         disabled={
                           normalizeDrawingSize(drawingSize) <= DRAWING_SIZE_MIN
@@ -4205,7 +4340,9 @@ export function TurkeyMap({
                         aria-label={
                           drawingTool === "pen"
                             ? "Seçili kalem kalınlığı"
-                            : "Seçili yazı boyutu"
+                            : drawingTool === "text"
+                              ? "Seçili yazı boyutu"
+                              : "Seçili dağ şekli boyutu"
                         }
                       >
                         {normalizeDrawingSize(drawingSize)}×
@@ -4215,7 +4352,9 @@ export function TurkeyMap({
                         aria-label={
                           drawingTool === "pen"
                             ? "Kalemi kalınlaştır"
-                            : "Yazıyı büyüt"
+                            : drawingTool === "text"
+                              ? "Yazıyı büyüt"
+                              : "Dağ şeklini büyüt"
                         }
                         disabled={
                           normalizeDrawingSize(drawingSize) >= DRAWING_SIZE_MAX
