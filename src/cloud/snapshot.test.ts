@@ -106,6 +106,41 @@ describe("parseAtlasSnapshot", () => {
 
     expect(parsed.success).toBe(true);
   });
+
+  it("düz çizgiyi ve dolgulu daireyi bulut verisinde korur", () => {
+    const parsed = parseAtlasSnapshot({
+      ...snapshot(),
+      mapDrawings: [
+        {
+          id: "line-1",
+          mapId: "map-a",
+          tool: "line",
+          color: "#17463b",
+          points: [
+            { x: 380, y: 250 },
+            { x: 560, y: 340 },
+          ],
+          createdAt: "2026-08-01T14:00:00.000Z",
+        },
+        {
+          id: "filled-circle-1",
+          mapId: "map-a",
+          tool: "circle",
+          color: "#d05f64",
+          filled: true,
+          points: [
+            { x: 610, y: 310 },
+            { x: 670, y: 360 },
+          ],
+          createdAt: "2026-08-01T14:01:00.000Z",
+        },
+      ],
+    });
+
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.mapDrawings[1].filled).toBe(true);
+  });
 });
 
 describe("mergeAtlasSnapshots", () => {
