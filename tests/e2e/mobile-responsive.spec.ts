@@ -72,8 +72,8 @@ test("hazır set ekranı mobil genişliğe sığar", async ({ page }) => {
   await page.goto("/");
   await openReadySet(page, /Dağlar/);
   await expect(
-    page.getByRole("heading", { name: "Türkiye'nin Dağları", exact: true }),
-  ).toBeVisible();
+    page.getByLabel("Harita adı"),
+  ).toHaveValue("Türkiye'nin Dağları");
 
   await expectNoHorizontalScroll(page);
 });
