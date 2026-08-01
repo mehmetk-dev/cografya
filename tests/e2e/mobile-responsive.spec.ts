@@ -68,6 +68,34 @@ test("ana çalışma ekranı mobil genişliğe sığar", async ({ page }) => {
   await expectNoHorizontalScroll(page);
 });
 
+test("kısa masaüstünde hazır setler görünür ve kenar çubuğu boşluk bırakmaz", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.setViewportSize({ width: 1365, height: 613 });
+  await page.goto("/");
+
+  const sidebar = page.locator(".map-sidebar");
+  const readySetsHeading = page.getByRole("button", {
+    name: /Hazır setler/,
+  });
+  await expect(readySetsHeading).toBeVisible();
+
+  await page.evaluate(() => window.scrollTo(0, 80));
+  await expect(readySetsHeading).toBeVisible();
+  await expect
+    .poll(async () =>
+      sidebar.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        return {
+          top: Math.round(bounds.top),
+          bottom: Math.round(bounds.bottom),
+        };
+      }),
+    )
+    .toEqual({ top: 0, bottom: 613 });
+});
+
 test("hazır set ekranı mobil genişliğe sığar", async ({ page }) => {
   await page.goto("/");
   await openReadySet(page, /Dağlar/);
