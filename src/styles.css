@@ -4798,8 +4798,97 @@ a.ready-source-badge:hover {
   text-align: left;
 }
 
-.general-note-form .field textarea {
+.general-note-editor {
+  overflow: hidden;
+  border: 1px solid #ddd7cb;
+  border-radius: 9px;
+  background: #fffefa;
+  transition:
+    border 130ms ease,
+    box-shadow 130ms ease;
+}
+
+.general-note-editor:focus-within {
+  border-color: #9aaa9f;
+  box-shadow: 0 0 0 3px rgba(85, 140, 121, 0.09);
+}
+
+.general-note-editor__toolbar {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 6px;
+  border-bottom: 1px solid #e4ded3;
+  background: #f7f3eb;
+}
+
+.general-note-editor__toolbar button,
+.general-note-editor__toolbar label {
+  display: grid;
+  width: 27px;
+  height: 25px;
+  place-items: center;
+  color: #5c6c66;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+}
+
+.general-note-editor__toolbar button:hover,
+.general-note-editor__toolbar label:hover {
+  color: #fff;
+  background: #17463b;
+}
+
+.general-note-editor__toolbar label {
+  position: relative;
+  cursor: pointer;
+}
+
+.general-note-editor__toolbar label > span {
+  padding-bottom: 2px;
+  font-family: Georgia, serif;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  border-bottom: 3px solid var(--general-note-color, #c0392b);
+}
+
+.general-note-editor__toolbar input[type="color"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.general-note-editor__surface {
   min-height: 148px;
+  max-height: 290px;
+  padding: 10px 11px 22px;
+  overflow-y: auto;
+  color: #2c433d;
+  font-size: 11px;
+  line-height: 1.55;
+  outline: 0;
+  white-space: pre-wrap;
+}
+
+.general-note-editor__surface:empty::before {
+  color: #b0b4b1;
+  content: attr(data-placeholder);
+  pointer-events: none;
+}
+
+.general-note-editor__surface ul,
+.general-note-editor__surface ol {
+  margin: 5px 0;
+  padding-left: 22px;
+  white-space: normal;
+}
+
+.general-note-editor__surface li + li {
+  margin-top: 3px;
 }
 
 .general-note-city-hint {

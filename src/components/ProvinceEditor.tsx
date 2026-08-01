@@ -17,7 +17,13 @@ import {
   MARKER_KINDS,
 } from "../markerKinds";
 import { createId } from "../id";
+import {
+  generalNoteCharacterCount,
+  generalNoteToEditorHtml,
+  serializeGeneralNoteHtml,
+} from "../generalNoteRichText";
 import { CatalogIcon } from "./CatalogIcon";
+import { GeneralNoteEditor } from "./GeneralNoteEditor";
 import type {
   City,
   MapMarker,
@@ -87,7 +93,9 @@ export function ProvinceEditor({
 }: ProvinceEditorProps) {
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
-  const [generalNoteDraft, setGeneralNoteDraft] = useState(generalNote);
+  const [generalNoteDraft, setGeneralNoteDraft] = useState(() =>
+    generalNoteToEditorHtml(generalNote),
+  );
   const [color, setColor] = useState(themeColor);
   const [items, setItems] = useState<ProvinceItem[]>([emptyItem()]);
   const [isSaving, setIsSaving] = useState(false);
@@ -124,18 +132,18 @@ export function ProvinceEditor({
   }, [city?.plateNumber, record, themeColor]);
 
   useEffect(() => {
-    setGeneralNoteDraft(generalNote);
+    setGeneralNoteDraft(generalNoteToEditorHtml(generalNote));
     setGeneralNoteSaved(false);
   }, [generalNote, mapId]);
 
   const submitGeneralNote = async (event: React.FormEvent) => {
     event.preventDefault();
-    const cleanNote = generalNoteDraft.trim();
+    const cleanNote = serializeGeneralNoteHtml(generalNoteDraft);
 
     setIsSavingGeneralNote(true);
     try {
       await onSaveGeneralNote(cleanNote);
-      setGeneralNoteDraft(cleanNote);
+      setGeneralNoteDraft(generalNoteToEditorHtml(cleanNote));
       setGeneralNoteSaved(true);
     } finally {
       setIsSavingGeneralNote(false);
@@ -157,27 +165,27 @@ export function ProvinceEditor({
         </p>
 
         <form className="general-note-form" onSubmit={submitGeneralNote}>
-          <label className="field">
+          <div className="field general-note-field">
             <span>Genel harita notu</span>
-            <textarea
+            <GeneralNoteEditor
               value={generalNoteDraft}
-              rows={7}
-              maxLength={1600}
-              placeholder="Örn. Türkiye'de dağlar genel olarak doğu-batı yönünde uzanır..."
-              onChange={(event) => {
-                setGeneralNoteDraft(event.target.value);
+              onChange={(html) => {
+                setGeneralNoteDraft(html);
                 setGeneralNoteSaved(false);
               }}
             />
             <small className="character-count">
-              {generalNoteDraft.length}/1600
+              {generalNoteCharacterCount(generalNoteDraft)}/1600
             </small>
-          </label>
+          </div>
 
           <button
             className="button button--primary button--full"
             type="submit"
-            disabled={isSavingGeneralNote}
+            disabled={
+              isSavingGeneralNote ||
+              generalNoteCharacterCount(generalNoteDraft) > 1600
+            }
           >
             {generalNoteSaved ? <Check size={17} /> : <Save size={17} />}
             {isSavingGeneralNote
