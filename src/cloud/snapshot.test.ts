@@ -66,6 +66,26 @@ describe("parseAtlasSnapshot", () => {
     if (!parsed.success) return;
     expect(parsed.data.studyMaps[0].presentation).toBe("mountain-atlas");
   });
+
+  it("elle yerleştirilen dağ şeklini bulut verisinde doğrular", () => {
+    const parsed = parseAtlasSnapshot({
+      ...snapshot(),
+      mapDrawings: [
+        {
+          id: "mountain-shape-1",
+          mapId: "map-a",
+          tool: "mountain-volcanic",
+          color: "#c8563f",
+          size: 1.5,
+          rotation: 35,
+          points: [{ x: 520, y: 330 }],
+          createdAt: "2026-08-01T12:00:00.000Z",
+        },
+      ],
+    });
+
+    expect(parsed.success).toBe(true);
+  });
 });
 
 describe("mergeAtlasSnapshots", () => {

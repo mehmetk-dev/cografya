@@ -12,7 +12,7 @@ async function openMountainWorkspace(page: import("@playwright/test").Page) {
   await button.click();
 }
 
-test("Dağlar seti normal haritada elle dağ simgesi yerleştirir", async ({
+test("Dağlar setinde şekil doğrudan yerleştirilir, taşınır, büyütülür ve döndürülür", async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop");
@@ -28,19 +28,88 @@ test("Dağlar seti normal haritada elle dağ simgesi yerleştirir", async ({
     "Türkiye'nin Dağları",
   );
 
-  await page.getByLabel("İl ara ve seç").selectOption("4");
-  await page.getByText("Harita içerikleri", { exact: true }).click();
-  await page.getByLabel("İşaret adı").fill("Ağrı Dağı");
-  await page.getByRole("button", { name: "Volkanik Dağ" }).click();
-  await page.getByRole("button", { name: /Haritada konum seç/ }).click();
-  await map.locator('path[data-province-code="4"]').click({ force: true });
-
   await expect(
-    map.getByRole("button", {
-      name: /Ağrı Dağı, Ağrı, Volkanik Dağ/,
-    }),
+    page.getByRole("button", { name: "Kıvrım dağ şekli" }),
   ).toBeVisible();
-  await expect(page.getByText("Ağrı Dağı, Ağrı haritasına yerleştirildi")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Kırık dağ şekli" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Volkanik dağ şekli" }).click();
+
+  const svg = map.locator(".turkey-map");
+  const svgBounds = await svg.boundingBox();
+  expect(svgBounds).not.toBeNull();
+  await svg.click({
+    position: {
+      x: svgBounds!.width * 0.58,
+      y: svgBounds!.height * 0.52,
+    },
+  });
+
+  const symbol = map.locator(
+    ".drawing-mountain-symbol--mountain-volcanic",
+  );
+  await expect(symbol).toHaveCount(1);
+
+  await page.getByRole("button", { name: "Seç ve taşı" }).click();
+  const beforeMove = await symbol.boundingBox();
+  expect(beforeMove).not.toBeNull();
+  await page.mouse.move(
+    beforeMove!.x + beforeMove!.width / 2,
+    beforeMove!.y + beforeMove!.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    beforeMove!.x + beforeMove!.width / 2 + 70,
+    beforeMove!.y + beforeMove!.height / 2 + 25,
+    { steps: 5 },
+  );
+  await page.mouse.up();
+  await expect
+    .poll(async () => (await symbol.boundingBox())?.x ?? 0)
+    .toBeGreaterThan(beforeMove!.x + 40);
+
+  await symbol.click({ force: true });
+  const resizeHandle = map.locator(
+    ".drawing-transform-controls .map-label-resize-handle",
+  );
+  await expect(resizeHandle).toBeVisible();
+  const beforeResize = await symbol.boundingBox();
+  const resizeBounds = await resizeHandle.boundingBox();
+  expect(beforeResize).not.toBeNull();
+  expect(resizeBounds).not.toBeNull();
+  await page.mouse.move(
+    resizeBounds!.x + resizeBounds!.width / 2,
+    resizeBounds!.y + resizeBounds!.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    resizeBounds!.x + resizeBounds!.width / 2 + 36,
+    resizeBounds!.y + resizeBounds!.height / 2 + 24,
+    { steps: 5 },
+  );
+  await page.mouse.up();
+  await expect
+    .poll(async () => (await symbol.boundingBox())?.width ?? 0)
+    .toBeGreaterThan(beforeResize!.width * 1.15);
+
+  const rotateHandle = map.locator(
+    ".drawing-transform-controls .map-label-rotate-handle",
+  );
+  const rotateBounds = await rotateHandle.boundingBox();
+  expect(rotateBounds).not.toBeNull();
+  await page.mouse.move(
+    rotateBounds!.x + rotateBounds!.width / 2,
+    rotateBounds!.y + rotateBounds!.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    rotateBounds!.x + rotateBounds!.width / 2 + 42,
+    rotateBounds!.y + rotateBounds!.height / 2 + 24,
+    { steps: 5 },
+  );
+  await page.mouse.up();
+  await expect(symbol).toHaveAttribute("data-rotation", /^(?!0$).+/);
 });
 
 test("Dağlar çalışma alanı mobilde normal harita olarak açılır", async ({
