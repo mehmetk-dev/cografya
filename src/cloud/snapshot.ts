@@ -429,9 +429,50 @@ export function mergeAtlasSnapshotsThreeWay(
   };
 }
 
+function sortByStableKey<T>(items: T[], keyOf: (item: T) => string) {
+  return [...items].sort((left, right) => {
+    const leftKey = keyOf(left);
+    const rightKey = keyOf(right);
+    if (leftKey === rightKey) return 0;
+    return leftKey < rightKey ? -1 : 1;
+  });
+}
+
+function canonicalizeObjectKeys(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(canonicalizeObjectKeys);
+  }
+  if (!value || typeof value !== "object") return value;
+
+  return Object.keys(value)
+    .sort()
+    .reduce<Record<string, unknown>>((result, key) => {
+      result[key] = canonicalizeObjectKeys(
+        (value as Record<string, unknown>)[key],
+      );
+      return result;
+    }, {});
+}
+
 export function snapshotSignature(snapshot: AtlasSnapshot) {
-  return JSON.stringify({
+  const normalized = {
     ...snapshot,
     capturedAt: "",
-  });
+    studyMaps: sortByStableKey(snapshot.studyMaps, (item) => item.id),
+    mapFolders: sortByStableKey(snapshot.mapFolders, (item) => item.id),
+    provinceRecords: sortByStableKey(
+      snapshot.provinceRecords,
+      (item) => item.id,
+    ),
+    mapMarkers: sortByStableKey(snapshot.mapMarkers, (item) => item.id),
+    mapDrawings: sortByStableKey(snapshot.mapDrawings, (item) => item.id),
+    quizStats: sortByStableKey(snapshot.quizStats, (item) => item.id),
+    quizMistakes: sortByStableKey(snapshot.quizMistakes, (item) => item.id),
+    dailyProgress: sortByStableKey(
+      snapshot.dailyProgress,
+      (item) => item.date,
+    ),
+  };
+
+  return JSON.stringify(canonicalizeObjectKeys(normalized));
 }
