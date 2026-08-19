@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
-import { Cloud, LoaderCircle, LockKeyhole, MapPinned } from "lucide-react";
+import { BookOpen, Cloud, LoaderCircle, LockKeyhole, MapPinned, Sparkles } from "lucide-react";
 import { clearLocalWorkspace } from "../cloud/localWorkspace";
 import {
   supabase,
@@ -10,6 +10,7 @@ import { validateAuthCredentials } from "./authValidation";
 
 type AuthGateProps = {
   children: (user: User) => ReactNode;
+  onContinueAsGuest?: () => void;
 };
 
 function friendlyAuthError(code?: string) {
@@ -27,11 +28,11 @@ function friendlyAuthError(code?: string) {
     case "weak_password":
       return "Daha güçlü bir şifre belirle.";
     default:
-      return "İşlem tamamlanamadı. Bilgilerini kontrol edip tekrar dene.";
+      return "İşlem tamamlanamadı. Bilgilerini veya internet bağlantını kontrol edip tekrar dene.";
   }
 }
 
-export function AuthGate({ children }: AuthGateProps) {
+export function AuthGate({ children, onContinueAsGuest }: AuthGateProps) {
   const [user, setUser] = useState<User | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -48,16 +49,34 @@ export function AuthGate({ children }: AuthGateProps) {
     }
 
     let active = true;
-    void supabase.auth.getSession().then(({ data }) => {
+
+    // Ağ veya DNS gecikmelerinde arayüzün dakikalarca kilitlenmesini önlemek için 2 saniyelik güvenlik zaman aşımı
+    const sessionTimeout = setTimeout(() => {
       if (!active) return;
-      setUser(data.session?.user ?? null);
       setCheckingSession(false);
-    });
+    }, 2000);
+
+    void supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!active) return;
+        clearTimeout(sessionTimeout);
+        setUser(data.session?.user ?? null);
+        setCheckingSession(false);
+      })
+      .catch((err) => {
+        console.warn("Oturum kontrolü başarısız:", err);
+        if (!active) return;
+        clearTimeout(sessionTimeout);
+        setUser(null);
+        setCheckingSession(false);
+      });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
+      clearTimeout(sessionTimeout);
       setUser(session?.user ?? null);
       setCheckingSession(false);
       if (event === "SIGNED_OUT") {
@@ -67,6 +86,7 @@ export function AuthGate({ children }: AuthGateProps) {
 
     return () => {
       active = false;
+      clearTimeout(sessionTimeout);
       subscription.unsubscribe();
     };
   }, []);
@@ -108,6 +128,12 @@ export function AuthGate({ children }: AuthGateProps) {
           "Kayıt oluşturuldu. E-postana gelen doğrulama bağlantısını aç.",
         );
       }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") {
+        setError("Sunucuya bağlanırken zaman aşımı oluştu. İnternet ve Supabase adresini kontrol et.");
+      } else {
+        setError("Sunucuya erişilemedi. Lütfen internet bağlantını veya Supabase ayarlarını kontrol et.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -120,19 +146,35 @@ export function AuthGate({ children }: AuthGateProps) {
           <div className="auth-card__brand">
             <MapPinned size={30} />
             <div>
-              <span>COĞRAFYA ATLASIM</span>
-              <h1>Bulut bağlantısı bekleniyor</h1>
+              <span>COĞRAFYA & TARİH ATLASIM</span>
+              <h1>Ders Notları & Çalışma Alanı</h1>
             </div>
           </div>
           <p>
-            Giriş sistemini açmak için Supabase proje bilgilerini ortam
-            değişkenlerine ekle.
+            Bulut sunucusu bağlı değil veya süresi dolmuş. Uygulamayı tüm
+            Tarih, Coğrafya ve Atatürk notlarıyla birlikte doğrudan tarayıcında
+            kullanabilirsin.
           </p>
+
+          {onContinueAsGuest && (
+            <button
+              type="button"
+              className="auth-guest-btn auth-guest-btn--primary"
+              onClick={onContinueAsGuest}
+            >
+              <BookOpen size={18} />
+              Ders Notlarına ve Haritalara Başla
+            </button>
+          )}
+
+          <div className="auth-divider">
+            <span>VEYA BULUT BAĞLANTISI</span>
+          </div>
+
           <code>VITE_SUPABASE_URL</code>
           <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>
           <small>
-            Yalnızca publishable key kullanılmalı; secret veya service_role
-            anahtarı tarayıcıya eklenmemeli.
+            Yeni bir Supabase projesi oluşturup .env.local içine eklerseniz cihazlar arası eşitleme aktifleşir.
           </small>
         </section>
       </main>
@@ -142,9 +184,36 @@ export function AuthGate({ children }: AuthGateProps) {
   if (checkingSession) {
     return (
       <main className="auth-shell">
-        <div className="auth-loading">
-          <LoaderCircle className="spin" size={26} />
-          Oturum kontrol ediliyor
+        <div className="auth-loading auth-loading--column">
+          <div className="auth-loading__header">
+            <LoaderCircle className="spin" size={24} />
+            <span>Oturum kontrol ediliyor...</span>
+          </div>
+          <div className="auth-loading__actions">
+            {onContinueAsGuest && (
+              <button
+                type="button"
+                className="auth-guest-btn auth-guest-btn--small"
+                onClick={onContinueAsGuest}
+              >
+                Misafir olarak notlara geç
+              </button>
+            )}
+            <button
+              type="button"
+              className="auth-skip-btn"
+              onClick={() => {
+                setCheckingSession(false);
+                try {
+                  void supabase?.auth.signOut({ scope: "local" });
+                } catch {
+                  // ignore
+                }
+              }}
+            >
+              Giriş ekranına git
+            </button>
+          </div>
         </div>
       </main>
     );
@@ -235,6 +304,25 @@ export function AuthGate({ children }: AuthGateProps) {
             {mode === "login" ? "Giriş yap" : "Hesap oluştur"}
           </button>
         </form>
+
+        {onContinueAsGuest && (
+          <div className="auth-guest-section">
+            <div className="auth-divider">
+              <span>VEYA</span>
+            </div>
+            <button
+              type="button"
+              className="auth-guest-btn"
+              onClick={onContinueAsGuest}
+            >
+              <Sparkles size={16} />
+              Giriş Yapmadan Doğrudan Başla (Misafir Modu)
+            </button>
+            <p className="auth-guest-note">
+              Tüm Tarih, Coğrafya ve Atatürk notlarına anında erişebilirsiniz. İlerlemeniz bu cihazda saklanır.
+            </p>
+          </div>
+        )}
       </section>
     </main>
   );

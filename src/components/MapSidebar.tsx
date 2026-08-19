@@ -13,6 +13,7 @@ import {
   Flame,
   Layers3,
   LoaderCircle,
+  LogIn,
   LogOut,
   Map,
   Plus,
@@ -127,14 +128,16 @@ export function MapSidebar({
     0,
   );
   const cloudStatus = cloudAccount?.status ?? "synced";
-  const cloudStatusTitle =
-    cloudStatus === "error"
+  const cloudStatusTitle = !cloudAccount
+    ? "Çevrimdışı / Yerel Mod"
+    : cloudStatus === "error"
       ? "Bulut kaydı bekliyor"
       : cloudStatus === "syncing" || cloudStatus === "loading"
         ? "Buluta kaydediliyor"
         : "Buluta kaydedildi";
-  const cloudStatusDetail =
-    cloudStatus === "error"
+  const cloudStatusDetail = !cloudAccount
+    ? "Veriler tarayıcında saklanıyor"
+    : cloudStatus === "error"
       ? "Bu cihazdaki kopya korunuyor"
       : "Telefon ve bilgisayarda aynı";
 
@@ -576,7 +579,7 @@ export function MapSidebar({
             <small>{cloudStatusDetail}</small>
           </div>
         </div>
-        {cloudAccount && (
+        {cloudAccount ? (
           <div className="sidebar-account-actions">
             {cloudAccount.status === "error" && (
               <button
@@ -604,6 +607,21 @@ export function MapSidebar({
               <span>
                 {cloudAccount.signingOut ? "Çıkış yapılıyor" : "Çıkış yap"}
               </span>
+            </button>
+          </div>
+        ) : (
+          <div className="sidebar-account-actions">
+            <button
+              className="sidebar-account-button"
+              type="button"
+              title="Giriş ekranına dön / Bulut hesabı bağla"
+              onClick={() => {
+                window.localStorage.removeItem("cografya_guest_mode_enabled");
+                window.dispatchEvent(new Event("cografya_guest_mode_reset"));
+              }}
+            >
+              <LogIn size={15} />
+              <span>Giriş</span>
             </button>
           </div>
         )}
