@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🎡 3D LUNAPARK FESTİVALİ - 3D Eğlence Parkı & Mini Oyunlar</title>
+  <meta name="description" content="Tam 3 Boyutlu (3D) lunapark festival atmosferi, 3D çelik raylı giden tren, trene binme kamerası, gece/gündüz döngüsü ve 5 adet 3D oyun!">
+  <link rel="stylesheet" href="/src/styles/main.css">
+  <link rel="stylesheet" href="/src/styles/games.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎡</text></svg>">
+</head>
+<body>
+  <!-- 3D Three.js Theme Park Container -->
+  <div id="carnival-3d-canvas"></div>
+
+  <!-- Real-time Coaster POV Telemetry Overlay -->
+  <div id="coaster-telemetry-hud" class="coaster-hud" style="display: none;">
+    <div class="hud-item"><span>HIZ</span><b id="coaster-kmh">0 km/s</b></div>
+    <div class="hud-item"><span>BÖLÜM</span><b id="coaster-section" class="highlight">İSTASYON</b></div>
+    <div class="hud-item"><span>G-KUVVETİ</span><b id="coaster-gforce">1.0 G</b></div>
+  </div>
+
+  <!-- UI Overlay -->
+  <div id="app-container">
+    <!-- Navbar -->
+    <header class="carnival-header">
+      <div class="logo-area">
+        <div class="logo-icon">🎡</div>
+        <div class="logo-text">
+          <h1>3D LUNAPARK FESTİVALİ</h1>
+          <p>3D Lunapark & Arcade Dünyası</p>
+        </div>
+      </div>
+
+      <!-- 3D Camera Controls -->
+      <div class="camera-controls-bar">
+        <button class="cam-btn active" id="cam-orbit-btn" title="3D Serbest Harita Gezintisi">
+          <span>🌐</span> <span>Serbest Kamera</span>
+        </button>
+        <button class="cam-btn" id="cam-coaster-btn" title="Trene Bin ve Birinci Şahıs Gözünden Sür!">
+          <span>🎢</span> <span>Trene Bin (POV)</span>
+        </button>
+        <button class="cam-btn" id="cam-follow-btn" title="Treni Dışarıdan Otomatik Takip Et">
+          <span>🚂</span> <span>Treni Takip Et</span>
+        </button>
+        <button class="cam-btn" id="cam-overview-btn" title="Yukarıdan Kuşbakışı Görünüm">
+          <span>🦅</span> <span>Kuşbakışı</span>
+        </button>
+      </div>
+
+      <div class="header-actions">
+        <div class="ticket-badge" id="open-shop-badge" title="Lunapark Biletleri - Mağaza için tıkla">
+          <span>🎟️</span>
+          <span class="ticket-count-badge">0</span>
+          <span>BİLET</span>
+        </div>
+
+        <button class="icon-btn" id="theme-toggle-btn" title="Gece / Gündüz Geçişi">
+          <span id="theme-icon">🌙</span>
+        </button>
+
+        <button class="icon-btn" id="bgm-toggle-btn" title="Festival Müziği">
+          <span id="bgm-icon">🎵</span>
+        </button>
+
+        <button class="icon-btn" id="sound-toggle-btn" title="Ses Efektleri">
+          <span id="sound-icon">🔊</span>
+        </button>
+
+        <button class="icon-btn" id="shop-btn" title="Ödül Mağazası">
+          <span>🛍️</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hint Bar -->
+    <div class="festival-hint">
+      ✨ Parkı 360° döndürebilir, üst menüden trene binebilir veya aşağıdaki 3D standlara tıklayarak oyunlara girebilirsin!
+    </div>
+
+    <!-- 5 Game Booths Kiosks -->
+    <div class="booths-container">
+      <div class="booths-title">
+        <h2>🎪 3D FESTİVAL OYUNLARI</h2>
+      </div>
+
+      <div class="booths-grid">
+        <!-- 1. Snake Game -->
+        <div class="booth-card" data-game="snake" style="--booth-color: #00ff88;">
+          <div class="booth-header">
+            <div class="booth-icon">🐉</div>
+            <div class="booth-info">
+              <h3>3D Siber Yılan</h3>
+              <span>Serbest Slither Arenası</span>
+            </div>
+          </div>
+          <div class="booth-score-preview">
+            <span>En Yüksek:</span>
+            <span id="booth-hs-snake">0</span>
+          </div>
+          <button class="booth-play-btn">3D OYNA</button>
+        </div>
+
+        <!-- 2. Car Racing Game -->
+        <div class="booth-card" data-game="car_racing" style="--booth-color: #ff0055;">
+          <div class="booth-header">
+            <div class="booth-icon">🏎️</div>
+            <div class="booth-info">
+              <h3>3D Nitro Drift</h3>
+              <span>3D Araba Yarışı</span>
+            </div>
+          </div>
+          <div class="booth-score-preview">
+            <span>En Yüksek:</span>
+            <span id="booth-hs-car">0 m</span>
+          </div>
+          <button class="booth-play-btn">3D OYNA</button>
+        </div>
+
+        <!-- 3. Cannon Target Shooter -->
+        <div class="booth-card" data-game="cannon_target" style="--booth-color: #ffaa00;">
+          <div class="booth-header">
+            <div class="booth-icon">🎯</div>
+            <div class="booth-info">
+              <h3>3D Festival Topu</h3>
+              <span>Hedef Vurma Fiziği</span>
+            </div>
+          </div>
+          <div class="booth-score-preview">
+            <span>En Yüksek:</span>
+            <span id="booth-hs-cannon">0</span>
+          </div>
+          <button class="booth-play-btn">3D OYNA</button>
+        </div>
+
+        <!-- 4. Pinball & Bumper -->
+        <div class="booth-card" data-game="pinball" style="--booth-color: #9d4edd;">
+          <div class="booth-header">
+            <div class="booth-icon">🕹️</div>
+            <div class="booth-info">
+              <h3>3D Neon Pinball</h3>
+              <span>Çarpışan Top Kabini</span>
+            </div>
+          </div>
+          <div class="booth-score-preview">
+            <span>En Yüksek:</span>
+            <span id="booth-hs-pinball">0</span>
+          </div>
+          <button class="booth-play-btn">3D OYNA</button>
+        </div>
+
+        <!-- 5. Rocket Gravity Lander -->
+        <div class="booth-card" data-game="rocket_lander" style="--booth-color: #00f2fe;">
+          <div class="booth-header">
+            <div class="booth-icon">🚀</div>
+            <div class="booth-info">
+              <h3>3D Yerçekimi Roketi</h3>
+              <span>Akrobat İniş Fiziği</span>
+            </div>
+          </div>
+          <div class="booth-score-preview">
+            <span>En Yüksek:</span>
+            <span id="booth-hs-rocket">0</span>
+          </div>
+          <button class="booth-play-btn">3D OYNA</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Modal Container -->
+  <div id="game-modal" class="modal-backdrop">
+    <div id="game-container"></div>
+  </div>
+
+  <!-- Shop Modal -->
+  <div id="shop-modal" class="modal-backdrop">
+    <div class="shop-modal-box">
+      <div class="shop-header">
+        <h2 style="color: #ffdd00; font-family: 'Fredoka', cursive;">🛍️ LUNAPARK ÖDÜL STANDI</h2>
+        <button class="game-close-btn" id="shop-close-btn">✕ KAPAT</button>
+      </div>
+      <p style="font-size: 13px; color: rgba(255,255,255,0.7);">
+        Oyunları oynayarak topladığın biletlerle lunapark için özel efektler ve yükseltmeler satın al!
+      </p>
+      <div class="shop-items-grid" id="shop-items-list">
+        <!-- Dynamically rendered -->
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
