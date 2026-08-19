@@ -830,14 +830,14 @@ export const ATATURK_PERIODS: AtaturkPeriod[] = [
 // ----------------------------------------------------
 export const ATATURK_MASTER_MNEMONICS: AtaturkMnemonic[] = [
   {
-    code: "Ç - A - K",
+    code: "Ç - K - S (Çanakkale -> Kafkas -> Suriye)",
     title: "I. Dünya Savaşı'nda Savaştığı Cepheler (Kronolojik)",
     context: "Mustafa Kemal'in I. Dünya Savaşı'nda savaştığı cephelerin tarih sırasıdır.",
     category: "hayati",
     items: [
       { letter: "Ç", word: "Çanakkale Cephesi (1915)", note: "19. Tümen - Anafartalar Kahramanı" },
-      { letter: "A", word: "Kafkas Cephesi (1916)", note: "Muş ve Bitlis'i kurtardı, Generallik" },
-      { letter: "K", word: "Kanal / Suriye-Filistin (1917-1918)", note: "7. Ordu & Yıldırım Orduları" }
+      { letter: "K", word: "Kafkas Cephesi (1916)", note: "Muş ve Bitlis'i kurtardı, Generallik" },
+      { letter: "S", word: "Suriye-Filistin Cephesi (1917-1918)", note: "7. Ordu & Yıldırım Orduları Komutanlığı" }
     ]
   },
   {
@@ -904,15 +904,15 @@ export const ATATURK_MASTER_MNEMONICS: AtaturkMnemonic[] = [
     ]
   },
   {
-    code: "İ - T - A - N",
+    code: "İ - T - A - I (İran, Türkiye, Afganistan, Irak)",
     title: "Sadabat Paktı'na Katılan Devletler (1937)",
     context: "Doğu sınırını İtalyan yayılmacılığına karşı koruyan Tahran Paktı.",
     category: "dis_politika",
     items: [
       { letter: "İ", word: "İran", note: "Ev sahibi devlet (Sadabat Sarayı)" },
       { letter: "T", word: "Türkiye", note: "Öncü devlet" },
-      { letter: "A", word: "Afganistan", note: "Asya müttefiki" },
-      { letter: "N", word: "Irak (N-Harfi / Irak)", note: "Ortadoğu komşusu" }
+      { letter: "A", word: "Afganistan", note: "Doğu müttefiki" },
+      { letter: "I", word: "Irak", note: "Ortadoğu komşusu" }
     ]
   },
   {
