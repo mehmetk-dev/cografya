@@ -10,6 +10,7 @@ import {
   FolderPen,
   FolderPlus,
   GitBranch,
+  Flame,
   Layers3,
   LoaderCircle,
   LogOut,
@@ -42,6 +43,7 @@ type MapSidebarProps = {
   onOpenReadySet: (set: ReadyStudySet) => Promise<void>;
   onOpenNotes: () => void;
   onOpenHistory: () => void;
+  onOpenAtaturk?: () => void;
 };
 
 const PRESETS = [
@@ -76,6 +78,7 @@ export function MapSidebar({
   onOpenReadySet,
   onOpenNotes,
   onOpenHistory,
+  onOpenAtaturk,
 }: MapSidebarProps) {
   const cloudAccount = useCloudAccount();
   const [isCreating, setIsCreating] = useState(false);
@@ -273,14 +276,20 @@ export function MapSidebar({
 
       <div className="sidebar-subject-switcher" aria-label="Ders seç">
         <button className="is-active" type="button" aria-current="page">
-          <Map size={16} />
+          <Map size={15} />
           <span>Coğrafya</span>
         </button>
         <button type="button" onClick={onOpenHistory}>
-          <GitBranch size={16} />
-          <span>Tarih</span>
-          <small>Yeni</small>
+          <GitBranch size={15} />
+          <span>Osmanlı</span>
         </button>
+        {onOpenAtaturk && (
+          <button type="button" onClick={onOpenAtaturk}>
+            <Flame size={15} />
+            <span>Atatürk</span>
+            <small>Yeni</small>
+          </button>
+        )}
       </div>
 
       <button

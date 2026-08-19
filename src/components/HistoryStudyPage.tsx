@@ -48,6 +48,7 @@ import {
 
 type HistoryStudyPageProps = {
   onBack: () => void;
+  onOpenAtaturk?: () => void;
 };
 
 function kindBadge(kind: HistoryEventKind) {
@@ -75,7 +76,7 @@ function kindBadge(kind: HistoryEventKind) {
   }
 }
 
-export function HistoryStudyPage({ onBack }: HistoryStudyPageProps) {
+export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProps) {
   const [query, setQuery] = useState("");
   const [selectedKind, setSelectedKind] = useState<string>("all");
   const [progress, setProgress] = useState<HistoryProgress>(loadHistoryProgress);
@@ -907,6 +908,30 @@ export function HistoryStudyPage({ onBack }: HistoryStudyPageProps) {
             </section>
           );
         })}
+
+        {onOpenAtaturk && (
+          <div className="ataturk-bridge-card">
+            <div className="ataturk-bridge-card__left">
+              <div className="ataturk-bridge-badge">
+                <Flame size={16} />
+                <span>Sıradaki Konu / Yeni Modül</span>
+              </div>
+              <h3>Gazi Mustafa Kemal Atatürk & İnkılap Tarihi</h3>
+              <p>
+                Osmanlı'nın dağılmasından sonra Millî Mücadele, Kurtuluş Savaşı cepheleri,
+                Lozan Antlaşması, Atatürk İnkılapları ve KPSS kodlamaları ile devam edin.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="ataturk-bridge-btn"
+              onClick={onOpenAtaturk}
+            >
+              <span>Atatürk Modülüne Geç</span>
+              <ArrowRight size={18} />
+            </button>
+          </div>
+        )}
       </main>
 
       {/* 5. FLOATING QUICK JUMP & MNEMONIC PILL */}
