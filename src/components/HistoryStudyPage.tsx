@@ -11,6 +11,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   ChevronUp,
   CircleAlert,
@@ -77,12 +78,13 @@ function kindBadge(kind: HistoryEventKind) {
 }
 
 export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProps) {
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string>("kurulus");
+  const [selectedCultureTopicId, setSelectedCultureTopicId] = useState<string>("all");
   const [query, setQuery] = useState("");
   const [selectedKind, setSelectedKind] = useState<string>("all");
   const [progress, setProgress] = useState<HistoryProgress>(loadHistoryProgress);
-  const [activeSection, setActiveSection] = useState<string>("kurulus");
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
-  
+
   // Quiz Modal State
   const [quizOpen, setQuizOpen] = useState(false);
   const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
@@ -93,6 +95,23 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
   const [mnemonicModalOpen, setMnemonicModalOpen] = useState(false);
   const [mnemonicPeriodFilter, setMnemonicPeriodFilter] = useState<string>("all");
   const [copiedMnemonic, setCopiedMnemonic] = useState<string | null>(null);
+
+  // Current active period calculation
+  const currentPeriodIndex = useMemo(() => {
+    const idx = HISTORY_PERIODS.findIndex((p) => p.id === selectedPeriodId);
+    return idx >= 0 ? idx : 0;
+  }, [selectedPeriodId]);
+
+  const currentPeriod = HISTORY_PERIODS[currentPeriodIndex] || HISTORY_PERIODS[0];
+  const prevPeriod = currentPeriodIndex > 0 ? HISTORY_PERIODS[currentPeriodIndex - 1] : null;
+  const nextPeriod = currentPeriodIndex < HISTORY_PERIODS.length - 1 ? HISTORY_PERIODS[currentPeriodIndex + 1] : null;
+
+  // Change period with auto-scroll to top
+  const handleSelectPeriod = (periodId: string) => {
+    setSelectedPeriodId(periodId);
+    setSelectedCultureTopicId("all");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // Toggle visited
   const toggleEventVisited = (eventId: string, e?: React.MouseEvent) => {
@@ -129,17 +148,6 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
     setExpandedEvents(next);
   };
 
-  // Scroll to section smoothly
-  const scrollToPeriod = (periodId: string) => {
-    setActiveSection(periodId);
-    const element = document.getElementById(periodId);
-    if (element) {
-      const yOffset = -80;
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: "smooth" });
-    }
-  };
-
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -153,27 +161,6 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
   const totalTimelineEvents = ALL_HISTORY_TIMELINE_EVENTS.length;
   const completedCount = progress.visitedEventIds.length;
   const overallPercent = Math.min(100, Math.round((completedCount / totalTimelineEvents) * 100));
-
-  // Active section observer on scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY + 200;
-      for (const period of HISTORY_PERIODS) {
-        const el = document.getElementById(period.id);
-        if (el) {
-          const top = el.offsetTop;
-          const height = el.offsetHeight;
-          if (scrollPosition >= top && scrollPosition < top + height) {
-            setActiveSection(period.id);
-            break;
-          }
-        }
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   // Filtered Mnemonics
   const filteredMnemonics = useMemo(() => {
@@ -236,6 +223,27 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
     setCurrentQuizIndex((prev) => (prev + 1) % quizQuestions.length);
   };
 
+  // Filtered Culture Sections for Period 6
+  const filteredCultureSections = useMemo(() => {
+    if (!currentPeriod.cultureSections) return [];
+    if (selectedCultureTopicId === "all") return currentPeriod.cultureSections;
+    return currentPeriod.cultureSections.filter((s) => s.id === selectedCultureTopicId);
+  }, [currentPeriod, selectedCultureTopicId]);
+
+  // Current period events
+  const periodEvents = useMemo(() => {
+    if (selectedKind === "all") return currentPeriod.events;
+    return currentPeriod.events.filter((e) => e.kind === selectedKind);
+  }, [currentPeriod, selectedKind]);
+
+  const isCulture = currentPeriod.id === "kultur-uygarlik";
+  const periodVisited = currentPeriod.events.filter((e) =>
+    progress.visitedEventIds.includes(e.id)
+  ).length;
+  const periodTotal = currentPeriod.events.length;
+  const periodPercent = periodTotal > 0 ? Math.round((periodVisited / periodTotal) * 100) : 100;
+  const periodMnemonics = ALL_MASTER_MNEMONICS.filter((m) => m.periodId === currentPeriod.id);
+
   return (
     <div className="history-atlas-root">
       {/* 1. STICKY TOPBAR */}
@@ -249,44 +257,16 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
               title="Coğrafya haritasına dön"
             >
               <ArrowLeft size={16} />
-              <span>Coğrafyaya Dön</span>
+              <span>Coğrafya</span>
             </button>
             <div className="history-atlas-title-block">
               <div className="history-atlas-brand">
-                <Crown size={19} className="history-crown-icon" />
-                <strong>Osmanlı Tarihi & Medeniyeti</strong>
+                <Crown size={18} className="history-crown-icon" />
+                <strong>Osmanlı Tarihi</strong>
               </div>
-              <span className="history-atlas-subtitle">KPSS Kapsamlı Kronoloji ve Kültür Atlası</span>
+              <span className="history-atlas-subtitle">KPSS Kronoloji & Medeniyet Atlası</span>
             </div>
           </div>
-
-          {/* Quick Period Navigation Pills */}
-          <nav className="history-atlas-period-nav" aria-label="Dönemler arası geçiş">
-            {HISTORY_PERIODS.map((period) => {
-              const isActive = activeSection === period.id;
-              const periodVisited = period.events.filter((e) =>
-                progress.visitedEventIds.includes(e.id)
-              ).length;
-              const periodTotal = period.events.length;
-
-              return (
-                <button
-                  key={period.id}
-                  type="button"
-                  className={`history-period-pill ${isActive ? "is-active" : ""}`}
-                  style={{ "--pill-accent": period.accentColor } as React.CSSProperties}
-                  onClick={() => scrollToPeriod(period.id)}
-                >
-                  <span>{period.shortTitle}</span>
-                  {periodTotal > 0 && (
-                    <small>
-                      {periodVisited}/{periodTotal}
-                    </small>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
 
           <div className="history-atlas-topbar__right">
             <button
@@ -296,7 +276,7 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
               title="Tüm KPSS Hafıza Kodlamaları & Şifreleri"
             >
               <KeyRound size={15} />
-              <span>Şifreler Bankası ({ALL_MASTER_MNEMONICS.length})</span>
+              <span>Şifreler ({ALL_MASTER_MNEMONICS.length})</span>
             </button>
             <button
               type="button"
@@ -305,7 +285,7 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
               title="KPSS Neden-Sonuç Testi"
             >
               <Brain size={15} />
-              <span>Soru Çöz</span>
+              <span>Test Çöz</span>
             </button>
             <div className="history-progress-widget" title={`${completedCount} / ${totalTimelineEvents} olay incelendi`}>
               <div className="history-progress-text">
@@ -319,7 +299,44 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
           </div>
         </div>
 
-        {/* Search & Filter Bar */}
+        {/* PERIOD STEPPER NAVIGATION TABS */}
+        <nav className="history-period-stepper-bar" aria-label="Dönemler Sayfalama Çubuğu">
+          <div className="history-period-stepper-scroll">
+            {HISTORY_PERIODS.map((period, idx) => {
+              const isActive = selectedPeriodId === period.id;
+              const pVisited = period.events.filter((e) =>
+                progress.visitedEventIds.includes(e.id)
+              ).length;
+              const pTotal = period.events.length;
+
+              return (
+                <button
+                  key={period.id}
+                  type="button"
+                  className={`history-stepper-tab ${isActive ? "is-active" : ""}`}
+                  style={{ "--tab-accent": period.accentColor } as React.CSSProperties}
+                  onClick={() => {
+                    setQuery("");
+                    handleSelectPeriod(period.id);
+                  }}
+                >
+                  <span className="stepper-idx">{idx + 1}</span>
+                  <div className="stepper-label-group">
+                    <strong className="stepper-title">{period.shortTitle}</strong>
+                    <span className="stepper-dates">{period.period}</span>
+                  </div>
+                  {pTotal > 0 && (
+                    <span className="stepper-progress-pill">
+                      {pVisited}/{pTotal}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* Search & Kind Filter Bar */}
         <div className="history-search-strip">
           <div className="history-search-container">
             <div className="history-search-input-wrapper">
@@ -327,7 +344,7 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
               <input
                 type="text"
                 value={query}
-                placeholder="Padişah, savaş, antlaşma, ıslahat, şifre (örn: SINAV, TOKMAK, Kırım, Mohaç)..."
+                placeholder="Padişah, savaş, antlaşma, ıslahat veya şifre ara (örn: SINAV, TOKMAK, Kırım, Mohaç)..."
                 onChange={(e) => setQuery(e.target.value)}
               />
               {query && (
@@ -350,92 +367,57 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
                 className={`filter-pill ${selectedKind === "sultan" ? "is-active" : ""}`}
                 onClick={() => setSelectedKind("sultan")}
               >
-                👑 Padişahlar
+                👑 Padişah
               </button>
               <button
                 type="button"
                 className={`filter-pill ${selectedKind === "war" ? "is-active" : ""}`}
                 onClick={() => setSelectedKind("war")}
               >
-                ⚔️ Savaşlar
+                ⚔️ Savaş
               </button>
               <button
                 type="button"
                 className={`filter-pill ${selectedKind === "treaty" ? "is-active" : ""}`}
                 onClick={() => setSelectedKind("treaty")}
               >
-                📜 Antlaşmalar
+                📜 Antlaşma
               </button>
               <button
                 type="button"
                 className={`filter-pill ${selectedKind === "reform" ? "is-active" : ""}`}
                 onClick={() => setSelectedKind("reform")}
               >
-                ⚡ Islahatlar
+                ⚡ Islahat
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* 2. GRAND HERO BANNER */}
-      <section className="history-hero-grand">
-        <div className="history-hero-grand__overlay" />
-        <div className="history-hero-grand__content">
-          <div className="history-hero-badge">
-            <GraduationCap size={16} />
-            <span>KPSS & MEB MÜFREDATI OSMANLI TARİHİ KÜLLİYATI</span>
-          </div>
-          <h1>
-            623 Yıllık Cihan Tarihini <br />
-            <span>Nedenleriyle, Kodlamalarıyla ve Şifreleriyle</span> Keşfet
-          </h1>
-          <p>
-            Kuruluştan Dağılmaya tüm padişahlar, meydan savaşları, tarihi antlaşmalar, Batılılaşma ıslahatları ve
-            Osmanlı Kültür-Medeniyeti. Aşağı doğru kaydırarak zevkle oku ve kalıcı kodlamalarla öğren.
-          </p>
-
-          <div className="history-hero-stats-row">
-            <div className="history-hero-stat-card">
-              <strong>623 Yıl</strong>
-              <span>1299 – 1922 İhtişamı</span>
-            </div>
-            <div className="history-hero-stat-card">
-              <strong>6 Ana Dönem</strong>
-              <span>Kuruluş'tan Kültür'e</span>
-            </div>
-            <div className="history-hero-stat-card">
-              <strong>36 Padişah</strong>
-              <span>Mahlasları ve İcraatları</span>
-            </div>
-            <div
-              className="history-hero-stat-card is-highlight"
-              style={{ cursor: "pointer" }}
-              onClick={() => setMnemonicModalOpen(true)}
-              title="Tüm hafıza şifrelerini aç"
-            >
-              <strong>🔑 {ALL_MASTER_MNEMONICS.length} Hafıza Şifresi</strong>
-              <span>SINAV II · TOKMAK · 31313 · SAKAR · BBG</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. SEARCH RESULTS (IF QUERY ACTIVE) */}
-      {query && (
-        <section className="history-search-results-section">
+      {/* 2. SEARCH RESULTS (IF SEARCH ACTIVE) */}
+      {query ? (
+        <main className="history-search-results-section">
           <div className="history-search-results-header">
-            <h2>
-              Arama Sonuçları: <span>"{query}"</span>
-            </h2>
-            <span className="results-count-badge">{searchResults.length} sonuç bulundu</span>
+            <div>
+              <h2>
+                Arama Sonuçları: <span>"{query}"</span>
+              </h2>
+              <p>Tüm dönemler arasında eşleşen olaylar ve notlar listeleniyor.</p>
+            </div>
+            <div className="search-header-actions">
+              <span className="results-count-badge">{searchResults.length} sonuç bulundu</span>
+              <button type="button" className="clear-search-btn" onClick={() => setQuery("")}>
+                <X size={14} /> Aramayı Kapat
+              </button>
+            </div>
           </div>
 
           {searchResults.length === 0 ? (
             <div className="history-empty-results">
               <CircleAlert size={36} />
-              <strong>Aradığınız kriterlere uygun olay veya bilgi bulunamadı.</strong>
-              <p>Farklı bir kelime (örn: 'Viyana', 'Tanzimat', 'Süleyman', 'Mecelle', 'TOKMAK') deneyebilirsiniz.</p>
+              <strong>Aradığınız kriterlere uygun kayıt bulunamadı.</strong>
+              <p>Farklı bir anahtar kelime deneyebilir veya yukarıdaki filtreleri sıfırlayabilirsiniz.</p>
             </div>
           ) : (
             <div className="history-search-cards-grid">
@@ -477,17 +459,17 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
                         onClick={(e) => toggleEventVisited(event.id, e)}
                       >
                         <CheckCircle2 size={15} />
-                        <span>{isVisited ? "Öğrenildi" : "Öğrenildi İşaretle"}</span>
+                        <span>{isVisited ? "Öğrenildi" : "Tamamla"}</span>
                       </button>
                       <button
                         type="button"
                         className="jump-to-era-btn"
                         onClick={() => {
                           setQuery("");
-                          scrollToPeriod(event.topicId);
+                          handleSelectPeriod(event.topicId);
                         }}
                       >
-                        <span>Döneme Git</span>
+                        <span>Dönem Sayfasına Git</span>
                         <ChevronRight size={14} />
                       </button>
                     </footer>
@@ -496,390 +478,233 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
               })}
             </div>
           )}
-        </section>
-      )}
+        </main>
+      ) : (
+        /* 3. DEDICATED SINGLE PERIOD PAGE VIEW */
+        <main className="history-period-single-page" style={{ "--period-accent": currentPeriod.accentColor } as React.CSSProperties}>
+          {/* PERIOD HEADER BANNER */}
+          <section className="history-period-banner">
+            <div className="history-period-banner__image-box">
+              <img src={currentPeriod.image} alt={currentPeriod.title} className="history-period-banner__img" />
+              <div className="history-period-banner__overlay" />
+            </div>
 
-      {/* 4. MAIN LINEAR DOWNWARD TIMELINE STREAM */}
-      <main className="history-linear-stream">
-        {HISTORY_PERIODS.map((period, periodIndex) => {
-          const isCulture = period.id === "kultur-uygarlik";
-          const periodVisited = period.events.filter((e) =>
-            progress.visitedEventIds.includes(e.id)
-          ).length;
-          const periodTotal = period.events.length;
-          const periodPercent = periodTotal > 0 ? Math.round((periodVisited / periodTotal) * 100) : 100;
-          const periodMnemonics = ALL_MASTER_MNEMONICS.filter((m) => m.periodId === period.id);
-
-          return (
-            <section
-              key={period.id}
-              id={period.id}
-              className="history-period-block"
-              style={{ "--period-accent": period.accentColor } as React.CSSProperties}
-            >
-              {/* PERIOD HEADER BANNER */}
-              <div className="history-period-banner">
-                <div className="history-period-banner__image-box">
-                  <img src={period.image} alt={period.title} className="history-period-banner__img" />
-                  <div className="history-period-banner__overlay" />
-                </div>
-
-                <div className="history-period-banner__content">
-                  <div className="history-period-meta-row">
-                    <span className="history-period-number">DÖNEM {String(periodIndex + 1).padStart(2, "0")}</span>
-                    <span className="history-period-dates">{period.period}</span>
-                    <span className="history-period-badge">{period.badge}</span>
-                  </div>
-
-                  <h2 className="history-period-heading">{period.title}</h2>
-                  <p className="history-period-slogan">"{period.slogan}"</p>
-                  <p className="history-period-description">{period.description}</p>
-
-                  {/* Period Mnemonic Quick Bar */}
-                  {periodMnemonics.length > 0 && (
-                    <div className="period-mnemonics-strip">
-                      <span className="strip-title">
-                        <KeyRound size={14} /> Bu Dönemin Şifreleri:
-                      </span>
-                      <div className="strip-pills">
-                        {periodMnemonics.map((mn, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            className="period-mnemonic-chip"
-                            onClick={() => {
-                              setMnemonicPeriodFilter(period.id);
-                              setMnemonicModalOpen(true);
-                            }}
-                            title={mn.description}
-                          >
-                            <span className="chip-code">{mn.code}</span>
-                            <span className="chip-name">{mn.title}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="history-period-actions-row">
-                    {!isCulture && (
-                      <>
-                        <div className="period-progress-indicator">
-                          <span>{periodVisited} / {periodTotal} İncilendi (%{periodPercent})</span>
-                          <div className="period-progress-track">
-                            <div className="period-progress-fill" style={{ width: `${periodPercent}%` }} />
-                          </div>
-                        </div>
-
-                        <div className="period-batch-buttons">
-                          <button
-                            type="button"
-                            className="period-action-btn"
-                            onClick={() => markAllInPeriod(period)}
-                          >
-                            <CheckCircle2 size={14} /> Tümünü Tamamla
-                          </button>
-                          <button
-                            type="button"
-                            className="period-action-btn"
-                            onClick={() => expandAllInPeriod(period)}
-                          >
-                            <Layers size={14} /> Detayları Aç/Kapat
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
+            <div className="history-period-banner__content">
+              <div className="history-period-meta-row">
+                <span className="history-period-number">DÖNEM {String(currentPeriodIndex + 1).padStart(2, "0")} / 06</span>
+                <span className="history-period-dates">{currentPeriod.period}</span>
+                <span className="history-period-badge">{currentPeriod.badge}</span>
               </div>
 
-              {/* TIMELINE EVENTS FOR SİYASİ TARİH DÖNEMLERİ */}
-              {!isCulture && (
-                <div className="history-timeline-spine">
-                  <div className="history-spine-line" />
+              <h1 className="history-period-heading">{currentPeriod.title}</h1>
+              <p className="history-period-slogan">"{currentPeriod.slogan}"</p>
+              <p className="history-period-description">{currentPeriod.description}</p>
 
-                  {period.events.map((event, eventIndex) => {
-                    const isExpanded = Boolean(expandedEvents[event.id]);
-                    const isVisited = progress.visitedEventIds.includes(event.id);
-                    const b = kindBadge(event.kind);
-                    const BadgeIcon = b.icon;
-
-                    return (
-                      <article
-                        key={event.id}
-                        id={`event-${event.id}`}
-                        className={`history-event-card ${isVisited ? "is-visited" : ""} ${isExpanded ? "is-expanded" : ""}`}
+              {/* Period Mnemonic Quick Bar */}
+              {periodMnemonics.length > 0 && (
+                <div className="period-mnemonics-strip">
+                  <span className="strip-title">
+                    <KeyRound size={14} /> Bu Dönemin Hafıza Şifreleri:
+                  </span>
+                  <div className="strip-pills">
+                    {periodMnemonics.map((mn, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        className="period-mnemonic-chip"
+                        onClick={() => {
+                          setMnemonicPeriodFilter(currentPeriod.id);
+                          setMnemonicModalOpen(true);
+                        }}
+                        title={mn.description}
                       >
-                        {/* Timeline Node Connector */}
-                        <div className="history-event-card__node">
-                          <button
-                            type="button"
-                            className={`history-node-dot ${isVisited ? "is-done" : ""}`}
-                            onClick={(e) => toggleEventVisited(event.id, e)}
-                            title={isVisited ? "Tamamlandı olarak işaretli" : "Tamamla"}
-                          >
-                            {isVisited ? <Check size={14} /> : <span>{eventIndex + 1}</span>}
-                          </button>
-                        </div>
-
-                        {/* Event Card Body */}
-                        <div className="history-event-card__body">
-                          {/* Card Top Strip */}
-                          <header className="history-event-card__top">
-                            <div className="history-event-card__tags">
-                              <span className={`kind-tag ${b.color}`}>
-                                <BadgeIcon size={13} />
-                                {b.label}
-                              </span>
-                              <span className="date-tag">
-                                <Calendar size={13} />
-                                {event.dateLabel}
-                              </span>
-                              {event.sultan && (
-                                <span className="sultan-pill">
-                                  <Crown size={13} />
-                                  <strong>{event.sultan}</strong>
-                                  {event.mahlas && <small>Mahlas: {event.mahlas}</small>}
-                                </span>
-                              )}
-                            </div>
-
-                            <button
-                              type="button"
-                              className={`check-done-toggle ${isVisited ? "is-checked" : ""}`}
-                              onClick={(e) => toggleEventVisited(event.id, e)}
-                            >
-                              <CheckCircle2 size={16} />
-                              <span>{isVisited ? "Öğrenildi" : "Tamamla"}</span>
-                            </button>
-                          </header>
-
-                          {/* Card Title & Summary */}
-                          <div className="history-event-card__title-box">
-                            <small className="eyebrow-text">{event.eyebrow}</small>
-                            <h3 className="event-title">{event.title}</h3>
-                            <p className="event-summary">{event.summary}</p>
-                          </div>
-
-                          {/* CAUSAL CHAIN (NEDEN - OLAY - SONUÇ) */}
-                          {event.causalChain && (
-                            <div className="history-causal-box">
-                              <div className="causal-step is-cause">
-                                <span className="step-label">
-                                  <CircleAlert size={14} /> NEDEN
-                                </span>
-                                <p>{event.causalChain.cause}</p>
-                              </div>
-                              <div className="causal-arrow">
-                                <ArrowRight size={18} />
-                              </div>
-                              <div className="causal-step is-event">
-                                <span className="step-label">
-                                  <Flame size={14} /> OLAY
-                                </span>
-                                <strong>{event.causalChain.event}</strong>
-                              </div>
-                              <div className="causal-arrow">
-                                <ArrowRight size={18} />
-                              </div>
-                              <div className="causal-step is-result">
-                                <span className="step-label">
-                                  <BadgeCheck size={14} /> TARİHİ SONUÇ
-                                </span>
-                                <p>{event.causalChain.result}</p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* KPSS AYIRICI ALTIN NOT (CALLOUT) */}
-                          {event.examNote && (
-                            <div className="history-exam-callout">
-                              <div className="callout-icon">
-                                <Target size={20} />
-                              </div>
-                              <div className="callout-content">
-                                <strong>🎯 KPSS Ayırıcı Altın Bilgi:</strong>
-                                <p>{event.examNote}</p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* AKILDA TUTMA ŞİFRESİ (MNEMONIC CARD) */}
-                          {event.mnemonic && (
-                            <div className="history-mnemonic-box">
-                              <div className="mnemonic-header">
-                                <div className="mnemonic-title-left">
-                                  <KeyRound size={18} />
-                                  <strong>{event.mnemonic.title}</strong>
-                                  <span className="mnemonic-code-badge">{event.mnemonic.code}</span>
-                                </div>
-                                <button
-                                  type="button"
-                                  className="mnemonic-copy-btn"
-                                  onClick={() => copyMnemonicText(event.mnemonic!)}
-                                  title="Şifreyi panoya kopyala"
-                                >
-                                  {copiedMnemonic === event.mnemonic.code ? (
-                                    <>
-                                      <Check size={13} /> Kopyalandı
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Copy size={13} /> Kopyala
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-                              <p className="mnemonic-desc">{event.mnemonic.description}</p>
-                              <div className="mnemonic-items-grid">
-                                {event.mnemonic.items.map((item, idx) => (
-                                  <div key={idx} className="mnemonic-item-chip">
-                                    <span className="mnemonic-letter">{item.letter}</span>
-                                    <div>
-                                      <strong>{item.name}</strong>
-                                      <small>{item.detail}</small>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* EXPANDABLE DEEP SECTIONS */}
-                          {(event.details || event.keySections || event.actors) && (
-                            <div className="history-expand-wrapper">
-                              <button
-                                type="button"
-                                className="history-expand-toggle-btn"
-                                onClick={() => toggleExpand(event.id)}
-                              >
-                                <span>{isExpanded ? "Ayrıntılı Maddeleri Gizle" : "Ayrıntılı Maddeleri ve Teşkilat Notlarını Gör"}</span>
-                                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                              </button>
-
-                              {isExpanded && (
-                                <div className="history-expanded-content">
-                                  {event.details && event.details.length > 0 && (
-                                    <div className="expanded-bullet-list">
-                                      <h4>Önemli Detaylar & Maddeler:</h4>
-                                      <ul>
-                                        {event.details.map((detail, dIdx) => (
-                                          <li key={dIdx}>{detail}</li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  )}
-
-                                  {event.keySections && (
-                                    <div className="expanded-key-sections">
-                                      {event.keySections.map((sec, sIdx) => (
-                                        <div key={sIdx} className="expanded-sub-section">
-                                          <h5>{sec.title}</h5>
-                                          <ul>
-                                            {sec.items.map((item, iIdx) => (
-                                              <li key={iIdx}>{item}</li>
-                                            ))}
-                                          </ul>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-
-                                  {event.actors && event.actors.length > 0 && (
-                                    <div className="expanded-actors-row">
-                                      <span>
-                                        <Users size={14} /> Tarihi Şahsiyetler & Taraflar:
-                                      </span>
-                                      <div className="actor-pills">
-                                        {event.actors.map((actor, aIdx) => (
-                                          <span key={aIdx} className="actor-pill">
-                                            {actor}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </article>
-                    );
-                  })}
+                        <span className="chip-code">{mn.code}</span>
+                        <span className="chip-name">{mn.title}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* CULTURE & CIVILIZATION SECTION (DÖNEM 6) */}
-              {isCulture && period.cultureSections && (
-                <div className="history-culture-container">
-                  <div className="history-culture-intro">
-                    <h3>🏛️ 623 Yıllık Devlet ve Medeniyet Külliyatı</h3>
-                    <p>
-                      Osmanlı Devleti'nin idari, hukuki, askeri ve sosyo-ekonomik teşkilatlanması KPSS'de en çok
-                      soru getiren bölümdür. Aşağıdaki kartları, tabloları ve özel hafıza şifrelerini inceleyin.
-                    </p>
-                  </div>
+              <div className="history-period-actions-row">
+                {!isCulture && (
+                  <>
+                    <div className="period-progress-indicator">
+                      <span>{periodVisited} / {periodTotal} Konu İncelendi (%{periodPercent})</span>
+                      <div className="period-progress-track">
+                        <div className="period-progress-fill" style={{ width: `${periodPercent}%` }} />
+                      </div>
+                    </div>
 
-                  <div className="history-culture-grid">
-                    {period.cultureSections.map((sec) => (
-                      <article key={sec.id} className="history-culture-card">
-                        <header className="history-culture-card__header">
-                          <span className="culture-badge">{sec.badge}</span>
-                          <h3>{sec.title}</h3>
+                    <div className="period-batch-buttons">
+                      <button
+                        type="button"
+                        className="period-action-btn"
+                        onClick={() => markAllInPeriod(currentPeriod)}
+                      >
+                        <CheckCircle2 size={14} /> Tümünü Öğrenildi Yap
+                      </button>
+                      <button
+                        type="button"
+                        className="period-action-btn"
+                        onClick={() => expandAllInPeriod(currentPeriod)}
+                      >
+                        <Layers size={14} /> Detayları Aç/Kapat
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* SİYASİ TARİH DÖNEMİ OLAYLARI (PERIODS 1 - 5) */}
+          {!isCulture && (
+            <section className="history-timeline-spine">
+              <div className="history-spine-line" />
+
+              {periodEvents.length === 0 ? (
+                <div className="history-empty-results">
+                  <p>Bu filtreye uygun olay bulunamadı.</p>
+                </div>
+              ) : (
+                periodEvents.map((event, eventIndex) => {
+                  const isExpanded = Boolean(expandedEvents[event.id]);
+                  const isVisited = progress.visitedEventIds.includes(event.id);
+                  const b = kindBadge(event.kind);
+                  const BadgeIcon = b.icon;
+
+                  return (
+                    <article
+                      key={event.id}
+                      id={`event-${event.id}`}
+                      className={`history-event-card ${isVisited ? "is-visited" : ""} ${isExpanded ? "is-expanded" : ""}`}
+                    >
+                      {/* Timeline Node Connector */}
+                      <div className="history-event-card__node">
+                        <button
+                          type="button"
+                          className={`history-node-dot ${isVisited ? "is-done" : ""}`}
+                          onClick={(e) => toggleEventVisited(event.id, e)}
+                          title={isVisited ? "Öğrenildi olarak işaretli" : "Öğrenildi olarak işaretle"}
+                        >
+                          {isVisited ? <Check size={14} /> : <span>{eventIndex + 1}</span>}
+                        </button>
+                      </div>
+
+                      {/* Event Card Body */}
+                      <div className="history-event-card__body">
+                        {/* Card Top Strip */}
+                        <header className="history-event-card__top">
+                          <div className="history-event-card__tags">
+                            <span className={`kind-tag ${b.color}`}>
+                              <BadgeIcon size={13} />
+                              {b.label}
+                            </span>
+                            <span className="date-tag">
+                              <Calendar size={13} />
+                              {event.dateLabel}
+                            </span>
+                            {event.sultan && (
+                              <span className="sultan-pill">
+                                <Crown size={13} />
+                                <strong>{event.sultan}</strong>
+                                {event.mahlas && <small>Mahlas: {event.mahlas}</small>}
+                              </span>
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            className={`check-done-toggle ${isVisited ? "is-checked" : ""}`}
+                            onClick={(e) => toggleEventVisited(event.id, e)}
+                          >
+                            <CheckCircle2 size={16} />
+                            <span>{isVisited ? "Öğrenildi" : "Tamamla"}</span>
+                          </button>
                         </header>
 
-                        <p className="culture-summary">{sec.summary}</p>
-
-                        <div className="culture-details-list">
-                          {sec.details.map((d, dIdx) => (
-                            <p key={dIdx} className={d.startsWith("-") ? "is-sub-item" : ""}>
-                              {d}
-                            </p>
-                          ))}
+                        {/* Card Title & Summary */}
+                        <div className="history-event-card__title-box">
+                          <small className="eyebrow-text">{event.eyebrow}</small>
+                          <h3 className="event-title">{event.title}</h3>
+                          <p className="event-summary">{event.summary}</p>
                         </div>
 
-                        {sec.subTables && (
-                          <div className="culture-tables-wrapper">
-                            {sec.subTables.map((tbl, tIdx) => (
-                              <div key={tIdx} className="culture-subtable-box">
-                                <h4>{tbl.title}</h4>
-                                <div className="table-responsive">
-                                  <table className="culture-table">
-                                    <thead>
-                                      <tr>
-                                        {tbl.headers.map((h, hIdx) => (
-                                          <th key={hIdx}>{h}</th>
-                                        ))}
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {tbl.rows.map((row, rIdx) => (
-                                        <tr key={rIdx}>
-                                          <td className="font-bold">{row.col1}</td>
-                                          <td>{row.col2}</td>
-                                          {row.col3 && <td>{row.col3}</td>}
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </div>
-                            ))}
+                        {/* CAUSAL CHAIN (NEDEN - OLAY - SONUÇ) RESPONSIVE */}
+                        {event.causalChain && (
+                          <div className="history-causal-box">
+                            <div className="causal-step is-cause">
+                              <span className="step-label">
+                                <CircleAlert size={14} /> 1. NEDEN
+                              </span>
+                              <p>{event.causalChain.cause}</p>
+                            </div>
+                            <div className="causal-arrow">
+                              <ArrowRight size={18} className="arrow-horizontal" />
+                              <ChevronDown size={18} className="arrow-vertical" />
+                            </div>
+                            <div className="causal-step is-event">
+                              <span className="step-label">
+                                <Flame size={14} /> 2. OLAY
+                              </span>
+                              <strong>{event.causalChain.event}</strong>
+                            </div>
+                            <div className="causal-arrow">
+                              <ArrowRight size={18} className="arrow-horizontal" />
+                              <ChevronDown size={18} className="arrow-vertical" />
+                            </div>
+                            <div className="causal-step is-result">
+                              <span className="step-label">
+                                <BadgeCheck size={14} /> 3. TARİHİ SONUÇ
+                              </span>
+                              <p>{event.causalChain.result}</p>
+                            </div>
                           </div>
                         )}
 
-                        {sec.mnemonic && (
-                          <div className="history-mnemonic-box mini">
+                        {/* KPSS AYIRICI ALTIN NOT (CALLOUT) */}
+                        {event.examNote && (
+                          <div className="history-exam-callout">
+                            <div className="callout-icon">
+                              <Target size={20} />
+                            </div>
+                            <div className="callout-content">
+                              <strong>🎯 KPSS Ayırıcı Altın Bilgi:</strong>
+                              <p>{event.examNote}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* AKILDA TUTMA ŞİFRESİ (MNEMONIC CARD) */}
+                        {event.mnemonic && (
+                          <div className="history-mnemonic-box">
                             <div className="mnemonic-header">
                               <div className="mnemonic-title-left">
-                                <KeyRound size={15} />
-                                <strong>{sec.mnemonic.title}</strong>
-                                <span className="mnemonic-code-badge">{sec.mnemonic.code}</span>
+                                <KeyRound size={18} />
+                                <strong>{event.mnemonic.title}</strong>
+                                <span className="mnemonic-code-badge">{event.mnemonic.code}</span>
                               </div>
+                              <button
+                                type="button"
+                                className="mnemonic-copy-btn"
+                                onClick={() => copyMnemonicText(event.mnemonic!)}
+                                title="Şifreyi panoya kopyala"
+                              >
+                                {copiedMnemonic === event.mnemonic.code ? (
+                                  <>
+                                    <Check size={13} /> Kopyalandı
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy size={13} /> Kopyala
+                                  </>
+                                )}
+                              </button>
                             </div>
+                            <p className="mnemonic-desc">{event.mnemonic.description}</p>
                             <div className="mnemonic-items-grid">
-                              {sec.mnemonic.items.map((item, idx) => (
+                              {event.mnemonic.items.map((item, idx) => (
                                 <div key={idx} className="mnemonic-item-chip">
                                   <span className="mnemonic-letter">{item.letter}</span>
                                   <div>
@@ -892,49 +717,263 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
                           </div>
                         )}
 
-                        {sec.examNote && (
-                          <div className="history-exam-callout mini">
-                            <Target size={16} />
-                            <div>
-                              <strong>KPSS Ayırıcı Bilgi:</strong> {sec.examNote}
-                            </div>
+                        {/* EXPANDABLE DEEP SECTIONS */}
+                        {(event.details || event.keySections || event.actors) && (
+                          <div className="history-expand-wrapper">
+                            <button
+                              type="button"
+                              className="history-expand-toggle-btn"
+                              onClick={() => toggleExpand(event.id)}
+                            >
+                              <span>{isExpanded ? "Ayrıntılı Maddeleri Gizle" : "Ayrıntılı Maddeleri ve Teşkilat Notlarını Gör"}</span>
+                              {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+
+                            {isExpanded && (
+                              <div className="history-expanded-content">
+                                {event.details && event.details.length > 0 && (
+                                  <div className="expanded-bullet-list">
+                                    <h4>Önemli Detaylar & Maddeler:</h4>
+                                    <ul>
+                                      {event.details.map((detail, dIdx) => (
+                                        <li key={dIdx}>{detail}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+
+                                {event.keySections && (
+                                  <div className="expanded-key-sections">
+                                    {event.keySections.map((sec, sIdx) => (
+                                      <div key={sIdx} className="expanded-sub-section">
+                                        <h5>{sec.title}</h5>
+                                        <ul>
+                                          {sec.items.map((item, iIdx) => (
+                                            <li key={iIdx}>{item}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {event.actors && event.actors.length > 0 && (
+                                  <div className="expanded-actors-row">
+                                    <span>
+                                      <Users size={14} /> Tarihi Şahsiyetler & Taraflar:
+                                    </span>
+                                    <div className="actor-pills">
+                                      {event.actors.map((actor, aIdx) => (
+                                        <span key={aIdx} className="actor-pill">
+                                          {actor}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
-                      </article>
-                    ))}
-                  </div>
-                </div>
+                      </div>
+                    </article>
+                  );
+                })
               )}
             </section>
-          );
-        })}
+          )}
 
-        {onOpenAtaturk && (
-          <div className="ataturk-bridge-card">
-            <div className="ataturk-bridge-card__left">
-              <div className="ataturk-bridge-badge">
-                <Flame size={16} />
-                <span>Sıradaki Konu / Yeni Modül</span>
+          {/* CULTURE & CIVILIZATION SECTION (DÖNEM 6) */}
+          {isCulture && currentPeriod.cultureSections && (
+            <section className="history-culture-container">
+              {/* Culture Sub-topic Filter Pills */}
+              <div className="culture-subtopic-nav">
+                <span className="subtopic-nav-title">
+                  <Landmark size={15} /> Konu Başlığı Seç:
+                </span>
+                <div className="subtopic-pills-scroll">
+                  <button
+                    type="button"
+                    className={`subtopic-pill ${selectedCultureTopicId === "all" ? "is-active" : ""}`}
+                    onClick={() => setSelectedCultureTopicId("all")}
+                  >
+                    Tümü ({currentPeriod.cultureSections.length})
+                  </button>
+                  {currentPeriod.cultureSections.map((sec) => (
+                    <button
+                      key={sec.id}
+                      type="button"
+                      className={`subtopic-pill ${selectedCultureTopicId === sec.id ? "is-active" : ""}`}
+                      onClick={() => setSelectedCultureTopicId(sec.id)}
+                    >
+                      {sec.title}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <h3>Gazi Mustafa Kemal Atatürk & İnkılap Tarihi</h3>
-              <p>
-                Osmanlı'nın dağılmasından sonra Millî Mücadele, Kurtuluş Savaşı cepheleri,
-                Lozan Antlaşması, Atatürk İnkılapları ve KPSS kodlamaları ile devam edin.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="ataturk-bridge-btn"
-              onClick={onOpenAtaturk}
-            >
-              <span>Atatürk Modülüne Geç</span>
-              <ArrowRight size={18} />
-            </button>
-          </div>
-        )}
-      </main>
 
-      {/* 5. FLOATING QUICK JUMP & MNEMONIC PILL */}
+              <div className="history-culture-grid">
+                {filteredCultureSections.map((sec) => (
+                  <article key={sec.id} className="history-culture-card">
+                    <header className="history-culture-card__header">
+                      <span className="culture-badge">{sec.badge}</span>
+                      <h3>{sec.title}</h3>
+                    </header>
+
+                    <p className="culture-summary">{sec.summary}</p>
+
+                    <div className="culture-details-list">
+                      {sec.details.map((d, dIdx) => (
+                        <p key={dIdx} className={d.startsWith("-") ? "is-sub-item" : ""}>
+                          {d}
+                        </p>
+                      ))}
+                    </div>
+
+                    {sec.subTables && (
+                      <div className="culture-tables-wrapper">
+                        {sec.subTables.map((tbl, tIdx) => (
+                          <div key={tIdx} className="culture-subtable-box">
+                            <h4>{tbl.title}</h4>
+                            <div className="table-responsive">
+                              <table className="culture-table">
+                                <thead>
+                                  <tr>
+                                    {tbl.headers.map((h, hIdx) => (
+                                      <th key={hIdx}>{h}</th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {tbl.rows.map((row, rIdx) => (
+                                    <tr key={rIdx}>
+                                      <td className="font-bold">{row.col1}</td>
+                                      <td>{row.col2}</td>
+                                      {row.col3 && <td>{row.col3}</td>}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {sec.mnemonic && (
+                      <div className="history-mnemonic-box mini">
+                        <div className="mnemonic-header">
+                          <div className="mnemonic-title-left">
+                            <KeyRound size={15} />
+                            <strong>{sec.mnemonic.title}</strong>
+                            <span className="mnemonic-code-badge">{sec.mnemonic.code}</span>
+                          </div>
+                        </div>
+                        <div className="mnemonic-items-grid">
+                          {sec.mnemonic.items.map((item, idx) => (
+                            <div key={idx} className="mnemonic-item-chip">
+                              <span className="mnemonic-letter">{item.letter}</span>
+                              <div>
+                                <strong>{item.name}</strong>
+                                <small>{item.detail}</small>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {sec.examNote && (
+                      <div className="history-exam-callout mini">
+                        <Target size={16} />
+                        <div>
+                          <strong>KPSS Ayırıcı Bilgi:</strong> {sec.examNote}
+                        </div>
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* 4. BOTTOM PERIOD PAGINATION FOOTER */}
+          <footer className="history-period-pagination-bar">
+            <div className="pagination-bar__inner">
+              {prevPeriod ? (
+                <button
+                  type="button"
+                  className="pagination-nav-btn is-prev"
+                  onClick={() => handleSelectPeriod(prevPeriod.id)}
+                >
+                  <ChevronLeft size={20} />
+                  <div className="pagination-btn-text">
+                    <small>Önceki Dönem</small>
+                    <strong>{prevPeriod.shortTitle}</strong>
+                  </div>
+                </button>
+              ) : (
+                <div className="pagination-nav-btn is-disabled">
+                  <small>İlk Dönemdesiniz</small>
+                  <strong>1. Kuruluş Dönemi</strong>
+                </div>
+              )}
+
+              <div className="pagination-step-dots">
+                <div className="step-dots-row">
+                  {HISTORY_PERIODS.map((p, pIdx) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`step-dot ${selectedPeriodId === p.id ? "is-current" : ""}`}
+                      onClick={() => handleSelectPeriod(p.id)}
+                      title={p.shortTitle}
+                    >
+                      <span>{pIdx + 1}</span>
+                    </button>
+                  ))}
+                </div>
+                <span className="step-dots-label">
+                  Dönem {currentPeriodIndex + 1} / {HISTORY_PERIODS.length}
+                </span>
+              </div>
+
+              {nextPeriod ? (
+                <button
+                  type="button"
+                  className="pagination-nav-btn is-next"
+                  onClick={() => handleSelectPeriod(nextPeriod.id)}
+                >
+                  <div className="pagination-btn-text">
+                    <small>Sonraki Dönem</small>
+                    <strong>{nextPeriod.shortTitle}</strong>
+                  </div>
+                  <ChevronRight size={20} />
+                </button>
+              ) : onOpenAtaturk ? (
+                <button
+                  type="button"
+                  className="pagination-nav-btn is-next is-ataturk-bridge"
+                  onClick={onOpenAtaturk}
+                >
+                  <div className="pagination-btn-text">
+                    <small>Sıradaki Modül</small>
+                    <strong>Atatürk & İnkılap Tarihi</strong>
+                  </div>
+                  <ArrowRight size={20} />
+                </button>
+              ) : (
+                <div className="pagination-nav-btn is-disabled">
+                  <small>Son Dönem</small>
+                  <strong>Kültür & Medeniyet</strong>
+                </div>
+              )}
+            </div>
+          </footer>
+        </main>
+      )}
+
+      {/* 5. FLOATING QUICK ACTION TOOLS */}
       <div className="history-floating-tools">
         <button
           type="button"
@@ -943,25 +982,25 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
           title="Tüm KPSS Hafıza Kodlamaları"
         >
           <KeyRound size={17} />
-          <span>Şifreler Bankası</span>
+          <span>Şifreler</span>
         </button>
         <button
           type="button"
-          className="floating-tool-btn"
+          className="floating-tool-btn is-quiz"
           onClick={() => setQuizOpen(true)}
           title="KPSS Neden-Sonuç Testi"
         >
           <Brain size={17} />
-          <span>Soru Çöz</span>
+          <span>Test</span>
         </button>
         <button
           type="button"
           className="floating-tool-btn is-top"
           onClick={scrollToTop}
-          title="Başa Dön"
+          title="Sayfa Başına Git"
         >
           <ArrowUp size={17} />
-          <span>En Başa</span>
+          <span>Başa Dön</span>
         </button>
       </div>
 
@@ -987,7 +1026,7 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
               </button>
             </header>
 
-            {/* Modal Period Filter Filter */}
+            {/* Modal Period Filter */}
             <div className="mnemonic-modal-filter-strip">
               <button
                 type="button"
