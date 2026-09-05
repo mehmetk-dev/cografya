@@ -11,6 +11,7 @@ import {
   FolderPlus,
   GitBranch,
   Flame,
+  HelpCircle,
   Layers3,
   LoaderCircle,
   LogIn,
@@ -45,6 +46,7 @@ type MapSidebarProps = {
   onOpenNotes: () => void;
   onOpenHistory: () => void;
   onOpenAtaturk?: () => void;
+  onOpenQuestions?: () => void;
 };
 
 const PRESETS = [
@@ -80,6 +82,7 @@ export function MapSidebar({
   onOpenNotes,
   onOpenHistory,
   onOpenAtaturk,
+  onOpenQuestions,
 }: MapSidebarProps) {
   const cloudAccount = useCloudAccount();
   const [isCreating, setIsCreating] = useState(false);
@@ -293,6 +296,12 @@ export function MapSidebar({
             <small>Yeni</small>
           </button>
         )}
+        {onOpenQuestions && (
+          <button type="button" onClick={onOpenQuestions}>
+            <HelpCircle size={15} />
+            <span>Sorular</span>
+          </button>
+        )}
       </div>
 
       <button
@@ -310,6 +319,23 @@ export function MapSidebar({
         </span>
         <ChevronDown size={16} />
       </button>
+
+      {onOpenQuestions && (
+        <button
+          className="sidebar-notes-button sidebar-questions-btn"
+          type="button"
+          onClick={onOpenQuestions}
+          style={{ marginTop: "8px" }}
+        >
+          <span><HelpCircle size={18} /></span>
+          <span>
+            <small>KPSS / SORU HAVUZU</small>
+            <strong>Sorular & Çözümler</strong>
+            <small>288 soru · 91 Coğrafya</small>
+          </span>
+          <ChevronDown size={16} style={{ transform: "rotate(-90deg)" }} />
+        </button>
+      )}
 
       <button
         className="sidebar-heading sidebar-heading--toggle"

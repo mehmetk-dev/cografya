@@ -30,6 +30,7 @@ import { StudyCenterModal } from "./components/StudyCenterModal";
 import { StudyNotesPage } from "./components/StudyNotesPage";
 import { HistoryStudyPage } from "./components/HistoryStudyPage";
 import { AtaturkStudyPage } from "./components/AtaturkStudyPage";
+import { QuestionsPage } from "./components/QuestionsPage";
 import { ReadySetOverview } from "./components/ReadySetOverview";
 import { createId } from "./id";
 import { getMarkerVisual } from "./markerKinds";
@@ -62,6 +63,7 @@ const ACTIVE_MAP_KEY = "cografya-atlasim-active-map";
 const STUDY_NOTES_HASH = "#konu-notlari";
 const HISTORY_STUDY_HASH = "#tarih-zinciri";
 const ATATURK_STUDY_HASH = "#ataturk-ve-inkilap";
+const QUESTIONS_STUDY_HASH = "#sorular";
 
 function dateKey(date = new Date()) {
   const year = date.getFullYear();
@@ -363,6 +365,9 @@ export default function App() {
   );
   const [ataturkPageOpen, setAtaturkPageOpen] = useState(
     () => window.location.hash === ATATURK_STUDY_HASH,
+  );
+  const [questionsPageOpen, setQuestionsPageOpen] = useState(
+    () => window.location.hash === QUESTIONS_STUDY_HASH,
   );
   const [initializationError, setInitializationError] = useState("");
   const [pendingMarker, setPendingMarker] = useState<{
@@ -666,6 +671,7 @@ export default function App() {
       setNotesPageOpen(window.location.hash === STUDY_NOTES_HASH);
       setHistoryPageOpen(window.location.hash === HISTORY_STUDY_HASH);
       setAtaturkPageOpen(window.location.hash === ATATURK_STUDY_HASH);
+      setQuestionsPageOpen(window.location.hash === QUESTIONS_STUDY_HASH);
     };
 
     window.addEventListener("hashchange", syncStudyPage);
@@ -1216,6 +1222,8 @@ export default function App() {
       );
     }
     setHistoryPageOpen(false);
+    setAtaturkPageOpen(false);
+    setQuestionsPageOpen(false);
     setNotesPageOpen(true);
   };
 
@@ -1242,6 +1250,8 @@ export default function App() {
       );
     }
     setNotesPageOpen(false);
+    setAtaturkPageOpen(false);
+    setQuestionsPageOpen(false);
     setHistoryPageOpen(true);
   };
 
@@ -1269,6 +1279,7 @@ export default function App() {
     }
     setNotesPageOpen(false);
     setHistoryPageOpen(false);
+    setQuestionsPageOpen(false);
     setAtaturkPageOpen(true);
   };
 
@@ -1284,6 +1295,34 @@ export default function App() {
       `${window.location.pathname}${window.location.search}`,
     );
     setAtaturkPageOpen(false);
+  };
+
+  const openQuestionsPage = () => {
+    if (window.location.hash !== QUESTIONS_STUDY_HASH) {
+      window.history.pushState(
+        { ...window.history.state, questionsPage: true },
+        "",
+        QUESTIONS_STUDY_HASH,
+      );
+    }
+    setNotesPageOpen(false);
+    setHistoryPageOpen(false);
+    setAtaturkPageOpen(false);
+    setQuestionsPageOpen(true);
+  };
+
+  const closeQuestionsPage = () => {
+    if (window.history.state?.questionsPage) {
+      window.history.back();
+      return;
+    }
+
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${window.location.pathname}${window.location.search}`,
+    );
+    setQuestionsPageOpen(false);
   };
 
   const openStudyCenterFromNotes = () => {
@@ -1610,6 +1649,14 @@ export default function App() {
     );
   }
 
+  if (questionsPageOpen) {
+    return (
+      <QuestionsPage
+        onBack={closeQuestionsPage}
+      />
+    );
+  }
+
   return (
     <div className="app-shell">
       <MapSidebar
@@ -1630,6 +1677,7 @@ export default function App() {
         onOpenNotes={openNotesPage}
         onOpenHistory={openHistoryPage}
         onOpenAtaturk={openAtaturkPage}
+        onOpenQuestions={openQuestionsPage}
       />
 
       <main className="workspace" id="map-workspace">
