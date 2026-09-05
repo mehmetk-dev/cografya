@@ -1,11 +1,15 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import type { User } from "@supabase/supabase-js";
-import { BookOpen, Cloud, LoaderCircle, LockKeyhole, MapPinned, Sparkles } from "lucide-react";
-import { clearLocalWorkspace } from "../cloud/localWorkspace";
 import {
-  supabase,
-  supabaseConfiguration,
-} from "../cloud/supabaseClient";
+  BookOpen,
+  CheckCircle2,
+  Database,
+  LoaderCircle,
+  LockKeyhole,
+  MapPinned,
+  Sparkles,
+} from "lucide-react";
+import { clearLocalWorkspace } from "../cloud/localWorkspace";
+import { sqliteClient, type User } from "../cloud/sqliteClient";
 import { validateAuthCredentials } from "./authValidation";
 
 type AuthGateProps = {
@@ -17,18 +21,12 @@ function friendlyAuthError(code?: string) {
   switch (code) {
     case "invalid_credentials":
       return "E-posta adresi veya şifre hatalı.";
-    case "email_not_confirmed":
-      return "Önce e-posta adresini doğrulaman gerekiyor.";
     case "user_already_exists":
-    case "user_already_registered":
       return "Bu e-posta adresiyle zaten bir hesap bulunuyor.";
-    case "over_request_rate_limit":
-    case "over_email_send_rate_limit":
-      return "Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.";
     case "weak_password":
-      return "Daha güçlü bir şifre belirle.";
+      return "Daha güçlü bir şifre belirle (en az 8 karakter).";
     default:
-      return "İşlem tamamlanamadı. Bilgilerini veya internet bağlantını kontrol edip tekrar dene.";
+      return "İşlem tamamlanamadı. Bilgilerini kontrol edip tekrar dene.";
   }
 }
 
@@ -43,40 +41,26 @@ export function AuthGate({ children, onContinueAsGuest }: AuthGateProps) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!supabase) {
-      setCheckingSession(false);
-      return;
-    }
-
     let active = true;
 
-    // Ağ veya DNS gecikmelerinde arayüzün dakikalarca kilitlenmesini önlemek için 2 saniyelik güvenlik zaman aşımı
-    const sessionTimeout = setTimeout(() => {
-      if (!active) return;
-      setCheckingSession(false);
-    }, 2000);
-
-    void supabase.auth
+    // Oturumu hemen kontrol et
+    sqliteClient.auth
       .getSession()
       .then(({ data }) => {
         if (!active) return;
-        clearTimeout(sessionTimeout);
         setUser(data.session?.user ?? null);
         setCheckingSession(false);
       })
-      .catch((err) => {
-        console.warn("Oturum kontrolü başarısız:", err);
+      .catch(() => {
         if (!active) return;
-        clearTimeout(sessionTimeout);
         setUser(null);
         setCheckingSession(false);
       });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = sqliteClient.auth.onAuthStateChange((event, session) => {
       if (!active) return;
-      clearTimeout(sessionTimeout);
       setUser(session?.user ?? null);
       setCheckingSession(false);
       if (event === "SIGNED_OUT") {
@@ -86,17 +70,33 @@ export function AuthGate({ children, onContinueAsGuest }: AuthGateProps) {
 
     return () => {
       active = false;
-      clearTimeout(sessionTimeout);
       subscription.unsubscribe();
     };
   }, []);
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!supabase) return;
-
+  const handleQuickLogin = async () => {
+    setSubmitting(true);
     setError("");
     setMessage("");
+    try {
+      const { data, error: authError } = await sqliteClient.auth.quickLogin();
+      if (authError) {
+        setError(authError.message);
+      } else if (data.user) {
+        setUser(data.user);
+      }
+    } catch {
+      setError("Hızlı giriş sırasında bir hata oluştu.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+
     const validated = validateAuthCredentials({ email, password });
     if (!validated.success) {
       setError(validated.error.issues[0]?.message ?? "Bilgilerini kontrol et.");
@@ -106,80 +106,31 @@ export function AuthGate({ children, onContinueAsGuest }: AuthGateProps) {
     setSubmitting(true);
     try {
       if (mode === "login") {
-        const { error: authError } = await supabase.auth.signInWithPassword(
-          validated.data,
-        );
+        const { data, error: authError } =
+          await sqliteClient.auth.signInWithPassword(validated.data);
         if (authError) {
           setError(friendlyAuthError(authError.code));
+        } else if (data.user) {
+          setUser(data.user);
         }
         return;
       }
 
-      const { data, error: authError } = await supabase.auth.signUp({
-        ...validated.data,
-        options: {
-          emailRedirectTo: window.location.origin,
-        },
-      });
+      const { data, error: authError } = await sqliteClient.auth.signUp(
+        validated.data,
+      );
       if (authError) {
         setError(friendlyAuthError(authError.code));
-      } else if (!data.session) {
-        setMessage(
-          "Kayıt oluşturuldu. E-postana gelen doğrulama bağlantısını aç.",
-        );
+      } else if (data.user) {
+        setUser(data.user);
+        setMessage("Hesabın başarıyla oluşturuldu.");
       }
-    } catch (err: unknown) {
-      if (err instanceof Error && err.name === "AbortError") {
-        setError("Sunucuya bağlanırken zaman aşımı oluştu. İnternet ve Supabase adresini kontrol et.");
-      } else {
-        setError("Sunucuya erişilemedi. Lütfen internet bağlantını veya Supabase ayarlarını kontrol et.");
-      }
+    } catch {
+      setError("Sunucuya erişilemedi. Lütfen python server.py kontrol edin.");
     } finally {
       setSubmitting(false);
     }
   };
-
-  if (!supabaseConfiguration.configured) {
-    return (
-      <main className="auth-shell">
-        <section className="auth-card auth-card--setup">
-          <div className="auth-card__brand">
-            <MapPinned size={30} />
-            <div>
-              <span>COĞRAFYA & TARİH ATLASIM</span>
-              <h1>Ders Notları & Çalışma Alanı</h1>
-            </div>
-          </div>
-          <p>
-            Bulut sunucusu bağlı değil veya süresi dolmuş. Uygulamayı tüm
-            Tarih, Coğrafya ve Atatürk notlarıyla birlikte doğrudan tarayıcında
-            kullanabilirsin.
-          </p>
-
-          {onContinueAsGuest && (
-            <button
-              type="button"
-              className="auth-guest-btn auth-guest-btn--primary"
-              onClick={onContinueAsGuest}
-            >
-              <BookOpen size={18} />
-              Ders Notlarına ve Haritalara Başla
-            </button>
-          )}
-
-          <div className="auth-divider">
-            <span>VEYA BULUT BAĞLANTISI</span>
-          </div>
-
-          <code>VITE_SUPABASE_URL</code>
-          <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>
-          <small>
-            Yeni bir Supabase projesi oluşturup .env.local içine eklerseniz cihazlar arası eşitleme aktifleşir.
-          </small>
-        </section>
-      </main>
-    );
-  }
 
   if (checkingSession) {
     return (
@@ -204,11 +155,7 @@ export function AuthGate({ children, onContinueAsGuest }: AuthGateProps) {
               className="auth-skip-btn"
               onClick={() => {
                 setCheckingSession(false);
-                try {
-                  void supabase?.auth.signOut({ scope: "local" });
-                } catch {
-                  // ignore
-                }
+                void sqliteClient.auth.signOut();
               }}
             >
               Giriş ekranına git
@@ -227,14 +174,61 @@ export function AuthGate({ children, onContinueAsGuest }: AuthGateProps) {
         <div className="auth-card__brand">
           <MapPinned size={30} />
           <div>
-            <span>COĞRAFYA ATLASIM</span>
-            <h1>Haritaların her cihazda yanında</h1>
+            <span>COĞRAFYA & TARİH ATLASIM</span>
+            <h1>Sınava Hazırlık & Çalışma Alanı</h1>
           </div>
         </div>
 
-        <div className="auth-benefits" aria-label="Bulut hesabı avantajları">
-          <span><Cloud size={15} /> Bilgisayar ve telefon senkronizasyonu</span>
-          <span><LockKeyhole size={15} /> Yalnızca sana ait çalışma alanı</span>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            background: "rgba(16, 185, 129, 0.12)",
+            color: "#10b981",
+            border: "1px solid rgba(16, 185, 129, 0.3)",
+            borderRadius: "20px",
+            padding: "6px 14px",
+            fontSize: "0.82rem",
+            fontWeight: 600,
+            margin: "0 auto 16px",
+          }}
+        >
+          <Database size={15} />
+          <span>Yerel SQLite Aktif (cografya.db)</span>
+        </div>
+
+        <div className="auth-benefits" aria-label="Hesap avantajları">
+          <span>
+            <CheckCircle2 size={15} /> Sıfır bekleme, kalıcı yerel kayıt
+          </span>
+          <span>
+            <LockKeyhole size={15} /> İnternetsiz tam çevrimdışı çalışma
+          </span>
+        </div>
+
+        {/* Tek tıkla Mehmet Kerem hesabı ile giriş */}
+        <button
+          type="button"
+          className="auth-guest-btn auth-guest-btn--primary"
+          style={{
+            marginBottom: "16px",
+            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+            color: "#ffffff",
+            borderColor: "#059669",
+            fontWeight: 600,
+            fontSize: "0.95rem",
+            boxShadow: "0 4px 12px rgba(16, 185, 129, 0.25)",
+          }}
+          disabled={submitting}
+          onClick={handleQuickLogin}
+        >
+          <Sparkles size={18} />
+          Tek Tıkla Giriş Yap (Mehmet Kerem)
+        </button>
+
+        <div className="auth-divider">
+          <span>VEYA E-POSTA İLE GİRİŞ</span>
         </div>
 
         <div className="auth-tabs" role="tablist" aria-label="Hesap işlemi">
@@ -278,7 +272,7 @@ export function AuthGate({ children, onContinueAsGuest }: AuthGateProps) {
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="ornek@email.com"
+              placeholder="mehmetkerem@local.dev"
             />
           </label>
           <label>
@@ -286,13 +280,15 @@ export function AuthGate({ children, onContinueAsGuest }: AuthGateProps) {
             <input
               type="password"
               name="password"
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              autoComplete={
+                mode === "login" ? "current-password" : "new-password"
+              }
               minLength={8}
               maxLength={128}
               required
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="En az 8 karakter"
+              placeholder="••••••••"
             />
           </label>
 
@@ -315,11 +311,12 @@ export function AuthGate({ children, onContinueAsGuest }: AuthGateProps) {
               className="auth-guest-btn"
               onClick={onContinueAsGuest}
             >
-              <Sparkles size={16} />
+              <BookOpen size={16} />
               Giriş Yapmadan Doğrudan Başla (Misafir Modu)
             </button>
             <p className="auth-guest-note">
-              Tüm Tarih, Coğrafya ve Atatürk notlarına anında erişebilirsiniz. İlerlemeniz bu cihazda saklanır.
+              Tüm Tarih, Coğrafya ve Atatürk notlarına anında erişebilirsiniz.
+              İlerlemeniz bu tarayıcıda saklanır.
             </p>
           </div>
         )}

@@ -5,7 +5,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { User } from "@supabase/supabase-js";
 import { useLiveQuery } from "dexie-react-hooks";
 import { LoaderCircle } from "lucide-react";
 import { FLASHCARD_PROGRESS_CHANGED_EVENT } from "../flashcards";
@@ -32,56 +31,27 @@ import {
   snapshotSignature,
   type AtlasSnapshot,
 } from "./snapshot";
-import { supabase } from "./supabaseClient";
+import { sqliteClient, type CloudRow, type User } from "./sqliteClient";
 
 type CloudWorkspaceProps = {
   user: User;
   children: ReactNode;
 };
 
-type CloudRow = {
-  data: unknown;
-  updated_at: string;
-  revision: number;
-};
-
-type SavedCloudRevision = {
-  updated_at: string;
-  revision: number;
-};
-
-const MAX_SAVE_ATTEMPTS = 5;
-
-function getSupabase() {
-  if (!supabase) throw new Error("SUPABASE_NOT_CONFIGURED");
-  return supabase;
-}
+const MAX_SAVE_ATTEMPTS = 3;
 
 function friendlySyncError(error: unknown) {
-  const code =
-    typeof error === "object" && error && "code" in error
-      ? String(error.code)
-      : "";
-  if (code === "42P01") return "Bulut veri tablosu henüz kurulmamış.";
-  if (code === "42703") return "Bulut eşitleme güncellemesi henüz kurulmamış.";
-  if (code === "42501") return "Bulut veri tablosunun erişim izni eksik.";
   if (error instanceof Error && error.message === "INVALID_CLOUD_SNAPSHOT") {
-    return "Buluttaki veri biçimi doğrulanamadı; yerel kayıtların korunuyor.";
+    return "Veri biçimi doğrulanamadı; yerel kayıtların korunuyor.";
   }
   if (error instanceof Error && error.message === "CLOUD_SAVE_CONFLICT") {
-    return "Başka bir cihaz aynı anda kayıt yaptı. Tekrar deneniyor.";
+    return "Eşzamanlı değişiklik algılandı; tekrar deneniyor.";
   }
-  return "Bulut bağlantısı kurulamadı. Yerel kayıtların korunuyor.";
+  return "Yerel veritabanı eşitlemesi deneniyor...";
 }
 
 async function fetchCloudRow(userId: string): Promise<CloudRow | null> {
-  const { data, error } = await getSupabase()
-    .from("user_atlas_data")
-    .select("data, updated_at, revision")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (error) throw error;
-  return data as CloudRow | null;
+  return await sqliteClient.atlas.fetchRow(userId);
 }
 
 function LocalChangeWatcher({
@@ -116,7 +86,7 @@ function LocalChangeWatcher({
 export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
   const [ready, setReady] = useState(false);
   const [status, setStatus] = useState<CloudSyncStatus>("loading");
-  const [statusMessage, setStatusMessage] = useState("Bulut verisi hazırlanıyor");
+  const [statusMessage, setStatusMessage] = useState("Yerel veritabanı hazırlanıyor");
   const [signingOut, setSigningOut] = useState(false);
   const lastSignatureRef = useRef(
     window.localStorage.getItem(LAST_SYNC_SIGNATURE_KEY) ?? "",
@@ -126,7 +96,9 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
   );
   const lastCloudRevisionRef = useRef(0);
   const baseSnapshotRef = useRef<AtlasSnapshot | null>(null);
-  const uploadQueueRef = useRef<Promise<AtlasSnapshot>>(Promise.resolve(null as never));
+  const uploadQueueRef = useRef<Promise<AtlasSnapshot>>(
+    Promise.resolve(null as never),
+  );
 
   const rememberSync = useCallback((signature: string, updatedAt: string) => {
     lastSignatureRef.current = signature;
@@ -136,11 +108,7 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
   }, []);
 
   const recordSyncedSnapshot = useCallback(
-    async (
-      snapshot: AtlasSnapshot,
-      revision: number,
-      updatedAt: string,
-    ) => {
+    async (snapshot: AtlasSnapshot, revision: number, updatedAt: string) => {
       baseSnapshotRef.current = snapshot;
       lastCloudRevisionRef.current = revision;
       rememberSync(snapshotSignature(snapshot), updatedAt);
@@ -157,86 +125,72 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
       }
 
       setStatus("syncing");
-      setStatusMessage("Değişiklikler doğrudan buluta kaydediliyor");
+      setStatusMessage("Değişiklikler SQLite veritabanına kaydediliyor");
 
       for (let attempt = 0; attempt < MAX_SAVE_ATTEMPTS; attempt += 1) {
-        const row = await fetchCloudRow(user.id);
-        const now = new Date().toISOString();
+        try {
+          const row = await fetchCloudRow(user.id);
+          const now = new Date().toISOString();
 
-        if (!row) {
-          const upload = { ...snapshot, capturedAt: now };
-          const { data, error } = await getSupabase()
-            .from("user_atlas_data")
-            .insert({
-              user_id: user.id,
+          if (!row) {
+            const upload = { ...snapshot, capturedAt: now };
+            const saved = await sqliteClient.atlas.syncRow({
+              userId: user.id,
               data: upload,
-              updated_at: now,
               revision: 1,
-            })
-            .select("updated_at, revision")
-            .maybeSingle();
+              force: true,
+            });
 
-          if (error?.code === "23505") continue;
-          if (error) throw error;
-          if (!data) continue;
+            await recordSyncedSnapshot(upload, saved.revision, saved.updated_at);
+            setStatus("synced");
+            setStatusMessage("Kayıtlar SQLite veritabanında güncel");
+            return upload;
+          }
 
-          const saved = data as SavedCloudRevision;
-          await recordSyncedSnapshot(
-            upload,
-            saved.revision,
-            saved.updated_at,
-          );
-          setStatus("synced");
-          setStatusMessage("Haritalar bulutta ve tüm cihazlarda güncel");
-          return upload;
-        }
+          const parsed = parseAtlasSnapshot(row.data);
+          if (!parsed.success) throw new Error("INVALID_CLOUD_SNAPSHOT");
 
-        const parsed = parseAtlasSnapshot(row.data);
-        if (!parsed.success) throw new Error("INVALID_CLOUD_SNAPSHOT");
+          const next = baseSnapshotRef.current
+            ? mergeAtlasSnapshotsThreeWay(
+                baseSnapshotRef.current,
+                parsed.data,
+                snapshot,
+              )
+            : mergeAtlasSnapshots(parsed.data, snapshot);
 
-        const next = baseSnapshotRef.current
-          ? mergeAtlasSnapshotsThreeWay(
-              baseSnapshotRef.current,
+          if (snapshotSignature(next) === snapshotSignature(parsed.data)) {
+            await recordSyncedSnapshot(
               parsed.data,
-              snapshot,
-            )
-          : mergeAtlasSnapshots(parsed.data, snapshot);
+              row.revision,
+              row.updated_at,
+            );
+            setStatus("synced");
+            setStatusMessage("Kayıtlar SQLite veritabanında güncel");
+            return parsed.data;
+          }
 
-        if (snapshotSignature(next) === snapshotSignature(parsed.data)) {
-          await recordSyncedSnapshot(
-            parsed.data,
-            row.revision,
-            row.updated_at,
-          );
-          setStatus("synced");
-          setStatusMessage("Haritalar bulutta ve tüm cihazlarda güncel");
-          return parsed.data;
-        }
-
-        const upload = { ...next, capturedAt: now };
-        const { data, error } = await getSupabase()
-          .from("user_atlas_data")
-          .update({
+          const upload = { ...next, capturedAt: now };
+          const saved = await sqliteClient.atlas.syncRow({
+            userId: user.id,
             data: upload,
-            updated_at: now,
-            revision: row.revision + 1,
-          })
-          .eq("user_id", user.id)
-          .eq("revision", row.revision)
-          .select("updated_at, revision")
-          .maybeSingle();
-        if (error) throw error;
-        if (!data) continue;
+            revision: row.revision,
+            force,
+          });
 
-        const saved = data as SavedCloudRevision;
-        await recordSyncedSnapshot(
-          upload,
-          saved.revision,
-          saved.updated_at,
-        );
-        setStatus("synced");
-        setStatusMessage("Haritalar bulutta ve tüm cihazlarda güncel");
-        return upload;
+          await recordSyncedSnapshot(upload, saved.revision, saved.updated_at);
+          setStatus("synced");
+          setStatusMessage("Kayıtlar SQLite veritabanında güncel");
+          return upload;
+        } catch (err) {
+          if (
+            err instanceof Error &&
+            err.message === "CLOUD_SAVE_CONFLICT" &&
+            attempt < MAX_SAVE_ATTEMPTS - 1
+          ) {
+            continue;
+          }
+          throw err;
+        }
       }
 
       throw new Error("CLOUD_SAVE_CONFLICT");
@@ -264,9 +218,7 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
     async (submitted: AtlasSnapshot, saved: AtlasSnapshot) => {
       if (snapshotSignature(submitted) === snapshotSignature(saved)) return;
       const current = await collectLocalSnapshot();
-      if (
-        snapshotSignature(current) === snapshotSignature(submitted)
-      ) {
+      if (snapshotSignature(current) === snapshotSignature(submitted)) {
         await replaceLocalSnapshot(saved);
       }
     },
@@ -278,7 +230,7 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
 
     const bootstrap = async () => {
       setStatus("loading");
-      setStatusMessage("Bulut verisi hazırlanıyor");
+      setStatusMessage("Yerel veriler hazırlanıyor");
       try {
         const previousOwner = window.localStorage.getItem(
           LOCAL_WORKSPACE_OWNER_KEY,
@@ -319,8 +271,7 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
 
           const legacyLocalData = !previousOwner && hasAtlasContent(local);
           const pendingLocalData =
-            previousOwner === user.id &&
-            localSignature !== storedSignature;
+            previousOwner === user.id && localSignature !== storedSignature;
           const next = parsedBase?.success
             ? mergeAtlasSnapshotsThreeWay(
                 parsedBase.data,
@@ -338,15 +289,12 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
             row.updated_at,
           );
 
-          if (
-            snapshotSignature(next) !==
-            snapshotSignature(parsedCloud.data)
-          ) {
+          if (snapshotSignature(next) !== snapshotSignature(parsedCloud.data)) {
             const saved = await saveSnapshotToCloud(next, true);
             await applySavedSnapshotIfCurrent(next, saved);
           } else {
             setStatus("synced");
-            setStatusMessage("Haritalar bulutta ve tüm cihazlarda güncel");
+            setStatusMessage("Kayıtlar SQLite veritabanında güncel");
           }
         }
 
@@ -406,30 +354,17 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
     const onVisibilityChange = () => {
       if (document.visibilityState === "visible") void pullLatest();
     };
-    const channel = getSupabase()
-      .channel(`atlas-sync-${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "user_atlas_data",
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => void pullLatest(),
-      )
-      .subscribe();
-    const fallbackPoll = window.setInterval(() => {
+
+    const poll = window.setInterval(() => {
       if (document.visibilityState === "visible") void pullLatest();
-    }, 30_000);
+    }, 15_000);
 
     window.addEventListener("focus", pullLatest);
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
-      window.clearInterval(fallbackPoll);
+      window.clearInterval(poll);
       window.removeEventListener("focus", pullLatest);
       document.removeEventListener("visibilitychange", onVisibilityChange);
-      void getSupabase().removeChannel(channel);
     };
   }, [
     applySavedSnapshotIfCurrent,
@@ -453,8 +388,7 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
     setSigningOut(true);
     try {
       await enqueueUpload(await collectLocalSnapshot(), true);
-      const { error } = await getSupabase().auth.signOut({ scope: "local" });
-      if (error) throw error;
+      await sqliteClient.auth.signOut();
       await clearLocalWorkspace();
     } catch (error) {
       reportSyncError(error);

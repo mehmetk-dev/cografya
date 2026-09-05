@@ -1,0 +1,14 @@
+# Coolify Nixpacks Yapılandırması
+# Hem Node.js (build için) hem Python 3 (SQLite server için) kurulur.
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "python3"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "python3 server.py"
