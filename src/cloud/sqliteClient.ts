@@ -36,7 +36,8 @@ function getStoredSession(): Session | null {
   try {
     const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as Session;
+    const parsed = JSON.parse(raw) as Session;
+    return typeof parsed?.access_token === "string" && typeof parsed?.user?.id === "string" ? parsed : null;
   } catch {
     return null;
   }
@@ -82,6 +83,7 @@ async function apiFetch(path: string, options: RequestInit = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers,
+    signal: options.signal ?? AbortSignal.timeout(10_000),
   });
 
   return res;
@@ -108,6 +110,12 @@ export const sqliteClient = {
             setStoredSession(updated);
             return { data: { session: updated }, error: null };
           }
+          setStoredSession(null);
+          return { data: { session: null }, error: null };
+        }
+        if (res.status === 401 || res.status === 403) {
+          setStoredSession(null);
+          return { data: { session: null }, error: null };
         }
       } catch {
         // Sunucuya o an erişilemese bile yerel oturum geçerli kalsın (offline destek)
@@ -184,18 +192,7 @@ export const sqliteClient = {
 
         return { data: { user: json.user, session }, error: null };
       } catch (err) {
-        // Sunucuya erişilemezse yerel Mehmet Kerem kullanıcısını direkt oturum açtır
-        const fallbackSession: Session = {
-          access_token: "offline_token_mehmetkerem",
-          user: {
-            id: "user_mehmetkerem",
-            email: "mehmetkerem@local.dev",
-            user_metadata: { name: "Mehmet Kerem" },
-          },
-        };
-        setStoredSession(fallbackSession);
-        notifyListeners("SIGNED_IN", fallbackSession);
-        return { data: { user: fallbackSession.user, session: fallbackSession }, error: null };
+        return { data: { user: null, session: null }, error: { message: "Sunucuya bağlanılamadı. Misafir olarak yerel çalışabilirsin." } };
       }
     },
 
@@ -270,14 +267,11 @@ export const sqliteClient = {
 
   atlas: {
     async fetchRow(userId: string): Promise<CloudRow | null> {
-      try {
-        const res = await apiFetch(`/atlas/data?user_id=${encodeURIComponent(userId)}`);
-        if (!res.ok) return null;
-        const json = await res.json();
-        return json.row as CloudRow | null;
-      } catch {
-        return null;
-      }
+      const res = await apiFetch(`/atlas/data?user_id=${encodeURIComponent(userId)}`);
+      if (!res.ok) throw new Error(`ATLAS_READ_FAILED_${res.status}`);
+      const json = await res.json();
+      if (!("row" in json)) throw new Error("INVALID_CLOUD_SNAPSHOT");
+      return json.row as CloudRow | null;
     },
 
     async syncRow({
@@ -316,11 +310,7 @@ export const sqliteClient = {
         if (err instanceof Error && err.message === "CLOUD_SAVE_CONFLICT") {
           throw err;
         }
-        // Sunucu yoksa veya statik barındırmadaysa (Vercel vb.) yerel sürümü ilerlet
-        return {
-          revision: (revision || 0) + 1,
-          updated_at: new Date().toISOString(),
-        };
+        throw err;
       }
     },
   },

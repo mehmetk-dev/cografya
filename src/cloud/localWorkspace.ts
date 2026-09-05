@@ -1,3 +1,4 @@
+import { loadQuestionUserStore, QUESTION_USER_STORE_KEY, QUESTION_PROGRESS_REPLACED_EVENT } from "../questionsData";
 import { db } from "../db";
 import {
   FLASHCARD_PROGRESS_KEY,
@@ -89,6 +90,7 @@ export async function collectLocalSnapshot(): Promise<AtlasSnapshot> {
     dailyProgress,
     flashcardProgress: loadFlashcardProgress(),
     historyProgress: loadHistoryProgress(),
+    questionProgress: loadQuestionUserStore(),
   };
 }
 
@@ -139,6 +141,8 @@ export async function replaceLocalSnapshot(snapshot: AtlasSnapshot) {
   }
   writeFlashcardProgress(snapshot.flashcardProgress);
   writeHistoryProgress(snapshot.historyProgress);
+  window.localStorage.setItem(QUESTION_USER_STORE_KEY, JSON.stringify(snapshot.questionProgress ?? { answers: {}, bookmarkedIds: [] }));
+  window.dispatchEvent(new Event(QUESTION_PROGRESS_REPLACED_EVENT));
 }
 
 export async function loadLocalSyncState(userId: string) {
@@ -156,6 +160,16 @@ export async function saveLocalSyncState(
     snapshot,
     revision,
     updatedAt,
+  });
+}
+
+// Keep the outgoing account's unsynced data before a provider/account switch.
+// Backups deliberately live outside clearLocalWorkspace's tables.
+export async function archiveLocalWorkspace(userId: string) {
+  const snapshot = await collectLocalSnapshot();
+  if (!hasAtlasContent(snapshot)) return;
+  await db.workspaceBackups.put({
+    userId, snapshot, revision: 0, updatedAt: new Date().toISOString(),
   });
 }
 
@@ -186,6 +200,7 @@ export async function clearLocalWorkspace() {
         db.cloudSyncState.clear(),
       ]),
   );
+  window.localStorage.removeItem(QUESTION_USER_STORE_KEY);
   window.localStorage.removeItem(ACTIVE_MAP_KEY);
   window.localStorage.removeItem(FLASHCARD_PROGRESS_KEY);
   window.localStorage.removeItem(HISTORY_PROGRESS_KEY);
@@ -196,6 +211,8 @@ export async function clearLocalWorkspace() {
 
 export function hasAtlasContent(snapshot: AtlasSnapshot) {
   return (
+    Object.keys(snapshot.questionProgress?.answers ?? {}).length > 0 ||
+    Boolean(snapshot.questionProgress?.bookmarkedIds.length) ||
     snapshot.studyMaps.length > 0 ||
     snapshot.mapFolders.length > 0 ||
     snapshot.provinceRecords.length > 0 ||

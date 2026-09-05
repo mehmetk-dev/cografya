@@ -12,3 +12,6 @@ cmds = ["npm run build"]
 
 [start]
 cmd = "python3 server.py"
+
+[variables]
+HOST = "0.0.0.0"

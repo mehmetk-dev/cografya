@@ -8,7 +8,6 @@ import {
   MapPinned,
   Sparkles,
 } from "lucide-react";
-import { clearLocalWorkspace } from "../cloud/localWorkspace";
 import { sqliteClient, type User } from "../cloud/sqliteClient";
 import { validateAuthCredentials } from "./authValidation";
 
@@ -63,9 +62,7 @@ export function AuthGate({ children, onContinueAsGuest }: AuthGateProps) {
       if (!active) return;
       setUser(session?.user ?? null);
       setCheckingSession(false);
-      if (event === "SIGNED_OUT") {
-        void clearLocalWorkspace();
-      }
+
     });
 
     return () => {
@@ -73,24 +70,6 @@ export function AuthGate({ children, onContinueAsGuest }: AuthGateProps) {
       subscription.unsubscribe();
     };
   }, []);
-
-  const handleQuickLogin = async () => {
-    setSubmitting(true);
-    setError("");
-    setMessage("");
-    try {
-      const { data, error: authError } = await sqliteClient.auth.quickLogin();
-      if (authError) {
-        setError(authError.message);
-      } else if (data.user) {
-        setUser(data.user);
-      }
-    } catch {
-      setError("Hızlı giriş sırasında bir hata oluştu.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -195,40 +174,16 @@ export function AuthGate({ children, onContinueAsGuest }: AuthGateProps) {
           }}
         >
           <Database size={15} />
-          <span>Yerel SQLite Aktif (cografya.db)</span>
+          <span>Hesaplı kayıt · SQLite</span>
         </div>
 
         <div className="auth-benefits" aria-label="Hesap avantajları">
           <span>
-            <CheckCircle2 size={15} /> Sıfır bekleme, kalıcı yerel kayıt
+            <CheckCircle2 size={15} /> Hesabınla cihazlar arası kayıt
           </span>
           <span>
-            <LockKeyhole size={15} /> İnternetsiz tam çevrimdışı çalışma
+            <LockKeyhole size={15} /> Misafir modunda tarayıcıya kayıt
           </span>
-        </div>
-
-        {/* Tek tıkla Mehmet Kerem hesabı ile giriş */}
-        <button
-          type="button"
-          className="auth-guest-btn auth-guest-btn--primary"
-          style={{
-            marginBottom: "16px",
-            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-            color: "#ffffff",
-            borderColor: "#059669",
-            fontWeight: 600,
-            fontSize: "0.95rem",
-            boxShadow: "0 4px 12px rgba(16, 185, 129, 0.25)",
-          }}
-          disabled={submitting}
-          onClick={handleQuickLogin}
-        >
-          <Sparkles size={18} />
-          Tek Tıkla Giriş Yap (Mehmet Kerem)
-        </button>
-
-        <div className="auth-divider">
-          <span>VEYA E-POSTA İLE GİRİŞ</span>
         </div>
 
         <div className="auth-tabs" role="tablist" aria-label="Hesap işlemi">

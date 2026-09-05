@@ -1,3 +1,4 @@
+import { QUESTION_PROGRESS_CHANGED_EVENT } from "../questionsData";
 import {
   useCallback,
   useEffect,
@@ -15,6 +16,7 @@ import {
 } from "./CloudAccountContext";
 import {
   clearLocalWorkspace,
+  archiveLocalWorkspace,
   collectLocalSnapshot,
   hasAtlasContent,
   LAST_SYNC_AT_KEY,
@@ -47,7 +49,7 @@ function friendlySyncError(error: unknown) {
   if (error instanceof Error && error.message === "CLOUD_SAVE_CONFLICT") {
     return "Eşzamanlı değişiklik algılandı; tekrar deneniyor.";
   }
-  return "Yerel veritabanı eşitlemesi deneniyor...";
+  return "Sunucuya kaydedilemedi. Değişikliklerin bu tarayıcıda korunuyor; yeniden dene.";
 }
 
 async function fetchCloudRow(userId: string): Promise<CloudRow | null> {
@@ -64,9 +66,11 @@ function LocalChangeWatcher({
 
   useEffect(() => {
     const refresh = () => setLocalStudyRevision((value) => value + 1);
+    window.addEventListener(QUESTION_PROGRESS_CHANGED_EVENT, refresh);
     window.addEventListener(FLASHCARD_PROGRESS_CHANGED_EVENT, refresh);
     window.addEventListener(HISTORY_PROGRESS_CHANGED_EVENT, refresh);
     return () => {
+      window.removeEventListener(QUESTION_PROGRESS_CHANGED_EVENT, refresh);
       window.removeEventListener(FLASHCARD_PROGRESS_CHANGED_EVENT, refresh);
       window.removeEventListener(HISTORY_PROGRESS_CHANGED_EVENT, refresh);
     };
@@ -137,8 +141,7 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
             const saved = await sqliteClient.atlas.syncRow({
               userId: user.id,
               data: upload,
-              revision: 1,
-              force: true,
+              revision: 0,
             });
 
             await recordSyncedSnapshot(upload, saved.revision, saved.updated_at);
@@ -174,7 +177,6 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
             userId: user.id,
             data: upload,
             revision: row.revision,
-            force,
           });
 
           await recordSyncedSnapshot(upload, saved.revision, saved.updated_at);
@@ -231,11 +233,13 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
     const bootstrap = async () => {
       setStatus("loading");
       setStatusMessage("Yerel veriler hazırlanıyor");
+      let isolated = false;
       try {
         const previousOwner = window.localStorage.getItem(
           LOCAL_WORKSPACE_OWNER_KEY,
         );
         if (previousOwner && previousOwner !== user.id) {
+          await archiveLocalWorkspace(previousOwner);
           await clearLocalWorkspace();
           lastSignatureRef.current = "";
           lastCloudUpdatedAtRef.current = "";
@@ -243,6 +247,7 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
           baseSnapshotRef.current = null;
         }
 
+        isolated = true;
         const local = await collectLocalSnapshot();
         const localSignature = snapshotSignature(local);
         const storedSignature =
@@ -301,10 +306,10 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
         window.localStorage.setItem(LOCAL_WORKSPACE_OWNER_KEY, user.id);
       } catch (error) {
         if (!active) return;
-        window.localStorage.setItem(LOCAL_WORKSPACE_OWNER_KEY, user.id);
+        if (isolated) window.localStorage.setItem(LOCAL_WORKSPACE_OWNER_KEY, user.id);
         reportSyncError(error);
       } finally {
-        if (active) setReady(true);
+        if (active && isolated) setReady(true);
       }
     };
 
@@ -339,9 +344,11 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
       try {
         await uploadQueueRef.current.catch(() => undefined);
         const row = await fetchCloudRow(user.id);
-        if (!row || row.revision <= lastCloudRevisionRef.current) return;
-
         const local = await collectLocalSnapshot();
+        if (row && row.revision <= lastCloudRevisionRef.current && snapshotSignature(local) === lastSignatureRef.current) {
+          setStatus("synced");
+          return;
+        }
         const saved = await enqueueUpload(local, true);
         await applySavedSnapshotIfCurrent(local, saved);
       } catch (error) {
@@ -360,10 +367,12 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
     }, 15_000);
 
     window.addEventListener("focus", pullLatest);
+    window.addEventListener("online", pullLatest);
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       window.clearInterval(poll);
       window.removeEventListener("focus", pullLatest);
+      window.removeEventListener("online", pullLatest);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [
@@ -402,6 +411,7 @@ export function CloudWorkspace({ user, children }: CloudWorkspaceProps) {
         <div className="auth-loading">
           <LoaderCircle className="spin" size={26} />
           {statusMessage}
+          {status === "error" && <button className="button button--primary" onClick={() => window.location.reload()}>Yeniden dene</button>}
         </div>
       </main>
     );

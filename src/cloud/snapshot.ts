@@ -1,3 +1,4 @@
+import { questionUserStoreSchema, type QuestionUserStore } from "../questionsData";
 import { z } from "zod";
 import type {
   DailyProgress,
@@ -175,6 +176,7 @@ export const atlasSnapshotSchema = z.object({
   dailyProgress: z.array(dailyProgressSchema),
   flashcardProgress: z.record(z.string(), flashcardReviewSchema),
   historyProgress: historyProgressSchema.optional(),
+  questionProgress: questionUserStoreSchema.optional(),
 });
 
 export type AtlasSnapshot = {
@@ -191,6 +193,7 @@ export type AtlasSnapshot = {
   dailyProgress: DailyProgress[];
   flashcardProgress: FlashcardProgress;
   historyProgress?: HistoryProgress;
+  questionProgress?: QuestionUserStore;
 };
 
 export function parseAtlasSnapshot(value: unknown) {
@@ -361,7 +364,20 @@ export function mergeAtlasSnapshots(
     ),
     flashcardProgress,
     historyProgress,
+    questionProgress: mergeQuestionProgress(cloud.questionProgress, local.questionProgress),
   };
+}
+
+function mergeQuestionProgress(cloud?: QuestionUserStore, local?: QuestionUserStore, base?: QuestionUserStore): QuestionUserStore {
+  const entries = (store?: QuestionUserStore) => Object.entries(store?.answers ?? {}).map(([id, answer]) => ({ id, ...answer }));
+  const answers = base
+    ? mergeByKeyThreeWay(entries(base), entries(cloud), entries(local), q => q.id, q => q.answeredAt)
+    : mergeByKey(entries(cloud), entries(local), q => q.id, q => q.answeredAt);
+  const bookmarks = new Set([...(cloud?.bookmarkedIds ?? []), ...(local?.bookmarkedIds ?? [])]);
+  if (base) for (const id of base.bookmarkedIds) {
+    if (!cloud?.bookmarkedIds.includes(id) || !local?.bookmarkedIds.includes(id)) bookmarks.delete(id);
+  }
+  return { answers: Object.fromEntries(answers.map(({ id, ...answer }) => [id, answer])), bookmarkedIds: [...bookmarks].sort() };
 }
 
 export function mergeAtlasSnapshotsThreeWay(
@@ -436,6 +452,7 @@ export function mergeAtlasSnapshotsThreeWay(
     ),
     flashcardProgress: twoWayStudyProgress.flashcardProgress,
     historyProgress: twoWayStudyProgress.historyProgress,
+    questionProgress: mergeQuestionProgress(cloud.questionProgress, local.questionProgress, base.questionProgress ?? { answers: {}, bookmarkedIds: [] }),
   };
 }
 

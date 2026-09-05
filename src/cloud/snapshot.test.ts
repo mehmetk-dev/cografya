@@ -253,3 +253,32 @@ describe("snapshotSignature", () => {
     );
   });
 });
+
+describe("question progress synchronization", () => {
+  const answer = (selectedOption: string, answeredAt = "2026-09-05T10:00:00Z") => ({ selectedOption, isCorrect: true, answeredAt });
+
+  it("keeps old snapshots compatible and includes answers and bookmarks in new snapshots", () => {
+    expect(parseAtlasSnapshot(snapshot()).success).toBe(true);
+    const data = snapshot({ questionProgress: { answers: { q1: answer("A") }, bookmarkedIds: ["q1"] } });
+    const parsed = parseAtlasSnapshot(data);
+    expect(parsed.success && parsed.data.questionProgress).toEqual(data.questionProgress);
+    expect(snapshotSignature(data)).not.toBe(snapshotSignature(snapshot()));
+  });
+
+  it("merges answers independently and preserves resets and bookmark removals", async () => {
+    const { mergeAtlasSnapshotsThreeWay } = await import("./snapshot");
+    const base = snapshot({ questionProgress: { answers: { q1: answer("A") }, bookmarkedIds: ["q1"] } });
+    const cloud = snapshot({ questionProgress: { answers: { q1: answer("A"), q2: answer("B") }, bookmarkedIds: ["q1", "q2"] } });
+    const local = snapshot({ questionProgress: { answers: { q3: answer("C") }, bookmarkedIds: ["q3"] } });
+    const merged = mergeAtlasSnapshotsThreeWay(base, cloud, local).questionProgress!;
+    expect(merged.answers.q1).toBeUndefined();
+    expect(Object.keys(merged.answers).sort()).toEqual(["q2", "q3"]);
+    expect(merged.bookmarkedIds).toEqual(["q2", "q3"]);
+  });
+
+  it("uses the more recent answer when two devices answer the same question", () => {
+    const cloud = snapshot({ questionProgress: { answers: { q1: answer("A") }, bookmarkedIds: [] } });
+    const local = snapshot({ questionProgress: { answers: { q1: answer("B", "2026-09-05T11:00:00Z") }, bookmarkedIds: [] } });
+    expect(mergeAtlasSnapshots(cloud, local).questionProgress?.answers.q1.selectedOption).toBe("B");
+  });
+});

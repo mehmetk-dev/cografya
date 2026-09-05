@@ -4,6 +4,7 @@ import App from "./App";
 import { AuthGate } from "./auth/AuthGate";
 import { CloudWorkspace } from "./cloud/CloudWorkspace";
 import "./styles.css";
+import "./study-theme.css";
 
 export const GUEST_MODE_STORAGE_KEY = "cografya_guest_mode_enabled";
 
@@ -39,7 +40,7 @@ function Application() {
   return (
     <AuthGate onContinueAsGuest={handleContinueAsGuest}>
       {(user) => (
-        <CloudWorkspace user={user}>
+        <CloudWorkspace key={user.id} user={user}>
           <App />
         </CloudWorkspace>
       )}

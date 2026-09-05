@@ -28,6 +28,7 @@ class GeographyDatabase extends Dexie {
   quizMistakes!: EntityTable<QuizMistake, "id">;
   dailyProgress!: EntityTable<DailyProgress, "date">;
   cloudSyncState!: EntityTable<CloudSyncState, "userId">;
+  workspaceBackups!: EntityTable<CloudSyncState, "userId">;
 
   constructor() {
     super("cografya-atlasim");
@@ -83,6 +84,8 @@ class GeographyDatabase extends Dexie {
       dailyProgress: "date, completed, updatedAt",
       cloudSyncState: "userId, revision, updatedAt",
     });
+
+    this.version(7).stores({ workspaceBackups: "userId, updatedAt" });
   }
 }
 

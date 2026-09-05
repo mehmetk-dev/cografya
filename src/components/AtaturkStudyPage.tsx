@@ -1,3 +1,4 @@
+import { StudyNavigation } from "./StudyNavigation";
 import { useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -144,6 +145,7 @@ export function AtaturkStudyPage({
 
   return (
     <div className="ataturk-atlas-root">
+      <StudyNavigation active="ataturk" />
       {/* 1. TOPBAR */}
       <header className="ataturk-topbar">
         <div className="ataturk-topbar__inner">

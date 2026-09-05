@@ -11,5 +11,9 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY server.py ./
 ENV PORT=5005
+ENV HOST=0.0.0.0
+ENV DB_PATH=/data/cografya.db
+RUN mkdir -p /data
+VOLUME ["/data"]
 EXPOSE 5005
 CMD ["python3", "server.py"]

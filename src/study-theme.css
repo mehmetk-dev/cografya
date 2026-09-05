@@ -1,0 +1,201 @@
+/* Shared study surfaces use the map library's paper, ink and green palette. */
+.study-navigation { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:18px max(24px, calc((100% - 1240px) / 2)); background:var(--paper); border-bottom:1px solid var(--line); }
+.study-navigation__brand { display:flex; align-items:center; gap:11px; text-decoration:none; color:var(--ink); }
+.study-navigation__brand > span { display:grid; place-items:center; width:42px; height:42px; border-radius:14px 14px 14px 4px; background:var(--deep-green); color:var(--paper); }
+.study-navigation__brand strong { font-size:21px; line-height:1.25; letter-spacing:-.7px; }
+.study-navigation__brand small { display:block; font-size:9px; letter-spacing:1.7px; margin-top:3px; color:#65746c; }
+.study-navigation nav { display:flex; gap:6px; }
+.study-navigation nav a { display:flex; align-items:center; gap:8px; min-height:44px; padding:10px 14px; border-radius:10px; color:#53675e; font-size:13px; font-weight:650; text-decoration:none; white-space:nowrap; }
+.study-navigation nav a:hover { background:#eee9de; }
+.study-navigation nav a[aria-current="page"] { background:var(--deep-green); color:var(--paper); }
+.study-navigation a:focus-visible { outline:3px solid var(--amber); outline-offset:3px; }
+.history-atlas-root, .ataturk-atlas-root, .mobile-quiz-app { background:var(--cream); color:var(--ink); font-family:inherit; }
+.history-atlas-topbar, .ataturk-topbar { background:var(--paper); box-shadow:0 4px 18px #17352f06; border-color:var(--line); }
+.history-atlas-topbar__inner, .ataturk-topbar__inner { max-width:1280px; padding:16px 24px; flex-wrap:wrap; }
+.history-atlas-back-btn, .ataturk-back-btn { min-height:44px; background:var(--cream); border-color:var(--line); }
+.history-quiz-launch-btn, .ataturk-action-btn--quiz, .history-quiz-start-btn, .history-quiz-next-btn { background:var(--deep-green); color:var(--paper); box-shadow:none; min-height:44px; }
+.history-mnemonic-vault-btn, .ataturk-action-btn--mnemonic { background:#f7ead2; color:#79531a; border-color:#e4c894; min-height:44px; }
+.history-search-strip { background:var(--cream); }
+.history-search-input-wrapper input, .ataturk-search-box input { min-height:30px; }
+.history-hero-section, .ataturk-hero-grand { background:transparent; padding-top:32px; padding-bottom:28px; }
+.ataturk-hero-grand h1, .history-hero-title { font-size:clamp(28px, 4vw, 48px); letter-spacing:-1.6px; color:var(--ink); }
+.ataturk-hero-grand h1 span { color:var(--deep-green); }
+.ataturk-hero-grand h1 { background:none; -webkit-text-fill-color:var(--ink); }
+.history-period-single-page { max-width:1240px; }
+.history-period-hero { background:var(--paper); border:1px solid var(--line); box-shadow:var(--soft-shadow); }
+.history-period-hero-overlay { background:linear-gradient(90deg, var(--paper), #fffdf8e8); }
+.history-period-name, .history-period-description, .history-period-slogan { color:var(--ink); }
+.history-event-card__body, .history-event-content, .history-culture-card, .ataturk-event-card, .ataturk-treaty-card, .ataturk-mnemonic-card, .ataturk-trap-card { background:var(--paper); border-color:var(--line); box-shadow:0 6px 24px #17352f06; border-radius:16px; }
+.history-period-pill, .history-stepper-tab, .ataturk-period-pill, .ataturk-view-tab, .ataturk-cat-pill, .period-action-btn { min-height:44px; }
+.ataturk-stat-card { background:var(--paper); border:1px solid var(--line); }
+.ataturk-view-tabs { background:#ebe7db; border-color:var(--line); }
+.ataturk-view-tab.is-active, .ataturk-period-pill.is-active { background:var(--deep-green); color:var(--paper); border-color:var(--deep-green); box-shadow:none; }
+.ataturk-period-pill.is-active span, .ataturk-period-pill.is-active small { color:var(--paper); }
+.ataturk-main-container { max-width:1240px; }
+.ataturk-star-icon { background:var(--deep-green); color:var(--paper); box-shadow:none; }
+.ataturk-period-banner .banner-caption, .ataturk-period-banner .banner-caption span { color:white; }
+.history-quiz-modal, .history-mnemonic-modal, .ataturk-modal-card { background:var(--paper); color:var(--ink); box-shadow:var(--soft-shadow); max-height:90dvh; }
+.history-floating-tools button { min-width:44px; min-height:44px; }
+.study-page { background:var(--cream); }
+.study-page__topbar { border-color:var(--line); background:var(--paper); }
+
+/* Question workshop: a readable paper sheet and a calm, persistent action row. */
+.mobile-quiz-app { padding-bottom:110px; }
+.mobile-quiz-topbar { position:static; width:min(100%, 1120px); height:auto; min-height:68px; margin:0 auto; padding:16px 24px; background:transparent; border:0; }
+.mobile-back-btn, .mobile-matrix-trigger-btn, .mobile-star-btn, .mobile-reset-btn, .mobile-drawer-close { min-width:44px; min-height:44px; align-items:center; justify-content:center; }
+.mobile-subject-dropdown-wrap { max-width:340px; }
+.mobile-subject-select { min-height:44px; border-radius:10px; background:var(--paper); border-color:var(--line); color:var(--ink); }
+.question-workshop-intro { display:grid; grid-template-columns:1fr auto; align-items:center; gap:24px; width:min(100%, 1072px); margin:10px auto 24px; padding:0 24px; }
+.question-workshop-intro h1 { margin:8px 0; font-size:clamp(30px, 4vw, 46px); font-weight:750; letter-spacing:-1.8px; line-height:1.1; }
+.question-workshop-intro h1 > span { color:var(--amber); }
+.question-workshop-intro p { color:#5d6c67; font-size:14px; line-height:1.6; margin:12px 0 0; }
+.question-workshop-stats { display:flex; gap:28px; }
+.question-workshop-stats > div { display:grid; gap:6px; }
+.question-workshop-stats strong { font-size:28px; letter-spacing:-1px; }
+.question-workshop-stats strong small { font-size:15px; color:#69796e; }
+.question-workshop-stats span { font-size:11px; color:#5d6c67; }
+.question-completion { grid-column:1 / -1; display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; font-size:11px; color:#5d6c67; }
+.question-completion progress { width:100%; height:6px; appearance:none; border:0; border-radius:5px; overflow:hidden; background:#e3dfd2; }
+.question-completion progress::-webkit-progress-bar { background:#e3dfd2; }
+.question-completion progress::-webkit-progress-value { background:var(--deep-green); }
+.question-completion progress::-moz-progress-bar { background:var(--deep-green); }
+.mobile-status-nav { width:min(100%, 1024px); margin:0 auto; padding:0 0 16px; background:transparent; gap:8px; border-bottom:1px solid var(--line); scrollbar-width:thin; }
+.mobile-status-pill { min-height:44px; background:var(--paper); border-color:var(--line); border-radius:10px; padding:9px 14px; color:#53675e; }
+.mobile-status-pill.is-active { background:var(--deep-green); color:var(--paper); border-color:var(--deep-green); }
+.mobile-status-pill.is-active .pill-badge { background:#ffffff20; color:var(--paper); }
+.mobile-status-pill .pill-badge { background:#e9e6dc; color:var(--ink); }
+.mobile-question-body { max-width:860px; padding:24px; }
+.mobile-question-sheet { background:var(--paper); padding:32px 36px; border:1px solid var(--line); border-radius:22px 22px 22px 6px; gap:20px; box-shadow:var(--soft-shadow); }
+.mobile-sheet-stem { font-size:17px; line-height:1.8; color:var(--ink); }
+.mobile-sheet-stem p:empty { display:none; }
+.mobile-sheet-topic { font-size:13px; }
+.mobile-tag-number { background:#f8ebd3; color:#81571b; border-color:#e8c98e; }
+.mobile-option-card { padding:14px 16px; background:var(--paper); color:var(--ink); border-color:#dddcd1; min-height:56px; border-radius:12px; align-items:center; }
+.mobile-option-letter { width:30px; height:30px; background:var(--cream); color:#58685c; }
+.mobile-option-card:hover:not(:disabled) { background:#f2f0e7; border-color:#9cafa0; }
+.mobile-option-card.is-staged { background:#eaf0e8; border-color:var(--deep-green); color:var(--ink); }
+.mobile-option-card.is-staged .mobile-option-letter { background:var(--deep-green); color:var(--paper); }
+.mobile-option-card.is-correct-picked, .mobile-option-card.is-the-correct { background:#edf5ed; border-color:#448063; color:#17543d; }
+.mobile-option-card.is-wrong-picked { background:#fff0eb; border-color:#c06c5a; color:#8b342d; }
+.mobile-option-card.is-correct-picked .mobile-option-letter, .mobile-option-card.is-the-correct .mobile-option-letter { background:#286b4e; color:white; }
+.mobile-option-card.is-wrong-picked .mobile-option-letter { background:#aa4b3c; color:white; }
+.mobile-radio-circle { border-color:#b6beb1; }
+.mobile-radio-circle.is-selected { background:var(--deep-green); border-color:var(--deep-green); }
+.mobile-option-card:disabled { cursor:default; opacity:1; }
+.question-confidence { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding-top:4px; font-size:12px; color:#5d6c67; }
+.question-confidence span { margin-right:auto; }
+.question-confidence button, .question-review-button { min-height:44px; border:1px solid var(--line); background:var(--cream); border-radius:10px; padding:8px 12px; color:var(--ink); }
+.question-confidence button[aria-pressed="true"] { background:#e8eedf; border-color:var(--deep-green); }
+.question-feedback { display:flex; gap:12px; align-items:flex-start; background:#eaf2e7; border-radius:12px; padding:18px; color:#1e5a3c; }
+.question-feedback svg { flex-shrink:0; }
+.question-feedback.is-wrong { background:#fbefdb; color:#7e541e; }
+.question-feedback strong { font-size:14px; }
+.question-feedback p { margin:5px 0 0; font-size:13px; line-height:1.6; }
+.mobile-obsidian-callout { margin-top:0; padding:20px; background:#f0f4eb; border-color:#cfddc8; border-left:4px solid var(--deep-green); }
+.callout-badge { flex-wrap:wrap; color:#1e5a3c; }
+.callout-badge strong { background:var(--deep-green); color:var(--paper); }
+.callout-content { color:#364e41; font-size:15px; line-height:1.8; }
+.question-recall-tip { display:flex; align-items:flex-start; gap:8px; border-top:1px solid #cfddc8; padding-top:12px; }
+.question-recall-tip svg { flex-shrink:0; margin-top:4px; }
+.question-recall-tip p { margin:0; font-size:13px; line-height:1.6; }
+.question-review-button { display:flex; gap:8px; justify-content:center; align-items:center; font-size:12px; background:var(--paper); }
+.mobile-sticky-bottom-bar { max-width:812px; height:auto; min-height:80px; padding:14px 20px calc(14px + env(safe-area-inset-bottom)); gap:10px; background:var(--paper); border:1px solid var(--line); border-radius:16px 16px 0 0; box-shadow:0 -8px 30px #17352f08; }
+.mobile-submit-btn, .mobile-primary-next-btn { background:var(--deep-green); color:var(--paper); box-shadow:none; font-size:13px; }
+.mobile-solution-toggle-btn, .mobile-peek-solution-btn, .mobile-bottom-nav-btn { background:var(--cream); color:var(--ink); border-color:var(--line); }
+.mobile-drawer-backdrop { background:#17352f66; backdrop-filter:blur(4px); }
+.mobile-drawer-panel { background:var(--paper); border-color:var(--line); box-shadow:var(--soft-shadow); max-height:85dvh; }
+.mobile-drawer-content { padding-bottom:calc(24px + env(safe-area-inset-bottom)); }
+.drawer-grid-cell { min-height:44px; }
+.drawer-matrix-grid { grid-template-columns:repeat(auto-fill,minmax(44px,1fr)); max-height:none; overflow:visible; }
+.drawer-matrix-header { flex-wrap:wrap; gap:12px; }
+.drawer-search-row input { width:0; min-width:0; min-height:30px; }
+.mobile-sheet-meta { align-items:flex-start; }
+.mobile-sheet-actions { flex-shrink:0; }
+
+@media (max-width:900px) {
+  .study-navigation { flex-direction:column; align-items:flex-start; padding:16px 20px 0; gap:12px; }
+  .study-navigation nav { width:100%; overflow-x:auto; padding-bottom:12px; }
+  .question-workshop-intro { grid-template-columns:1fr; gap:20px; }
+  .question-workshop-stats { justify-content:space-between; max-width:420px; }
+  .mobile-status-nav { width:calc(100% - 40px); }
+}
+@media (max-width:600px) {
+  .study-navigation { padding:12px 16px 0; }
+  .study-navigation__brand > span { width:34px; height:34px; border-radius:10px 10px 10px 3px; }
+  .study-navigation__brand strong { font-size:18px; }
+  .study-navigation nav { gap:4px; }
+  .study-navigation nav a { padding:8px 11px; font-size:12px; }
+  .history-atlas-topbar, .ataturk-topbar { position:static; }
+  .history-atlas-topbar__inner, .ataturk-topbar__inner { padding:12px 16px; gap:12px; }
+  .history-atlas-topbar__left, .ataturk-topbar__left { gap:8px; min-width:0; }
+  .history-atlas-topbar__right, .ataturk-topbar__right { flex-wrap:wrap; gap:8px; }
+  .ataturk-brand { flex-wrap:wrap; gap:6px; }
+  .ataturk-kpss-tag { display:none; }
+  .ataturk-period-nav { padding:8px 16px; }
+  .ataturk-hero-grand { padding:24px 16px; }
+  .ataturk-hero-stats-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .ataturk-stat-card { min-width:0; }
+  .ataturk-view-tabs { display:flex; overflow-x:auto; justify-content:flex-start; max-width:100%; }
+  .ataturk-view-tab { flex-shrink:0; }
+  .ataturk-main-container { padding:0 16px 30px; }
+  .ataturk-event-card { padding:18px; }
+  .ataturk-period-header { flex-wrap:wrap; }
+  .ataturk-causal-box { flex-direction:column; }
+  .history-search-container { flex-wrap:wrap; }
+  .history-period-single-page { padding:16px 12px; }
+  .history-period-actions-row, .period-batch-buttons { flex-wrap:wrap; }
+  .history-period-name { font-size:26px; }
+  .history-timeline-spine { padding-left:32px; }
+  .history-event-card__node { left:-32px; }
+  .history-node-dot { width:26px; height:26px; }
+  .history-spine-line { left:12px; }
+  .mobile-quiz-topbar { padding:12px 16px; gap:8px; }
+  .question-workshop-intro { padding:0 16px; margin:10px auto 20px; }
+  .question-workshop-intro h1 { font-size:32px; }
+  .question-workshop-intro p { font-size:13px; }
+  .question-workshop-stats strong { font-size:24px; }
+  .mobile-status-nav { width:calc(100% - 32px); }
+  .mobile-question-body { padding:16px 12px; }
+  .mobile-question-sheet { padding:20px 16px; gap:18px; }
+  .mobile-sheet-stem { font-size:16px; line-height:1.75; }
+  .mobile-sheet-meta { flex-wrap:wrap; }
+  .mobile-sheet-tags { flex:1; min-width:160px; }
+  .mobile-tag-category { line-height:1.5; }
+  .mobile-option-card { padding:12px; gap:10px; font-size:14px; }
+  .mobile-sticky-bottom-bar { padding:10px 12px calc(10px + env(safe-area-inset-bottom)); border-radius:0; gap:8px; }
+  .mobile-answered-actions { gap:6px; }
+  .mobile-solution-toggle-btn, .mobile-primary-next-btn { font-size:11px; padding:4px 6px; }
+  .mobile-answered-actions svg { display:none; }
+  .mobile-bottom-nav-btn { width:44px; }
+  .mobile-obsidian-callout { padding:16px 12px; }
+  .question-confidence span { flex-basis:100%; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .history-atlas-root *, .ataturk-atlas-root *, .mobile-quiz-app * { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+}
+.history-period-stepper-bar { background:#ede9dd; border-color:var(--line); }
+.history-stepper-tab.is-active { background:var(--deep-green); border-color:var(--deep-green); box-shadow:none; color:var(--paper); }
+.history-stepper-tab.is-active .stepper-title, .history-stepper-tab.is-active .stepper-dates, .history-stepper-tab.is-active .stepper-progress-pill { color:var(--paper); }
+.history-period-banner { box-shadow:var(--soft-shadow); border-color:var(--line); }
+.period-mnemonics-strip { background:#f6eddd; border-color:#e5d7ba; }
+.history-period-dates, .date-tag, .stepper-progress-pill { background:#ece8dd; color:#53675e; }
+.history-atlas-brand strong { color:var(--ink); }
+.history-event-card__inner { background:var(--paper); box-shadow:0 4px 20px #17352f06; }
+.ataturk-hero-grand h1 span { background:none; -webkit-text-fill-color:var(--deep-green); }
+.ataturk-view-tabs { max-width:960px; }
+@media (max-width:600px) {
+  .mobile-quiz-app .study-navigation__brand { display:none; }
+  .mobile-quiz-app .study-navigation { padding-top:4px; }
+  .mobile-quiz-app .study-navigation nav { padding-bottom:4px; }
+  .question-workshop-intro { gap:12px; margin:0 auto 16px; }
+  .question-workshop-intro .eyebrow { font-size:9px; }
+  .question-workshop-intro h1 { font-size:28px; margin:4px 0; }
+  .question-workshop-intro p { margin:6px 0 0; }
+  .question-workshop-stats { gap:12px; }
+  .question-workshop-stats > div { display:flex; align-items:baseline; flex-wrap:wrap; gap:3px; }
+  .question-workshop-stats strong { font-size:18px; }
+  .question-workshop-stats span { font-size:10px; }
+  .question-completion { gap:5px; }
+}
+.question-storage-error { width:min(100% - 32px, 812px); margin:12px auto; padding:14px; background:#fff0eb; border:1px solid #c06c5a; border-radius:10px; color:#8b342d; }
+.question-feedback { scroll-margin-block:24px 100px; }

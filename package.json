@@ -13,7 +13,6 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.110.8",
     "dexie": "^4.2.1",
     "dexie-react-hooks": "^4.2.0",
     "html-to-image": "^1.11.13",

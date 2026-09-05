@@ -1,3 +1,4 @@
+import { StudyNavigation } from "./StudyNavigation";
 import { useMemo, useState, useEffect } from "react";
 import {
   ArrowLeft,
@@ -246,6 +247,7 @@ export function HistoryStudyPage({ onBack, onOpenAtaturk }: HistoryStudyPageProp
 
   return (
     <div className="history-atlas-root">
+      <StudyNavigation active="history" />
       {/* 1. STICKY TOPBAR */}
       <header className="history-atlas-topbar">
         <div className="history-atlas-topbar__inner">

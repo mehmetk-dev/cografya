@@ -134,10 +134,10 @@ export function MapSidebar({
   const cloudStatusTitle = !cloudAccount
     ? "Çevrimdışı / Yerel Mod"
     : cloudStatus === "error"
-      ? "Bulut kaydı bekliyor"
+      ? "Sunucu kaydı bekliyor"
       : cloudStatus === "syncing" || cloudStatus === "loading"
-        ? "Buluta kaydediliyor"
-        : "Buluta kaydedildi";
+        ? "Sunucuya kaydediliyor"
+        : "SQLite’a kaydedildi";
   const cloudStatusDetail = !cloudAccount
     ? "Veriler tarayıcında saklanıyor"
     : cloudStatus === "error"
@@ -640,7 +640,7 @@ export function MapSidebar({
             <button
               className="sidebar-account-button"
               type="button"
-              title="Giriş ekranına dön / Bulut hesabı bağla"
+              title="Giriş ekranına dön / Hesap bağla"
               onClick={() => {
                 window.localStorage.removeItem("cografya_guest_mode_enabled");
                 window.dispatchEvent(new Event("cografya_guest_mode_reset"));

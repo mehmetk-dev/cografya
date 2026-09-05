@@ -1,3 +1,5 @@
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
 const chromiumExecutable =
@@ -9,8 +11,9 @@ export default defineConfig({
   fullyParallel: true,
   reporter: "list",
   use: {
-    baseURL: "http://127.0.0.1:5173",
+    baseURL: "http://127.0.0.1:5175",
     browserName: "chromium",
+    storageState: { cookies: [], origins: [{ origin: "http://127.0.0.1:5175", localStorage: [{ name: "cografya_guest_mode_enabled", value: "true" }] }] },
     launchOptions: {
       executablePath: chromiumExecutable,
     },
@@ -50,9 +53,18 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: "VITE_E2E_AUTH_BYPASS=true npm run dev -- --host 127.0.0.1",
-    url: "http://127.0.0.1:5173",
-    reuseExistingServer: true,
-  },
+  webServer: [
+    {
+      command: "python3 server.py",
+      env: { PORT: "5006", DB_PATH: join(tmpdir(), `cografya-e2e-${process.pid}.db`) },
+      url: "http://127.0.0.1:5006/api/health",
+      reuseExistingServer: false,
+    },
+    {
+      command: "npm run dev -- --host 127.0.0.1 --port 5175 --strictPort",
+      env: { VITE_PUBLIC_ACCESS: "false", VITE_E2E_AUTH_BYPASS: "false", ATLAS_API_TARGET: "http://127.0.0.1:5006" },
+      url: "http://127.0.0.1:5175",
+      reuseExistingServer: false,
+    },
+  ],
 });

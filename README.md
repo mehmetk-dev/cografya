@@ -13,11 +13,11 @@ bir uygulamada.
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white">
   <img alt="Vite" src="https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white">
   <img alt="IndexedDB" src="https://img.shields.io/badge/IndexedDB-Yerel%20kayıt-17443A">
-  <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Bulut%20senkronizasyonu-3FCF8E?logo=supabase&logoColor=white">
+  <img alt="SQLite" src="https://img.shields.io/badge/SQLite-Python%20API-17443A">
   <img alt="Responsive" src="https://img.shields.io/badge/Tasarım-Responsive-E9A23B">
 </p>
 
-**Node.js backend gerektirmez · Hesaplı cihaz senkronizasyonu · Yerel kayıt**
+**Python 3 + SQLite · Hesaplı cihaz senkronizasyonu · Tarayıcıda yerel kayıt**
 
 </div>
 
@@ -131,17 +131,17 @@ flowchart LR
     C --> H[("IndexedDB")]
     D --> H
     F --> H
-    H <--> I[("Supabase")]
+    H <--> I[("Python API / SQLite")]
 ```
 
 Uygulama çalışma sırasında verileri tarayıcıdaki **IndexedDB** alanında tutar.
-Oturum açıldığında bu yerel kayıtlar kullanıcıya ait tek bir Supabase kaydıyla
+Oturum açıldığında bu yerel kayıtlar Python API üzerinden kullanıcıya ait SQLite kaydıyla
 senkronize edilir. Böylece bilgisayarda yapılan değişiklikler aynı hesapla
 telefondan açıldığında da görünür.
 
 > [!IMPORTANT]
 > İlk senkronizasyon tamamlanana kadar veriler yalnızca kullanılan cihazdadır.
-> Hesap göstergesindeki “Tüm cihazlarda güncel” mesajı görüldükten sonra çıkış
+> Hesap göstergesindeki “SQLite’a kaydedildi” mesajı görüldükten sonra çıkış
 > yapılmalıdır. JSON yedeği ayrıca bağımsız bir kurtarma seçeneğidir.
 
 ## Teknolojiler
@@ -152,93 +152,84 @@ telefondan açıldığında da görünür.
 | TypeScript | Tip güvenli uygulama geliştirme |
 | Vite 6 | Geliştirme sunucusu ve üretim derlemesi |
 | Dexie / IndexedDB | Tarayıcı içinde kalıcı yerel kayıt |
-| Supabase Auth / Postgres | Kullanıcı girişi ve cihazlar arası senkronizasyon |
+| Python / SQLite | Kullanıcı girişi ve cihazlar arası senkronizasyon |
 | Lucide React | Arayüz ve harita simgeleri |
 | html-to-image | Haritayı yüksek çözünürlüklü görsele dönüştürme |
 | turkey-map-react | Türkiye il sınırı verileri |
 
 ## Yerel kurulum
 
-Gereksinimler:
-
-- Node.js 20 veya üzeri
-- npm
+Node.js 20+, npm ve Python 3.11+ gerekir. Python sunucusu standart kütüphaneyi kullanır.
 
 ```bash
-git clone <depo-adresi>
-cd cografya
 npm ci
 cp .env.example .env.local
-npm run dev
+npm run server
 ```
 
-Uygulama geliştirme ortamında varsayılan olarak
-[`http://localhost:5173`](http://localhost:5173) adresinde açılır.
+İkinci terminalde `npm run dev` çalıştırın. Uygulama `http://localhost:5173`
+adresinde açılır; `/api` istekleri port 5005'teki Python sunucusuna gider.
+Hesap oluşturun veya mevcut SQLite hesabınızla giriş yapın.
 
-### Supabase kurulumu
+- `VITE_PUBLIC_ACCESS=false`: normal hesaplı kullanım. SQLite kaydı için bu ayar gereklidir.
+- Misafir modu: yalnızca bu tarayıcıdaki IndexedDB ve localStorage'a kayıt.
+- `VITE_PUBLIC_ACCESS=true`: girişi ve sunucu senkronizasyonunu tamamen atlayan, yalnızca misafir kullanımına yönelik derleme.
+- Python `PORT` ve `DB_PATH` değişkenlerini işlem ortamından okur; `.env.local` dosyasını okumaz.
+- Geçersiz oturum yeniden giriş gerektirir; bağlantı kesilirse daha önceki cihaz oturumu ve yerel kayıtlar korunur.
 
-1. Supabase projesinde e-posta/şifre girişini etkin bırakın.
-2. Projeyi bağlayıp migration dosyasını uygulayın:
+## SQLite geçişi ve verilerin korunması
 
-```bash
-npx supabase link --project-ref <PROJECT_REF>
-npx supabase db push --linked
-```
+Aktif uygulama Supabase kullanmaz. `supabase/` eski şema ve migration arşividir.
+Supabase'deki hesaplar ve yalnızca uzak sunucuda bulunan kayıtlar otomatik olarak
+SQLite'a taşınmaz. Eski hesaptaki kayıtları önce dışa aktarın ve SQLite hesabına
+kontrollü biçimde içe aktarın; eski veritabanını aktarım doğrulanana kadar saklayın.
 
-3. `.env.local` içine proje URL’sini ve **publishable key** değerini yazın:
+Tarayıcıdaki haritalar, notlar, çizimler, çalışma ilerlemesi, soru cevapları ve
+kaydedilen sorular hesap snapshot'ında saklanır. Yazımlar `revision` ile
+karşılaştırılır; aynı sürümden yapılan ikinci yazım 409 döndürür ve istemci
+üç yönlü birleştirerek yeniden dener. Önceki kayıtlar
+`user_atlas_data_versions` tablosuna yazılır. Bağlantı geri geldiğinde,
+pencere odaklandığında ve 15 saniyelik denetimde eşitleme yeniden denenir.
 
-```dotenv
-VITE_SUPABASE_URL=https://PROJECT_REF.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-```
+Hesap/provider değişiminde önceki tarayıcı çalışma alanının kopyası
+`cografya-atlasim` IndexedDB veritabanındaki `workspaceBackups` tablosuna,
+eski kullanıcı kimliğiyle saklanır. Bu yedek sunucuya aktarılmış sayılmaz ve
+tarayıcı verilerini temizlemekle silinir. Eski SQLite SHA-256 şifreleri başarılı
+giriş sırasında salt içeren PBKDF2 kaydına yükseltilir; mevcut kullanıcı kimliği
+ve atlas kaydı korunur. Şifresiz ortak hesaba giriş kapatılmıştır.
+Daha önce oluşturulmuş varsayılan hesabın şifresi otomatik değiştirilmez.
+Sunucu üzerinde `python3 server.py --set-password HESAP_EPOSTASI` ile yeni şifre
+belirleyip eski oturumları kapatabilirsiniz. Üretimde aynı `DB_PATH` ile çalıştırın.
 
-4. Supabase Auth URL ayarlarında hem üretim alan adını hem de geliştirme için
-   `http://localhost:5173` adresini izin verilen yönlendirmelere ekleyin.
+## Üretime alma
 
-`secret` veya `service_role` anahtarı hiçbir zaman Vite ortam değişkenine
-eklenmemelidir.
-
-Haritalar çevrimdışı kullanım için IndexedDB’de önbelleğe alınır; asıl cihazlar
-arası kayıt Supabase’de tutulur. Her bulut yazımı artan bir `revision` değeriyle
-karşılaştırılır, eşzamanlı telefon/bilgisayar değişiklikleri üç yönlü
-birleştirilir ve önceki JSON sürümü `user_atlas_data_versions` tablosunda
-değiştirilemez yedek olarak saklanır. `user_atlas_data` Realtime yayınına
-eklendiği için açık cihazlar değişiklikleri anlık alır; bağlantı koparsa
-30 saniyelik denetim ve odaklanma kontrolü devreye girer.
-
-## Kullanılabilir komutlar
-
-| Komut | Açıklama |
-|---|---|
-| `npm run dev` | Vite geliştirme sunucusunu başlatır |
-| `npm run build` | TypeScript kontrolüyle üretim derlemesi oluşturur |
-| `npm run preview` | Oluşturulan üretim paketini yerelde önizler |
-
-## Sunucuya yükleme
-
-Proje statik olarak yayınlanabilir; Node.js çalışan bir backend gerekmez.
-Supabase yönetilen veritabanı ve kimlik doğrulama hizmeti olarak kullanılır.
+Uygulama artık yalnızca `dist/` yüklenerek çalıştırılan statik bir site değildir.
+Python API'nin de çalışması ve SQLite dosyasının kalıcı diskte tutulması gerekir.
 
 ```bash
 npm ci
 npm run build
+DB_PATH=/data/cografya.db HOST=0.0.0.0 PORT=5005 python3 server.py
 ```
 
-Oluşan `dist/` klasörünün **içeriğini** cPanel `public_html`, Nginx web kökü,
-Netlify, Vercel veya benzeri bir statik barındırma servisine yükleyin.
+Yerelde Python varsayılan olarak yalnızca `127.0.0.1` üzerinde dinler.
+Python hem `dist/` dosyalarını hem API'yi sunar. Ters proxy ile HTTPS kullanın.
+Dockerfile `/data/cografya.db` kullanır; Coolify'da kalıcı bir volume'u `/data`ya
+bağlayın. Nixpacks kullanılıyorsa `DB_PATH` ortam değişkenini kalıcı volume'daki
+konuma ayarlayın. Eski `cografya.db` dosyası varsa sunucu duruyorken volume'a
+kopyalayın; boş bir dosyayla değiştirmeyin. Kalıcı volume olmadan yeniden dağıtım
+hesap ve atlas kayıtlarını kaybettirebilir. SQLite dosyası için ayrıca düzenli
+SQLite backup yedeği alın; sürüm tablosu disk yedeğinin yerini tutmaz.
 
-| Dağıtım ayarı | Değer |
+Telefon ve bilgisayarın aynı kayıtları görmesi için ikisi de aynı sunucu adresi
+ve hesapla bağlanmalıdır. Telefonda ayrı bir localhost veritabanı paylaşılmaz.
+
+| Komut | Açıklama |
 |---|---|
-| Build command | `npm ci && npm run build` |
-| Output directory | `dist` |
-| Node.js backend | Gerekli değil |
-| Ortam değişkenleri | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` |
-
-> [!NOTE]
-> Mevcut üretim paketi alan adının kökünde (`site.com/`) çalışacak şekilde
-> hazırlanır. `site.com/cografya/` gibi bir alt klasörde yayınlamak için Vite
-> `base` ayarı ve görsel yolları alt dizine göre düzenlenmelidir. Kayıt ve
-> paylaşım özelliklerinin eksiksiz çalışması için HTTPS kullanılmalıdır.
+| `npm run dev` | Vite geliştirme sunucusu |
+| `npm run server` | Python SQLite API |
+| `npm run build` | TypeScript kontrolü ve üretim paketi |
+| `npm run preview` | Derlenmiş arayüzü önizler; API ayrıca çalışmalıdır |
 
 ## Proje yapısı
 
@@ -247,8 +238,8 @@ coğrafya/
 ├── public/
 │   └── images/sets/       # Hazır ders görselleri
 ├── src/
-│   ├── auth/              # Supabase giriş ve kayıt ekranı
-│   ├── cloud/             # IndexedDB ile Supabase senkronizasyonu
+│   ├── auth/              # SQLite hesap giriş ve kayıt ekranı
+│   ├── cloud/             # IndexedDB ile SQLite senkronizasyonu
 │   ├── components/        # Harita, paneller, quiz ve dışa aktarma
 │   ├── App.tsx            # Ana uygulama akışı
 │   ├── db.ts              # IndexedDB / Dexie veri katmanı
@@ -257,7 +248,7 @@ coğrafya/
 │   ├── readySets.ts       # MEB/KPSS odaklı hazır ders içerikleri
 │   └── styles.css         # Masaüstü ve responsive tasarım
 ├── ATTRIBUTIONS.md        # Veri, görsel ve paket atıfları
-├── supabase/              # RLS korumalı veritabanı migration'ı
+├── supabase/              # Eski Supabase şema arşivi
 ├── package.json
 └── vite.config.ts
 ```

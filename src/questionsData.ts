@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export type QuestionSubject =
   | "Coğrafya"
   | "Tarih"
@@ -31,28 +33,31 @@ export type QuestionUserStore = {
   bookmarkedIds: string[];
 };
 
+export const questionUserStoreSchema = z.object({
+  answers: z.record(z.string(), z.object({
+    selectedOption: z.string(), isCorrect: z.boolean(), answeredAt: z.string().datetime({ offset: true }),
+  })),
+  bookmarkedIds: z.array(z.string()),
+});
+export const QUESTION_PROGRESS_CHANGED_EVENT = "question-progress-changed";
+export const QUESTION_PROGRESS_REPLACED_EVENT = "question-progress-replaced";
+
 export const QUESTION_USER_STORE_KEY = "kpss-soru-havuzu-user-store-v1";
 
 export function loadQuestionUserStore(): QuestionUserStore {
   try {
     const raw = localStorage.getItem(QUESTION_USER_STORE_KEY);
     if (!raw) return { answers: {}, bookmarkedIds: [] };
-    const parsed = JSON.parse(raw);
-    return {
-      answers: parsed.answers ?? {},
-      bookmarkedIds: Array.isArray(parsed.bookmarkedIds) ? parsed.bookmarkedIds : [],
-    };
+    const parsed = questionUserStoreSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : { answers: {}, bookmarkedIds: [] };
   } catch {
     return { answers: {}, bookmarkedIds: [] };
   }
 }
 
 export function saveQuestionUserStore(store: QuestionUserStore): void {
-  try {
-    localStorage.setItem(QUESTION_USER_STORE_KEY, JSON.stringify(store));
-  } catch {
-    // ignore storage quota errors
-  }
+  localStorage.setItem(QUESTION_USER_STORE_KEY, JSON.stringify(store));
+  window.dispatchEvent(new Event(QUESTION_PROGRESS_CHANGED_EVENT));
 }
 
 export const ALL_QUESTIONS_DATA: QuestionItem[] = [

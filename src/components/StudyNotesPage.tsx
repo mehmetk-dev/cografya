@@ -1,3 +1,4 @@
+import { StudyNavigation } from "./StudyNavigation";
 import { useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -107,6 +108,7 @@ export function StudyNotesPage({
 
   return (
     <div className="study-page">
+      <StudyNavigation active="notes" />
       <header className="study-page__topbar">
         <button
           className="study-page__back"

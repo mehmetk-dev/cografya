@@ -1,4 +1,5 @@
-import { useMemo, useState, useEffect } from "react";
+import { StudyNavigation } from "./StudyNavigation";
+import { useMemo, useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
   Check,
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 import {
   ALL_QUESTIONS_DATA,
+  QUESTION_PROGRESS_REPLACED_EVENT,
   loadQuestionUserStore,
   saveQuestionUserStore,
   type QuestionItem,
@@ -47,9 +49,47 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
   const [onlyMapFilter, setOnlyMapFilter] = useState(false);
   const [expandedSolutions, setExpandedSolutions] = useState<Record<string, boolean>>({});
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [persistenceError, setPersistenceError] = useState(false);
+  const [retainedIds, setRetainedIds] = useState<string[]>([]);
+  const [confidence, setConfidence] = useState<Record<string, "sure" | "unsure">>({});
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    saveQuestionUserStore(userStore);
+    const refresh = () => setUserStore(loadQuestionUserStore());
+    window.addEventListener(QUESTION_PROGRESS_REPLACED_EVENT, refresh);
+    return () => window.removeEventListener(QUESTION_PROGRESS_REPLACED_EVENT, refresh);
+  }, []);
+
+  useEffect(() => {
+    setRetainedIds([]);
+  }, [selectedSubject, selectedCategory, statusTab, searchQuery, onlyMapFilter]);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    drawerRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDrawerOpen(false);
+      if (event.key !== "Tab") return;
+      const items = drawerRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input, select, a[href]');
+      if (!items?.length) return;
+      const first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
+    };
+  }, [drawerOpen]);
+
+  useEffect(() => {
+    try { saveQuestionUserStore(userStore); setPersistenceError(false); }
+    catch { setPersistenceError(true); }
   }, [userStore]);
 
   // Stage an option
@@ -64,7 +104,8 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
   // Confirm and submit answer
   const handleConfirmAnswer = (question: QuestionItem) => {
     const stagedOpt = stagedAnswers[question.id];
-    if (!stagedOpt) return;
+    if (!stagedOpt || userStore.answers[question.id]) return;
+    setRetainedIds(prev => [...new Set([...prev, question.id])]);
 
     const isCorrect = stagedOpt.toUpperCase() === question.correctAnswer.toUpperCase();
     setUserStore((prev) => {
@@ -113,6 +154,7 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
 
   // Reset single question
   const resetQuestion = (questionId: string) => {
+    setRetainedIds(prev => [...new Set([...prev, questionId])]);
     setUserStore((prev) => {
       const nextAnswers = { ...prev.answers };
       delete nextAnswers[questionId];
@@ -134,14 +176,15 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
 
   // Reset all
   const handleResetAll = () => {
-    if (window.confirm("Tüm soru çözüm geçmişini sıfırlamak istediğine emin misin?")) {
-      const emptyStore: QuestionUserStore = { answers: {}, bookmarkedIds: [] };
+    if (window.confirm(`${selectedSubject} dersindeki cevaplarını sıfırlamak istediğine emin misin? Kaydettiğin sorular korunacak.`)) {
+      const ids = new Set(scopeQuestions.map(q => q.id));
+      const emptyStore: QuestionUserStore = { ...userStore, answers: Object.fromEntries(Object.entries(userStore.answers).filter(([id]) => !ids.has(id))) };
       setUserStore(emptyStore);
-      saveQuestionUserStore(emptyStore);
       setStagedAnswers({});
       setExpandedSolutions({});
       setFocusIndex(0);
       setDrawerOpen(false);
+      setRetainedIds([]);
     }
   };
 
@@ -168,9 +211,9 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
       if (onlyMapFilter && !q.isMapQuestion) return false;
 
       const ans = userStore.answers[q.id];
-      if (statusTab === "unanswered" && ans !== undefined) return false;
-      if (statusTab === "solved" && ans === undefined) return false;
-      if (statusTab === "wrong" && (!ans || ans.isCorrect)) return false;
+      if (!retainedIds.includes(q.id) && statusTab === "unanswered" && ans !== undefined) return false;
+      if (!retainedIds.includes(q.id) && statusTab === "solved" && ans === undefined) return false;
+      if (!retainedIds.includes(q.id) && statusTab === "wrong" && (!ans || ans.isCorrect)) return false;
       if (statusTab === "bookmarked" && !userStore.bookmarkedIds.includes(q.id)) return false;
 
       if (searchQuery.trim()) {
@@ -191,7 +234,7 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
 
       return true;
     });
-  }, [scopeQuestions, selectedCategory, onlyMapFilter, statusTab, searchQuery, userStore]);
+  }, [scopeQuestions, selectedCategory, onlyMapFilter, statusTab, searchQuery, userStore, retainedIds]);
 
   // Ensure focusIndex is in bounds
   useEffect(() => {
@@ -236,6 +279,11 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
 
   // Current active question
   const currentQuestion = filteredQuestions[focusIndex] || null;
+  const currentAnsweredAt = currentQuestion ? userStore.answers[currentQuestion.id]?.answeredAt : undefined;
+  useEffect(() => {
+    if (!currentAnsweredAt) return;
+    document.querySelector(".question-feedback")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [currentAnsweredAt]);
 
   // Move to next question smoothly
   const handleNextQuestion = () => {
@@ -255,6 +303,7 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
 
   return (
     <div className="mobile-quiz-app">
+      <StudyNavigation active="questions" />
       {/* 1. TOP HEADER (Super clean single row) */}
       <header className="mobile-quiz-topbar">
         <button
@@ -270,6 +319,7 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
         <div className="mobile-subject-dropdown-wrap">
           <select
             className="mobile-subject-select"
+            aria-label="Ders seç"
             value={selectedSubject}
             onChange={(e) => {
               setSelectedSubject(e.target.value as QuestionSubject | "Tümü");
@@ -277,11 +327,9 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
               setFocusIndex(0);
             }}
           >
-            <option value="Coğrafya">🌍 Coğrafya (91 Soru)</option>
-            <option value="Tarih">📜 Tarih (176 Soru)</option>
-            <option value="Vatandaşlık">⚖️ Vatandaşlık (15 Soru)</option>
-            <option value="Güncel Bilgiler & Türkçe">✨ Güncel & Türkçe (6 Soru)</option>
-            <option value="Tümü">📚 Tüm Soru Havuzu (288)</option>
+            {(["Coğrafya", "Tarih", "Vatandaşlık", "Güncel Bilgiler & Türkçe", "Tümü"] as const).map(subject => (
+              <option key={subject} value={subject}>{subject} ({subject === "Tümü" ? ALL_QUESTIONS_DATA.length : ALL_QUESTIONS_DATA.filter(q => q.subject === subject).length})</option>
+            ))}
           </select>
           <ChevronDown size={14} className="mobile-select-arrow" />
         </div>
@@ -292,6 +340,7 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
           className="mobile-matrix-trigger-btn"
           onClick={() => setDrawerOpen(true)}
           title="Soru Listesi ve Filtreler"
+          aria-label="Soru listesi ve filtreler"
         >
           <span className="matrix-counter-text">
             {filteredQuestions.length > 0 ? `${focusIndex + 1}/${filteredQuestions.length}` : "0"}
@@ -300,18 +349,17 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
         </button>
       </header>
 
-      {/* Thin Slim Progress Bar under topbar */}
-      <div className="mobile-progress-bar-track">
-        <div
-          className="mobile-progress-bar-fill"
-          style={{
-            width:
-              filteredQuestions.length > 0
-                ? `${((focusIndex + 1) / filteredQuestions.length) * 100}%`
-                : "0%",
-          }}
-        />
-      </div>
+      <section className="question-workshop-intro">
+        <div><span className="eyebrow">BİLGİNİ PEKİŞTİR</span><h1>Soru atölyesi<span>.</span></h1>
+          <p>Düşün, cevabını seç, nedenini öğren. Her soru bir adım ileri.</p></div>
+        <div className="question-workshop-stats" aria-label="Ders ilerlemesi">
+          <div><strong>{stats.answered}<small>/{stats.total}</small></strong><span>Çözülen soru</span></div>
+          <div><strong>{stats.answered ? `%${stats.accuracy}` : "—"}</strong><span>Doğruluk</span></div>
+          <div><strong>{stats.wrong}</strong><span>Tekrar edilecek</span></div>
+        </div>
+        <div className="question-completion"><span>Ders ilerlemen</span><b>%{stats.total ? Math.round(stats.answered / stats.total * 100) : 0}</b>
+          <progress aria-label="Ders ilerlemen" max={stats.total || 1} value={stats.answered} /></div>
+      </section>
 
       {/* 2. STATUS TABS (Single clean horizontal pill bar) */}
       <nav className="mobile-status-nav" aria-label="Soru Durumu">
@@ -376,16 +424,17 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
         </button>
       </nav>
 
+      {persistenceError && <p className="question-storage-error" role="alert">Tarayıcıya kayıt yapılamadı. Bu sayfayı kapatmadan depolama alanını kontrol et.</p>}
       {/* 3. MAIN QUESTION CONTAINER */}
       <main className="mobile-question-body">
         {filteredQuestions.length === 0 ? (
           <div className="mobile-empty-state">
             <CheckCircle2 size={48} className="text-emerald" />
             <h2>
-              {statusTab === "unanswered"
+              {statusTab === "unanswered" && stats.unanswered === 0
                 ? "Tebrikler! Çözülecek soru kalmadı."
-                : statusTab === "wrong"
-                  ? "Hiç yanlışın yok!"
+                : statusTab === "wrong" && stats.wrong === 0
+                  ? "Yanlışlar listen boş."
                   : "Bu filtrede soru bulunamadı."}
             </h2>
             <p>
@@ -436,7 +485,8 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
                       type="button"
                       className={`mobile-star-btn ${isBookmarked ? "is-active" : ""}`}
                       onClick={() => toggleBookmark(q.id)}
-                      aria-label="Soruyu kaydet"
+                      aria-label={isBookmarked ? "Soruyu kayıttan çıkar" : "Soruyu kaydet"}
+                      aria-pressed={isBookmarked}
                     >
                       <Star size={18} fill={isBookmarked ? "#e9a23b" : "none"} />
                     </button>
@@ -446,6 +496,7 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
                         className="mobile-reset-btn"
                         onClick={() => resetQuestion(q.id)}
                         title="Tekrar çöz"
+                        aria-label="Tekrar çöz"
                       >
                         <RotateCcw size={15} />
                       </button>
@@ -468,7 +519,7 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
                 </div>
 
                 {/* Options List */}
-                <div className="mobile-sheet-options">
+                <div className="mobile-sheet-options" role="group" aria-label="Cevap seçenekleri">
                   {Object.entries(q.options).map(([optKey, optText]) => {
                     const isStaged = staged === optKey;
                     const isChosen = submittedAns?.selectedOption === optKey;
@@ -497,6 +548,7 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
                         className={`mobile-option-card ${optionState}`}
                         onClick={() => handleSelectOption(q.id, optKey)}
                         disabled={isAnswered}
+                        aria-pressed={isAnswered ? isChosen : isStaged}
                       >
                         <span className="mobile-option-letter">{optKey}</span>
                         <span className="mobile-option-text">{optText}</span>
@@ -524,9 +576,27 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
                   })}
                 </div>
 
+                {!isAnswered && staged && (
+                  <div className="question-confidence" role="group" aria-label="Cevabından ne kadar eminsin?">
+                    <span>Ne kadar eminsin?</span>
+                    <button type="button" aria-pressed={confidence[q.id] === "sure"} onClick={() => setConfidence(prev => ({ ...prev, [q.id]: "sure" }))}>Eminim</button>
+                    <button type="button" aria-pressed={confidence[q.id] === "unsure"} onClick={() => setConfidence(prev => ({ ...prev, [q.id]: "unsure" }))}>Kararsızım</button>
+                  </div>
+                )}
+                {isAnswered && (
+                  <div className={`question-feedback ${submittedAns.isCorrect ? "is-correct" : "is-wrong"}`} role="status">
+                    {submittedAns.isCorrect ? <CheckCircle2 size={23} /> : <Lightbulb size={23} />}
+                    <div><strong>{submittedAns.isCorrect ? "Doğru cevap, bir adım daha ileri!" : "Bu ayrımı birlikte netleştirelim."}</strong>
+                      <p>{submittedAns.isCorrect
+                        ? confidence[q.id] === "unsure" ? "Doğru düşündün. Açıklamayı okuyup bilgini sağlamlaştır." : "Neden doğru olduğunu kendi cümlenle açıklamayı dene."
+                        : `Senin yanıtın ${submittedAns.selectedOption}; doğru yanıt ${q.correctAnswer}. Açıklamayı incele, sonra yeniden çöz.`}</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Obsidian-style Solution Callout */}
                 {isSolutionOpen && (
-                  <div className="mobile-obsidian-callout">
+                  <div className="mobile-obsidian-callout" aria-label="Açıklamalı çözüm">
                     <div className="callout-header">
                       <div className="callout-badge">
                         <CheckCircle2 size={16} />
@@ -541,18 +611,10 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
                       ))}
                     </div>
 
-                    {q.isMapQuestion && (
-                      <div className="callout-map-box">
-                        <div className="callout-map-title">
-                          <MapPin size={13} />
-                          <strong>Harita Konum Analizi</strong>
-                        </div>
-                        <p>
-                          Bu soru harita üzerindeki numaralı merkezleri ve coğrafi dağılımı sorgular.
-                          İşaretli noktaların karşılıklarını yukarıdaki çözümden inceleyebilirsin.
-                        </p>
-                      </div>
-                    )}
+                    <div className="question-recall-tip"><Lightbulb size={17} /><p><strong>Kendini yokla:</strong> Çözümü gizleyip doğru seçeneğin neden doğru olduğunu hatırlamaya çalış.</p></div>
+                    <button className="question-review-button" type="button" onClick={() => toggleBookmark(q.id)}>
+                      <Star size={16} />{isBookmarked ? "Tekrar listemden çıkar" : "Daha sonra tekrar etmek için kaydet"}
+                    </button>
                   </div>
                 )}
               </div>
@@ -663,7 +725,7 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
       {/* 5. SLIDE-UP DRAWER FOR FILTERS & QUESTION MATRIX */}
       {drawerOpen && (
         <div className="mobile-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
-          <div className="mobile-drawer-panel" onClick={(e) => e.stopPropagation()}>
+          <div className="mobile-drawer-panel" ref={drawerRef} role="dialog" aria-modal="true" aria-label="Soru menüsü ve filtreler" onClick={(e) => e.stopPropagation()}>
             <header className="mobile-drawer-header">
               <div>
                 <h3>Soru Menüsü & Filtreler</h3>
@@ -672,6 +734,7 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
               <button
                 type="button"
                 className="mobile-drawer-close"
+                aria-label="Filtreleri kapat"
                 onClick={() => setDrawerOpen(false)}
               >
                 <X size={18} />
@@ -681,8 +744,9 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
             <div className="mobile-drawer-content">
               {/* Category selector */}
               <div className="drawer-filter-group">
-                <label>Konu Başlığı</label>
+                <label htmlFor="question-category">Konu Başlığı</label>
                 <select
+                  id="question-category"
                   value={selectedCategory}
                   onChange={(e) => {
                     setSelectedCategory(e.target.value);
@@ -719,6 +783,7 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
                 <input
                   type="text"
                   placeholder="Soru veya kavram ara..."
+                  aria-label="Soru veya kavram ara"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
