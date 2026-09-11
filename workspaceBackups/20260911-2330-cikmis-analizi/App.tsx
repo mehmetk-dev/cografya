@@ -32,7 +32,6 @@ import { HistoryStudyPage } from "./components/HistoryStudyPage";
 import { AtaturkStudyPage } from "./components/AtaturkStudyPage";
 import { QuestionsPage } from "./components/QuestionsPage";
 import { TreatiesStudyPage } from "./components/TreatiesStudyPage";
-import { HistoryExamAnalysisPage } from "./components/HistoryExamAnalysisPage";
 import { ReadySetOverview } from "./components/ReadySetOverview";
 import { createId } from "./id";
 import { getMarkerVisual } from "./markerKinds";
@@ -67,7 +66,6 @@ const HISTORY_STUDY_HASH = "#tarih-zinciri";
 const ATATURK_STUDY_HASH = "#ataturk-ve-inkilap";
 const QUESTIONS_STUDY_HASH = "#sorular";
 const TREATIES_STUDY_HASH = "#anlasmalar-ve-savaslar";
-const HISTORY_ANALYSIS_HASH = "#cikmis-analizi";
 
 function dateKey(date = new Date()) {
   const year = date.getFullYear();
@@ -376,9 +374,6 @@ export default function App() {
   const [treatiesPageOpen, setTreatiesPageOpen] = useState(
     () => window.location.hash === TREATIES_STUDY_HASH,
   );
-  const [historyAnalysisOpen, setHistoryAnalysisOpen] = useState(
-    () => window.location.hash === HISTORY_ANALYSIS_HASH,
-  );
   const [initializationError, setInitializationError] = useState("");
   const [pendingMarker, setPendingMarker] = useState<{
     provinceCode: number;
@@ -683,7 +678,6 @@ export default function App() {
       setAtaturkPageOpen(window.location.hash === ATATURK_STUDY_HASH);
       setQuestionsPageOpen(window.location.hash === QUESTIONS_STUDY_HASH);
       setTreatiesPageOpen(window.location.hash === TREATIES_STUDY_HASH);
-      setHistoryAnalysisOpen(window.location.hash === HISTORY_ANALYSIS_HASH);
     };
 
     window.addEventListener("hashchange", syncStudyPage);
@@ -1237,7 +1231,6 @@ export default function App() {
     setAtaturkPageOpen(false);
     setQuestionsPageOpen(false);
     setTreatiesPageOpen(false);
-    setHistoryAnalysisOpen(false);
     setNotesPageOpen(true);
   };
 
@@ -1267,7 +1260,6 @@ export default function App() {
     setAtaturkPageOpen(false);
     setQuestionsPageOpen(false);
     setTreatiesPageOpen(false);
-    setHistoryAnalysisOpen(false);
     setHistoryPageOpen(true);
   };
 
@@ -1297,7 +1289,6 @@ export default function App() {
     setHistoryPageOpen(false);
     setQuestionsPageOpen(false);
     setTreatiesPageOpen(false);
-    setHistoryAnalysisOpen(false);
     setAtaturkPageOpen(true);
   };
 
@@ -1327,7 +1318,6 @@ export default function App() {
     setHistoryPageOpen(false);
     setAtaturkPageOpen(false);
     setTreatiesPageOpen(false);
-    setHistoryAnalysisOpen(false);
     setQuestionsPageOpen(true);
   };
 
@@ -1357,7 +1347,6 @@ export default function App() {
     setHistoryPageOpen(false);
     setAtaturkPageOpen(false);
     setQuestionsPageOpen(false);
-    setHistoryAnalysisOpen(false);
     setTreatiesPageOpen(true);
   };
 
@@ -1373,19 +1362,6 @@ export default function App() {
       `${window.location.pathname}${window.location.search}`,
     );
     setTreatiesPageOpen(false);
-  };
-
-  const closeHistoryAnalysis = () => {
-    if (window.history.state?.historyAnalysisPage) {
-      window.history.back();
-      return;
-    }
-    window.history.replaceState(
-      window.history.state,
-      "",
-      `${window.location.pathname}${window.location.search}`,
-    );
-    setHistoryAnalysisOpen(false);
   };
 
   const openStudyCenterFromNotes = () => {
@@ -1727,15 +1703,6 @@ export default function App() {
         onOpenQuestions={openQuestionsPage}
         onOpenOttomanHistory={openHistoryPage}
         onOpenAtaturk={openAtaturkPage}
-      />
-    );
-  }
-
-  if (historyAnalysisOpen) {
-    return (
-      <HistoryExamAnalysisPage
-        onBack={closeHistoryAnalysis}
-        onOpenQuestions={openQuestionsPage}
       />
     );
   }

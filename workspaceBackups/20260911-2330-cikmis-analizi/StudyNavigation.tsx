@@ -1,13 +1,12 @@
 import { useEffect, useRef } from "react";
-import { BarChart3, BookOpen, Flag, GitBranch, HelpCircle, Map, Swords } from "lucide-react";
+import { BookOpen, Flag, GitBranch, HelpCircle, Map, Swords } from "lucide-react";
 
-type StudySection = "notes" | "history" | "ataturk" | "questions" | "treaties" | "analysis";
+type StudySection = "notes" | "history" | "ataturk" | "questions" | "treaties";
 const sections = [
   { id: "map", href: "#", label: "Coğrafya", icon: Map },
   { id: "history", href: "#tarih-zinciri", label: "Osmanlı", icon: GitBranch },
   { id: "ataturk", href: "#ataturk-ve-inkilap", label: "Atatürk", icon: Flag },
   { id: "treaties", href: "#anlasmalar-ve-savaslar", label: "Savaş & Antlaşma", icon: Swords },
-  { id: "analysis", href: "#cikmis-analizi", label: "Çıkmış Analizi", icon: BarChart3 },
   { id: "notes", href: "#konu-notlari", label: "Konu notları", icon: BookOpen },
   { id: "questions", href: "#sorular", label: "Soru atölyesi", icon: HelpCircle },
 ];
