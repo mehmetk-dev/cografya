@@ -20,6 +20,7 @@ export type QuestionItem = {
   explanation: string;
   isMapQuestion: boolean;
   file: string;
+  imageUrl?: string;
 };
 
 export type QuestionAnswerRecord = {
@@ -3566,7 +3567,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "A",
     "explanation": "✅ DOĞRU CEVAP: A) Nakkaş Sinan Bey\nFatih Sultan Mehmet'in bağdaş kurup bir gül koklarken tasvir edildiği meşhur minyatür portresi **Nakkaş Sinan Bey** (Şiblizade Ahmet ile birlikte) tarafından yapılmıştır. Bu eser, Doğu minyatür sanatı ile İtalyan Rönesans resim tekniğini sentezleyen Türk resim sanatının başyapıtıdır.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• B) Sedefkâr Mehmet Ağa: XVII. yüzyılda I. Ahmet döneminde İstanbul'daki meşhur Sultanahmet Camii'ni (Mavi Cami / Blue Mosque) inşa eden Mimar Sinan'ın talebesidir.\n• C) Şeyh Hamdullah: II. Bayezid devrinde yaşamış, hat sanatının altı kuralını (aklâm-ı sitte) sistemleştiren ve \"Hattatların Kıblesi (Kıbletü'l-Küttab)\" unvanını alan büyük hattattır.\n• D) Gentile Bellini: Fatih'in davetiyle Venedik'ten İstanbul'a gelip Fatih'in ünlü yağlı boya profil tablosunu ve madalyonunu yapan İtalyan Rönesans ressamıdır.\n• E) Şeker Ahmet Paşa: XIX. yüzyıl (19. yy) Osmanlı ressamıdır; Paris'te eğitim görmüş, Türk resminde İLK resim sergisini (1873) açan kişidir.\n\n💡 KPSS HAFIZA KARTI:\nFatih Portreleri Ayrımı:\n• Minyatür (Gül koklayan): Nakkaş Sinan Bey\n• Yağlı Boya Tablo (Profil): Gentile Bellini",
     "isMapQuestion": false,
-    "file": "20260905_000812.jpg"
+    "file": "20260905_000812.jpg",
+    "imageUrl": "/images/sorular/gul_koklayan_fatih.jpg"
   },
   {
     "id": "tarih-49",
@@ -4280,7 +4282,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "C",
     "explanation": "✅ DOĞRU CEVAP: C) Nuri Demirağ\nCumhuriyet'in ilk yıllarında Türkiye'nin 10 bin kilometrelik demiryolu ağını yerli sermayeyle inşa ettiği için Atatürk tarafından kendisine \"Demirağ\" soyadı verilen, 1936'da ilk yerli yolcu uçağını (Nu.D-36 ve Nu.D-38) üreten, ilk yerli paraşütü yapan, Sivas Divriği'de Gök Okulu'nu açan ve 1945'te çok partili hayata geçişte **Millî Kalkınma Partisi (MKP)**'ni kuran milli sanayicimiz **Nuri Demirağ**dır.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) Vecihi Hürkuş: Türk havacılık tarihinin efsane pilotudur; ilk yerli uçağı (Vecihi K-VI) tasarlayıp uçurmuş ve ilk sivil havacılık kulübünü kurmuştur.\n• B) Zihni Derin: Rize ve Doğu Karadeniz bölgesinde çay üretimini başlatan ve geliştiren Türk ziraat mühendisidir (\"Çayın Babası\").\n• D) Muzaffer Sarısözen: Türkiye'nin dört bir yanından binlerce halk türküsünü derleyen \"Yurttan Sesler\" korosunun kurucusu büyük folklorcudur.\n• E) Sabiha Gökçen: Atatürk'ün manevi kızı, Türkiye'nin ve dünyanın İLK kadın savaş pilotudur.\n\n💡 KPSS HAFIZA KARTI:\nCumhuriyet Havacılığı Öncüleri:\n• İlk Türk Yapımı Uçakla Uçan Pilot = Vecihi Hürkuş\n• İlk Yerli Uçak Fabrikası ve Seri Üretim = Nuri Demirağ\n• İlk Kadın Savaş Pilotu = Sabiha Gökçen\n• İlk Kadın Sivil Pilot = Bedriye Tahir Gökmen",
     "isMapQuestion": false,
-    "file": "20260905_000447.jpg"
+    "file": "20260905_000447.jpg",
+    "imageUrl": "/images/sorular/nuri_demirag_ucak.jpg"
   },
   {
     "id": "tarih-83",
@@ -6254,7 +6257,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "E",
     "explanation": "✅ DOĞRU CEVAP: E) Alman hava kuvvetlerinin İspanya’da bir kasabayı bombalaması\nDünyaca ünlü İspanyol ressam Pablo Picasso'nun 1937 yılında tuvale aktardığı kübist başyapıtı **\"Guernica\"** tablosu; İspanya İç Savaşı sırasında General Franco'yu destekleyen **Nazi Almanyası hava kuvvetlerinin (Condor Lejyonu), 26 Nisan 1937'de İspanya'nın Bask bölgesindeki Guernica kasabasını acımasızca bombalamasını ve savaşın siviller üzerindeki vahşetini** anlatır. Bir Nazi subayının \"Bu tabloyu siz mi yaptınız?\" sorusuna Picasso tarihi şu cevabı vermiştir: \"Hayır, siz yaptınız!\"\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) İtalya'nın Habeşistan'ı işgali (1935): Mussolini'nin Akdeniz'de imparatorluk hayaliyle Afrika'ya saldırmasıdır (Sadabat Paktı'na yol açtı).\n• B) Pearl Harbor Baskını (1941): Japonya'nın Hawaii'deki Amerikan donanma üssünü bombalayarak ABD'yi II. Dünya Savaşı'na soktuğu baskındır.\n• C) Almanya'nın Polonya'yı işgali (1 Eylül 1939): II. Dünya Savaşı'nı resmen başlatan askeri saldırıdır.\n• D) Rusya'da Bolşevik İhtilali (1917): Lenin liderliğinde Çarlık rejiminin devrildiği ve SSCB'nin temellerinin atıldığı devrimdir.\n\n💡 KPSS HAFIZA KARTI:\nSanat ve Tarih Eşleştirmeleri:\n• Guernica (Tablo) = Pablo Picasso (İspanya İç Savaşı ve hava bombardımanı)\n• Çanlar Kimin İçin Çalıyor (Roman) = Ernest Hemingway (İspanya İç Savaşı).",
     "isMapQuestion": false,
-    "file": "20260905_000900.jpg"
+    "file": "20260905_000900.jpg",
+    "imageUrl": "/images/sorular/picasso_guernica.jpg"
   },
   {
     "id": "tarih-177",
@@ -9698,7 +9702,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "E",
     "explanation": "✅ DOĞRU CEVAP: E) Narlar ve Ayvalar\n**\"Narlar ve Ayvalar\"** natürmort tablosu Osman Hamdi Bey'e ait DEĞİL; Türk resim sanatında natürmort (ölü doğa) ve manzara türünün öncüsü olan **ŞEKER AHMET PAŞA**'ya aittir! Osman Hamdi Bey ise insan figürlü, Doğu kültürünü ve mimarisini yansıtan oryantalist eserleriyle tanınır.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) Kaplumbağa Terbiyecisi: Osman Hamdi Bey'in 1906 yapımı en ünlü başyapıtıdır (Pera Müzesi'ndedir).\n• B) Mihrap (Yaratılış): Osman Hamdi Bey'in en çok tartışılan figüratif tablosudur.\n• C) Arzuhalci: Osmanlı sokak yaşamını yansıtan ünlü Osman Hamdi Bey eseridir.\n• D) Cami Önündeki Kadınlar: Bursa Yeşil Cami önünde Osmanlı kadınlarını betimlediği tablosudur.\n\n💡 KPSS HAFIZA KARTI:\nOsman Hamdi Bey Kimdir?:\n• Sanayi-i Nefise Mektebi'nin (Güzel Sanatlar Akademisi) kurucusudur.\n• İstanbul Arkeoloji Müzesi'nin (Müze-i Hümayun) kurucusu ve ilk müdürüdür.\n• Sayda kazılarında dünyaca ünlü **İskender Lahdi**'ni bulup İstanbul'a getirmiştir.\n• Ünlü Tabloları: **Kaplumbağa Terbiyecisi, Silah Taciri, Mihrap, Arzuhalci**.",
     "isMapQuestion": false,
-    "file": "20260904_235725.jpg"
+    "file": "20260904_235725.jpg",
+    "imageUrl": "/images/sorular/kaplumbaga_terbiyecisi.jpg"
   },
   {
     "id": "güncel-bilgiler-ve-türkçe-4",
@@ -9971,7 +9976,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "B",
     "explanation": "✅ DOĞRU CEVAP: B) İbrahim Çallı\nİbrahim Çallı, 1914 Kuşağı'nın öncüsü olup Zeybekler, Arzuhâlci ve Üsküdar tablolarının ressamıdır.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) Hikmet Onat, İstanbul manzaraları ve Boğaz kıyıları resimleriyle tanınır.\n• C) Şeker Ahmet Paşa, Türk resminde ilk kişisel sergiyi açan ve orman peyzajlarıyla bilinen ressamdır.\n• D) Osman Hamdi Bey, Kaplumbağa Terbiyecisi ve Silah Taciri tablolarının ressamıdır.\n• E) Hoca Ali Rıza, Türk resminde Üsküdar sokakları ve karakalem peyzajlarının ustasıdır.",
     "isMapQuestion": false,
-    "file": "20260919_142436.jpg"
+    "file": "20260919_142436.jpg",
+    "imageUrl": "/images/sorular/calli_zeybekler.jpg"
   },
   {
     "id": "güncel-bilgiler-ve-türkçe-17",
@@ -10169,19 +10175,20 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "categoryOrder": 2,
     "category": "Güncel Bilgiler — Edebiyat, Sanat ve Kültür",
     "topic": "Türk Resim Sanatı / Bedri Rahmi Eyüboğlu ve Eserleri",
-    "questionText": "\"Tophane\", \"Karadut\" ve geleneksel motiflerle bezenmiş çağdaş Türk resmi ile mozaik panolarıyla tanınan ünlü ressam ve şairimiz kimdir?",
+    "questionText": "Yukarıda verilen \"Tophane\" adlı tablo aşağıdaki ressamlardan hangisine aittir?",
     "options": {
-      "A": "Fikret Muallâ",
-      "B": "Nuri İyem",
-      "C": "Abidin Dino",
+      "A": "İbrahim Çallı",
+      "B": "Şeker Ahmet Paşa",
+      "C": "Mahmud Cûda",
       "D": "Bedri Rahmi Eyüboğlu",
-      "E": "Cihat Burak"
+      "E": "Osman Hamdi Bey"
     },
     "markedAnswer": "D",
     "correctAnswer": "D",
-    "explanation": "✅ DOĞRU CEVAP: D) Bedri Rahmi Eyüboğlu\nBedri Rahmi Eyüboğlu, D Grubu üyesi olup Tophane tablosu, Karadut şiiri ve halk motiflerini modern sanatla kaynaştırdığı mozaik panolarıyla ünlüdür.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) Fikret Muallâ, Paris resimleri ve dışavurumcu figüratif tarzıyla tanınır.\n• B) Nuri İyem, Anadolu kadını portreleri ve kırsal yaşam temalı tablolarıyla tanınır.\n• C) Abidin Dino, Mutluluğun Resmi ile özdeşleşen ressam ve yazarımızdır.\n• E) Cihat Burak, masalsı figüratif üslubu ve edebiyatçı kişiliğiyle bilinen ressamımızdır.",
+    "explanation": "✅ DOĞRU CEVAP: D) Bedri Rahmi Eyüboğlu\nGörseldeki ünlü \"Tophane\" tablosu Bedri Rahmi Eyüboğlu'na aittir. Sanatçı, D Grubu'nun öncülerinden olup halk motiflerini çağdaş resim, mozaik panolar ve Karadut gibi şiirleriyle birleştirmiştir.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) İbrahim Çallı: 1914 Kuşağı öncüsü; Zeybekler, Balıkçı Kahvesi ve Gül Koklayan Kadın tablolarıyla tanınır.\n• B) Şeker Ahmet Paşa: Türk resminde doğa ve natürmort ustasıdır (Narlar ve Ayvalar, Ormanda Geyik).\n• C) Mahmud Cûda: Müstakil Ressamlar ve Heykeltıraşlar Birliği kurucusu, natürmort ve peyzaj ressamıdır.\n• E) Osman Hamdi Bey: Türk müzeciliğinin kurucusu, Kaplumbağa Terbiyecisi ve Silah Taciri eserlerinin ressamıdır.",
     "isMapQuestion": false,
-    "file": "20260919_143322.jpg"
+    "file": "20260919_143322.jpg",
+    "imageUrl": "/images/sorular/tophane_tablosu.jpg"
   },
   {
     "id": "güncel-bilgiler-ve-türkçe-27",

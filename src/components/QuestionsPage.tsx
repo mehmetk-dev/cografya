@@ -521,6 +521,18 @@ export function QuestionsPage({ onBack }: QuestionsPageProps) {
                   </div>
                 )}
 
+                {/* Question Image */}
+                {q.imageUrl && (
+                  <div className="mobile-question-image-wrap">
+                    <img
+                      src={q.imageUrl}
+                      alt={`${q.topic || q.category} görseli`}
+                      className="mobile-question-image"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+
                 {/* Question Stem */}
                 <div className="mobile-sheet-stem">
                   {q.questionText.split("\n").map((line, lIdx) => (

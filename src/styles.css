@@ -13227,6 +13227,26 @@ a.ready-source-badge:hover {
   font-weight: 700;
 }
 
+.mobile-question-image-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 12px 0 16px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+}
+
+.mobile-question-image {
+  width: 100%;
+  max-height: 380px;
+  object-fit: contain;
+  display: block;
+  border-radius: 12px;
+}
+
 .mobile-sheet-stem {
   font-size: 16px;
   line-height: 1.68;
