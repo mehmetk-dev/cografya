@@ -27,6 +27,7 @@ import { READY_STUDY_SETS, type ReadyStudySet } from "../readySets";
 import { STUDY_NOTE_TOPICS } from "../studyNotes";
 import type { MapFolder, StudyMap } from "../types";
 import { CatalogIcon } from "./CatalogIcon";
+import { ALL_QUESTIONS_DATA } from "../questionsData";
 
 type MapSidebarProps = {
   maps: StudyMap[];
@@ -331,7 +332,7 @@ export function MapSidebar({
           <span>
             <small>KPSS / SORU HAVUZU</small>
             <strong>Sorular & Çözümler</strong>
-            <small>288 soru · 91 Coğrafya</small>
+            <small>{ALL_QUESTIONS_DATA.length} soru · {ALL_QUESTIONS_DATA.filter((q) => q.subject === "Coğrafya").length} Coğrafya</small>
           </span>
           <ChevronDown size={16} style={{ transform: "rotate(-90deg)" }} />
         </button>
