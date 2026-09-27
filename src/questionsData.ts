@@ -3186,7 +3186,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "C",
     "explanation": "✅ DOĞRU CEVAP: C) I ve II\nKuruluş Dönemi haritası incelendiğinde; Osmanlı Beyliği'nin güney sınırında Germiyanoğulları Beyliği yer alır (I). Batı sınırında ise Bizans İmparatorluğu ve Tekfurlukları bulunmaktadır (II). Osmanlı bu dönemde bir iç deniz olan Karadeniz veya Akdeniz'e tamamen hâkim değildir; Karadeniz Fatih döneminde (Kırım'ın fethiyle), Akdeniz ise Kanuni döneminde (Preveze ile) Türk gölü haline gelmiştir (III yanlış).\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• I. Öncül (Germiyanoğulları ile sınır komşuluğu): Doğrudur. Kütahya merkezli Germiyanoğulları ile Osmanlı komşudur (I. Murat devrinde çeyiz, II. Murat devrinde vasiyet yoluyla katılmıştır).\n• II. Öncül (Bizans ile gaza ve sınır): Doğrudur. Osmanlı'nın büyümesindeki en büyük avantaj, Bizans sınırında bir \"Uç Beyliği\" olmasıdır.\n• III. Öncül (Deniz hakimiyeti): Yanlıştır. Kuruluş döneminde henüz Karesioğulları ile donanmaya yeni adım atılmıştır; Akdeniz ve Karadeniz hakimiyeti Yükselme döneminde sağlanmıştır.\n\n💡 KPSS HAFIZA KARTI:\nOsmanlı'ya Toprak Katılma Yolları:\n• Çeyiz/Para ile: Germiyanoğulları (Çeyiz), Hamitoğulları (80 bin altın karşılığı satın alma)\n• Vasiyet ile: Germiyanoğulları (II. Yakup Bey'in vasiyeti)\n• İlk katılan beylik: Karesioğulları (Denizcilik başladı).",
     "isMapQuestion": true,
-    "file": "20260904_235607.jpg"
+    "file": "20260904_235607.jpg",
+    "imageUrl": "/images/haritalar/tarih_harita_29.jpg"
   },
   {
     "id": "tarih-30",
@@ -3291,7 +3292,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "C",
     "explanation": "✅ DOĞRU CEVAP: C) Saruhanoğulları - Menteşeoğulları\n1243 Kösedağ Savaşı'ndan sonra kurulan II. Dönem Batı Anadolu denizci beyliklerinin coğrafi konumlarında:\n• Manisa merkezli kurulan beylik: **Saruhanoğulları**\n• Muğla merkezli kurulan beylik: **Menteşeoğulları**dır.\nHaritada bunların yerleri çapraz yazıldığından yerlerinin karşılıklı değiştirilmesi gerekir.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) Menteşeoğulları: Muğla ve Fethiye kıyılarında kurulmuş, Rodos Şövalyeleriyle savaşmış güçlü denizci beyliktir.\n• B) Candaroğulları (İsfendiyaroğulları): Kastamonu ve Sinop merkezli Karadeniz beyliğidir.\n• D) Karamanoğulları: Konya ve Karaman merkezli, kendilerini Anadolu Selçuklu'nun tek mirasçısı gören beyliktir.\n• E) Karesioğulları: Balıkesir ve Çanakkale'de kurulmuş, Osmanlı'ya İLK katılan ve Osmanlı denizciliğini başlatan beyliktir.\n\n💡 KPSS HAFIZA KARTI:\nBatı Anadolu Denizci Beylikleri:\n• Balıkesir/Çanakkale = Karesioğulları\n• Manisa = Saruhanoğulları\n• İzmir/Aydın = Aydınoğulları\n• Muğla = Menteşeoğulları\n• Sinop = Candaroğulları",
     "isMapQuestion": true,
-    "file": "20260905_000826.jpg"
+    "file": "20260905_000826.jpg",
+    "imageUrl": "/images/haritalar/tarih_harita_34.jpg"
   },
   {
     "id": "tarih-35",
@@ -4068,7 +4070,7 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "markedAnswer": "D",
     "correctAnswer": "D",
     "explanation": "✅ DOĞRU CEVAP: D) Naima\nÖncüllerdeki eşleştirmeler şöyledir:\n• Osmanlı'da ilk rasathaneyi açan: **Takiyüddin Mehmet** (C)\n• Dünya haritasını ilk çizen coğrafyacı (\"Kitab-ı Bahriye\"): **Piri Reis** (B)\n• Seyahatname eseriyle ünlü seyyah: **Evliya Çelebi** (A)\n• İlk Osmanlı şeyhülislamı: **Molla Fenari** (E)\nBu durumda resmi vakanüvis olan **Mustafa Naima Efendi (Naima)** hakkında bir öncül verilmemiştir (D dışarıda kalır).\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) Evliya Çelebi: 17. yüzyılın dünyaca ünlü seyyahıdır; 10 ciltlik \"Seyahatname\"si ile Osmanlı coğrafyasını anlatmıştır.\n• B) Piri Reis: 1513'te ilk dünya haritasını çizen ve Akdeniz kılavuzu \"Kitab-ı Bahriye\"yi yazan denizcidir.\n• C) Takiyüddin Mehmet: III. Murat devrinde İstanbul Tophane'de ilk rasathaneyi kurmuş astronomdur.\n• D) Naima: Osmanlı Devleti'nin İLK resmi vakanüvisidir (tarihçisidir); eseri Naima Tarihi'dir.\n• E) Molla Fenari: II. Murat döneminde atanan Osmanlı'nın İLK Şeyhülislamıdır.\n\n💡 KPSS HAFIZA KARTI:\nTakiyüddin'in Rasathanesi, Şeyhülislam Kadızade Ahmet Şemseddin Efendi'nin \"uğursuzluk getirir\" fetvası üzerine Kaptan-ı Derya Kılıç Ali Paşa tarafından topla yıktırılmıştır!",
-    "isMapQuestion": true,
+    "isMapQuestion": false,
     "file": "20260905_001043.jpg"
   },
   {
@@ -4499,19 +4501,20 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "categoryOrder": 6,
     "category": "Osmanlı Devleti — Duraklama, Gerileme ve Islahatlar (XVII-XVIII. Yüzyıl)",
     "topic": "İlk Çağ Anadolu Medeniyetleri",
-    "questionText": "Aşağıdaki Türkiye haritasında İlk Çağ Anadolu medeniyetlerinin kurulduğu alanlar numaralandırılarak gösterilmiştir.\nBuna göre haritada verilen eşleştirmelerden hangisi yanlıştır?",
+    "questionText": "Aşağıdaki Türkiye haritasında Anadolu'da geçmiş dönemlerde yaşayan medeniyetlerin bulunduğu alanlar gösterilmiştir.\n\nHaritada hangi medeniyetin yaşadığı alan yanlış verilmiştir?",
     "options": {
-      "A": "İyonlar – Ege kıyıları",
-      "B": "Hititler – İç Anadolu",
-      "C": "Frigler – Güneydoğu Anadolu",
-      "D": "Urartular – Doğu Anadolu",
-      "E": "Lidyalılar – Gediz ve Küçük Menderes havzası"
+      "A": "Troya",
+      "B": "Aphrodisias",
+      "C": "Frigya",
+      "D": "Urartu",
+      "E": "Hattuşaş"
     },
     "markedAnswer": "C",
     "correctAnswer": "C",
     "explanation": "✅ DOĞRU CEVAP: C) Frigler – Güneydoğu Anadolu\nFrigler (Frigya), Güneydoğu Anadolu'da değil; **İç Batı Anadolu'da, Sakarya Nehri havzasında (Ankara-Polatlı'daki Gordion başkent olmak üzere Eskişehir ve Afyonkarahisar çevresinde)** kurulmuştur. Güneydoğu Anadolu'da İlk Çağ'da Asurlular ve Hurriler yaşamıştır.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) İyonlar – Ege kıyıları: Doğrudur. Efes, Milet, Foça gibi 12 şehir devletinden oluşmuş, deniz ticareti ve felsefede öncü olmuşlardır.\n• B) Hititler – İç Anadolu: Doğrudur. Kızılırmak yayı içinde Çorum/Boğazköy (Hattuşaş) merkezli büyük imparatorluk kurmuşlardır.\n• D) Urartular – Doğu Anadolu: Doğrudur. Van Gölü çevresinde Tuşba (Van) merkezli kurulmuş, taş işçiliği ve su kanalları (Şamran Kanalı) ile tanınmışlardır.\n• E) Lidyalılar – Gediz ve Küçük Menderes: Doğrudur. Manisa/Salihli (Sardes) merkezli kurulmuş, Kral Yolu'nu ticaretle canlandırmış ve tarihte İLK kez madeni parayı basmışlardır.\n\n💡 KPSS HAFIZA KARTI:\nFrigler Özellikleri:\n• Başkent: Gordion (Polatlı) | Ünlü Kral: Midas\n• Temel geçim: Tarım ve hayvancılık (Öküz öldürenin veya saban kıranın cezası ölümdü)\n• Tanrıça: Kibele (Bereket) | Halı/Kilim: Tapates | Çengelli iğne: Fibula | Kaya mezarları: Midas Anıtı.",
     "isMapQuestion": true,
-    "file": "20260905_001905.jpg"
+    "file": "20260905_001905.jpg",
+    "imageUrl": "/images/haritalar/tarih_harita_92.jpg"
   },
   {
     "id": "tarih-93",
@@ -4532,7 +4535,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "C",
     "explanation": "✅ DOĞRU CEVAP: C) Sümela Manastırı\nSardes, Gordion, Tuşba ve Hattuşaş M.Ö. I. ve II. binyıllarda yaşamış **İlk Çağ Anadolu Medeniyetleri**ne (Lidya, Frig, Urartu, Hitit) aittir. Trabzon Maçka'daki **Sümela Manastırı (Meryem Ana)** ise İlk Çağ'da değil, M.S. IV. yüzyılda (Orta Çağ / Doğu Roma-Bizans ve Trabzon Komnenos Rum İmparatorluğu döneminde) sarp kayalıklara inşa edilmiş Hristiyan manastırıdır.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) Sardes: Lidyalıların başkentidir (Manisa/Salihli) - İlk Çağ.\n• B) Gordion: Friglerin başkentidir (Ankara/Polatlı) - İlk Çağ.\n• D) Tuşba: Urartuların başkentidir (Van Kalesi çevresi) - İlk Çağ.\n• E) Hattuşaş: Hititlerin başkentidir (Çorum/Boğazkale) - İlk Çağ (UNESCO kalıcı listesi).\n\n💡 KPSS HAFIZA KARTI:\nİlk Çağ Anadolu Medeniyetleri Başkentleri:\n• Hititler -> Hattuşaş (Çorum)\n• Frigler -> Gordion (Ankara)\n• Lidyalılar -> Sardes (Manisa)\n• Urartular -> Tuşba (Van)\n• İyonlar -> Şehir devletleri (Efes, Milet, Foça)",
     "isMapQuestion": true,
-    "file": "20260905_001947.jpg"
+    "file": "20260905_001947.jpg",
+    "imageUrl": "/images/haritalar/tarih_harita_93.jpg"
   },
   {
     "id": "tarih-94",
@@ -4993,7 +4997,7 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "markedAnswer": "B",
     "correctAnswer": "E",
     "explanation": "✅ DOĞRU CEVAP: E) İtalya\nİtalya, I. Dünya Savaşı'ndan sonra kurulan bir devlet DEĞİLDİR! İtalya, siyasi birliğini Kont Cavour ve Garibaldi önderliğinde çok daha önce, **1870 yılında** tamamlayarak Avrupa'nın büyük devletlerinden biri haline gelmiştir.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) Estonya: Çarlık Rusyası'nın yıkılmasıyla bağımsızlığını kazanan Baltık devletidir.\n• B) Yugoslavya: Avusturya-Macaristan ve Osmanlı toprakları üzerinde Güney Slavlarının kurduğu devlettir.\n• C) Litvanya: I. Dünya Savaşı sonunda Çarlık Rusyası'ndan ayrılarak bağımsız olan Baltık devletidir.\n• D) Macaristan: Avusturya-Macaristan İmparatorluğu'nun parçalanması ve Trianon Antlaşması ile bağımsız cumhuriyet olmuştur.\n\n💡 KPSS HAFIZA KARTI:\nI. Dünya Savaşı Sonunda Parçalanan 4 Büyük İmparatorluk:\n1. Osmanlı İmparatorluğu -> Türkiye Cumhuriyeti\n2. Çarlık Rusyası -> SSCB, Finlandiya, Polonya, Estonya, Letonya, Litvanya\n3. Avusturya-Macaristan -> Avusturya, Macaristan, Çekoslovakya, Yugoslavya\n4. Alman İmparatorluğu -> Weimar Cumhuriyeti.",
-    "isMapQuestion": true,
+    "isMapQuestion": false,
     "file": "20260905_000319.jpg"
   },
   {
@@ -6486,7 +6490,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "C",
     "explanation": "✅ DOĞRU CEVAP: C) Saltuklular - Mengücekliler - Danişmentliler\nI: Saltuklular (Erzurum ve çevresinde kurulan ilk Türk beyliğidir; Mama Hatun Kümbeti, Kale Camii).\nII: Mengücekliler (Erzincan, Kemah ve Divriği de kurulmuştur; Divriği Ulu Camii).\nIII: Danişmentliler (Sivas, Tokat, Niksar da kurulmuştur; Yağıbasan Medresesi).\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) Mengücekliler Erzurum da değil Erzincan/Divriği de; Saltuklular ise Erzincan da değil Erzurum da kurulmuştur.\n• B) Danişmentliler Erzincan da değil Sivas/Tokat bölgesinde kurulmuştur.\n• D) Danişmentliler I numaralı Erzurum bölgesinde değil, III numaralı Orta Anadolu bölgesindedir.\n• E) Artuklular Güneydoğu Anadolu da (Mardin, Hasankeyf, Harput) kurulmuştur; Erzurum da kurulmamıştır.",
     "isMapQuestion": true,
-    "file": "20260919_041035.jpg"
+    "file": "20260919_041035.jpg",
+    "imageUrl": "/images/haritalar/tarih_harita_186.jpg"
   },
   {
     "id": "tarih-187",
