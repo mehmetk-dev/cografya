@@ -207,7 +207,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "B",
     "explanation": "✅ DOĞRU CEVAP: B) II (Doğu Karadeniz Kıyıları / Rize-Trabzon)\nTürkiye'de yıl boyunca her mevsim düzenli yağış alan, bulutluluk oranının ve bağıl nemin en yüksek olduğu yer **Doğu Karadeniz kıyılarıdır (II)**. Bulutlu gün sayısının çok fazla olması sebebiyle yıllık güneşlenme süresi Türkiye'de **EN DÜŞÜK** bu bölgede (yılda yaklaşık 1750 saat) ölçülür.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• I (Marmara/Ergene): Karasal-ılıman iklim sahasıdır, güneşlenme süresi orta düzeydedir.\n• III (Güneydoğu Anadolu - Şanlıurfa): Yaz kuraklığı ve bulutsuz gökyüzü sebebiyle Türkiye'de yıllık güneşlenme süresinin **EN FAZLA** olduğu alandır (3250 saat).\n• IV (İç Anadolu - Konya): Karasal iklimdir, güneşlenme süresi oldukça yüksektir (Güneş tarlaları kurulur).\n• V (Akdeniz - Antalya): Akdeniz iklimi nedeniyle yaz turizminin ve güneşlenme süresinin çok yüksek olduğu bölgedir.\n\n💡 KPSS HAFIZA KARTI:\nGüneşlenme Süresi:\n• Türkiye'de EN FAZLA: **Güneydoğu Anadolu ve Akdeniz** (Güneş enerjisi potansiyeli en yüksek).\n• Türkiye'de EN AZ: **Doğu Karadeniz** (Güneş enerjisi potansiyeli en düşük).",
     "isMapQuestion": true,
-    "file": "20260905_001658.jpg"
+    "file": "20260905_001658.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_7.jpg"
   },
   {
     "id": "coğrafya-8",
@@ -269,7 +270,7 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "markedAnswer": "D",
     "correctAnswer": "A",
     "explanation": "✅ DOĞRU CEVAP: A) I ve II\nTürkiye'nin Kuzey Yarım Küre'de yer alması ve Orta Kuşak'ta bulunmasıyla ilgili öncüller:\n• I. Güneyden esen rüzgarların (Lodos, Kıble, Keşişleme) sıcaklığı artırması: Ekvator'un güneyimizde yer almasından, yani **Kuzey Yarım Küre'de** olmamızdan kaynaklanır.\n• II. Dört mevsimin belirgin olarak yaşanması: Güneş ışınlarının geliş açısının yıl içinde dengeli değiştiği **Orta Kuşak'ta** yer almanın doğrudan sonucudur.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• III ve IV. öncüller (aynı anda farklı iklimlerin yaşanması, yüksek engebe vb.): Matematik konum değil, yer şekillerinin çeşitliliği ile ilgili **Göreceli (Özel) Konum** sonuçlarıdır.\n\n💡 KPSS HAFIZA KARTI:\nKuzey Yarım Küre'de Yer Almamızın Sonuçları:\n• Güneyden esen rüzgarlar sıcaklığı artırır, kuzeyden esenler düşürür.\n• Güneye gidildikçe sıcaklık ve çizgisel hız artar.\n• Dağların güney yamaçları daha sıcaktır (Bakı yönü daima güneydir).\n• En uzun gündüz 21 Haziran'da yaşanır.",
-    "isMapQuestion": true,
+    "isMapQuestion": false,
     "file": "20260905_002007.jpg"
   },
   {
@@ -312,7 +313,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "A",
     "explanation": "✅ DOĞRU CEVAP: A) Manavgat Şelalesi, Damlataş Mağarası, Çatalhöyük, Göreme Peri Bacaları\nHaritada gösterilen tur güzergahı sırasıyla şu durakları kapsar:\n1. Durak (Antalya - Manavgat): **Manavgat Şelalesi**\n2. Durak (Antalya - Alanya): **Damlataş Mağarası** (Türkiye'nin turizme açılan ilk mağarası - 1948)\n3. Durak (Konya - Çumra): **Çatalhöyük Neolitik Kenti** (UNESCO Dünya Mirası)\n4. Durak (Nevşehir): **Göreme Tarihî Milli Parkı ve Peri Bacaları** (Volkanik tüf ve bazalt aşınımı).\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• İnsuyu Mağarası: Burdur'dadır.\n• Karain Mağarası: Antalya merkezin kuzeyindedir (Paleolitik ilk insan yerleşimi).\n• Alacahöyük: Çorum'dadır (İç Anadolu güzergahında değildir).\n• Pamukkale: Denizli'dedir (Ege bölgesindedir).\n• Ihlara Vadisi: Aksaray'dadır.\n\n💡 KPSS HAFIZA KARTI:\nUNESCO Miras Alanları:\n• Çatalhöyük (Konya) = İnsanlık tarihinin ilk toplu yerleşimi ve tarım kenti\n• Göreme ve Kapadokya (Nevşehir) = Hem doğal hem kültürel karma miras alanı.",
     "isMapQuestion": true,
-    "file": "20260905_002122.jpg"
+    "file": "20260905_002122.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_12.jpg"
   },
   {
     "id": "coğrafya-13",
@@ -333,7 +335,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "A",
     "explanation": "✅ DOĞRU CEVAP: A) I (Ege Bölgesi / Gediz-Büyük Menderes Graben Hatları)\nTürkiye'de dağlar genellikle doğu-batı doğrultusunda uzanır. **Ege Bölgesi'nde (I)** dağlar (Kaz, Madra, Yunt, Bozdağlar, Aydın dağları) kıyıya dik uzandığı için dağların arasındaki graben ovaları (Bakırçay, Gediz, Küçük ve Büyük Menderes) boyunca **denizden iç kesimlere doğru doğu-batı yönlü kara ve demiryolu ulaşımı hiçbir doğal engele (tünel/geçit ihtiyacına) takılmadan çok kolay ve maliyetsizce sağlanır**. Karadeniz ve Akdeniz'de ise dağlar kıyıya paralel olduğu için kuzey-güney yönlü ulaşım çok zordur.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• II (Marmara/Yıldız Dağları): Engebe ulaşımı zorlaştırır.\n• III (Doğu Karadeniz): Dağlar kıyıya paraleldir, iç kesimlerle ulaşım Zigana ve Ovit tünelleriyle sağlanır.\n• IV (Akdeniz / Toroslar): Kıyı ile iç kesimler ulaşımı Çubuk, Gülek, Sertavul ve Belen geçitlerine bağlıdır.\n• V (Hakkari Bölgesi): Türkiye'nin en dağlık ve ulaşımı en güç bölgesidir.\n\n💡 KPSS HAFIZA KARTI:\nDağların Uzanışının Ulaşıma Etkisi:\n• Ege'de kıyı ile iç kesimler arası ulaşım **KOLAYDIR** (Geçit gerekmez, maliyet azdır).\n• Karadeniz ve Akdeniz'de kıyı ile iç kesimler arası ulaşım **ZORDUR** (Geçit ve tünel zorunludur, maliyet çok yüksektir).",
     "isMapQuestion": true,
-    "file": "20260905_002201.jpg"
+    "file": "20260905_002201.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_13.jpg"
   },
   {
     "id": "coğrafya-14",
@@ -396,7 +399,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "E",
     "explanation": "✅ DOĞRU CEVAP: E) IV ve V (Güllük ve Gökova Körfezleri)\nEge kıyılarında yer alan körfezler **KUZEYDEN GÜNEYE DOĞRU** sırasıyla:\nI. Edremit Körfezi (Balıkesir)\nII. Çandarlı Körfezi (İzmir kuzeyi)\nIII. İzmir Körfezi\nIV. Kuşadası Körfezi (Aydın)\nV. **Güllük (Mandalya) Körfezi** (Muğla - Milas/Bodrum)\nVI. **Gökova Körfezi** (Muğla - Bodrum/Datça arası).\nHaritada en güneyde yer alan IV ve V numaralı körfezler Güllük ve Gökova körfezleridir.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• Edremit Körfezi: Kaz Dağları eteğinde en kuzeydeki körfezdir (Zeytin üretimi).\n• Çandarlı Körfezi: Bakırçay deltasının döküldüğü körfezdir (Kuzey Ege limanı).\n• Kuşadası Körfezi: Büyük Menderes deltasının kuzeyindedir (Kruvaziyer turizmi).\n• Gökova Körfezi: Datça ile Bodrum yarımadaları arasında mavi turun merkezidir.\n\n💡 KPSS HAFIZA KARTI:\nEge Körfezleri Kuzeyden Güneye Şifresi: **E-Ç-İ-K-G-G**\n• **E**dremit\n• **Ç**andarlı\n• **İ**zmir\n• **K**uşadası\n• **G**üllük\n• **G**ökova",
     "isMapQuestion": true,
-    "file": "20260905_002334.jpg"
+    "file": "20260905_002334.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_16.jpg"
   },
   {
     "id": "coğrafya-17",
@@ -795,7 +799,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "C",
     "explanation": "✅ DOĞRU CEVAP: C) Bolkar Dağları\nBatı Karadeniz kıyısından (T) Akdeniz'de Taşeli Platosu'na (R) çekilen doğrusal hat; Köroğlu Dağları, Haymana Platosu, Cihanbeyli-Obruk Platosu ve Konya Ovası üzerinden geçer. **Bolkar Dağları (ve Aladağlar)** ise bu hattın çok daha doğusunda (Niğde, Mersin ve Adana sınırında / Orta Toroslar'da) yer aldığı için bu güzergahın üzerinde bulunmaz.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) Köroğlu Dağları: Batı Karadeniz'de hattın başlangıç kesimindedir.\n• B) Obruk Platosu: Konya Ovası'nın kuzeyinde hattın üzerindedir.\n• D) Haymana Platosu: Ankara'nın güneyinde hattın geçtiği İç Anadolu platosudur.\n• E) Konya Ovası: Türkiye'nin en büyük çöküntü ovası olup hattın ortasında yer alır.\n\n💡 KPSS HAFIZA KARTI:\nToros Dağları Bölümleri:\n• Batı Toroslar = Bey Dağları, Geyik Dağları, Dedegöl, Barla\n• Orta Toroslar = **Bolkarlar**, Aladağlar, Tahtalı Dağları\n• Güneydoğu Toroslar = Malatya, Maden, Genç, Cilo Dağları.",
     "isMapQuestion": true,
-    "file": "20260905_001932.jpg"
+    "file": "20260905_001932.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_35.jpg"
   },
   {
     "id": "coğrafya-36",
@@ -900,7 +905,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "D",
     "explanation": "✅ DOĞRU CEVAP: D) Krom - Kop Dağları\nHarita üzerinde noktalarla gösterilen maden sahaları incelendiğinde; krom madeni için işaretlenen nokta Ege-Akdeniz sınırındaki **Muğla (Fethiye-Köyceğiz)** yöresidir. Kop Dağları (Bayburt-Erzurum arası) haritada işaretli değildir; bu nedenle haritadaki yer ile \"Kop Dağları\" eşleştirmesi yanlıştır.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) Boksit - Akseki (Antalya): Haritada Toroslar üzerinde işaretlidir (Doğrudur).\n• B) Trona (Doğal Soda) - Beypazarı (Ankara): Haritada İç Anadolu'da işaretlidir (Doğrudur).\n• C) Fosfat - Mazıdağı (Mardin): Haritada Güneydoğu'da işaretlidir (Doğrudur).\n• E) Bakır - Küre Dağları (Kastamonu): Haritada Batı Karadeniz kıyısında işaretlidir (Doğrudur).\n\n💡 KPSS HAFIZA KARTI:\nKrom Madeni Çıkarılan Başlıca 3 Merkez:\n1. Elazığ - Guleman (En zengin rezerv / Ferrokrom tesisi var)\n2. Muğla - Fethiye ve Köyceğiz\n3. Bursa - Orhaneli.",
     "isMapQuestion": true,
-    "file": "20260905_002058.jpg"
+    "file": "20260905_002058.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_40.jpg"
   },
   {
     "id": "coğrafya-41",
@@ -942,7 +948,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "C",
     "explanation": "✅ DOĞRU CEVAP: C) III numaralı alanda turizm nedeniyle tarım gelişmemiştir.\nIII numaralı alan **Antalya ve kıyı Akdeniz kuşağıdır**. Bu bölgede turizm çok güçlü olmakla birlikte, iddia edildiği gibi tarım geri planda kalmamıştır! Aksine Antalya, Türkiye'nin **SERACILIK (Örtü Altı Tarım), TURFANDA SEBZE, NARENCİYE VE ÇİÇEKÇİLİK BAŞKENTİDİR**. Türkiye örtü altı yaş sebze üretiminin yarıya yakını bu bölgeden karşılanır.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) I (Güneydoğu / Şanlıurfa): GAP sulamasıyla birlikte pamuk, mısır gibi sulu tarım ürünlerinin payı katlanarak artmıştır (Doğrudur).\n• B) II (Trakya / Ergene): Ayçiçeği ve kanola gibi yağlık bitkilerin ekim alanıdır (Doğrudur).\n• D) IV (Hakkari / Doğu Anadolu): Aşırı engebe ve yükselti sebebiyle tarım olanakları çok kısıtlıdır (Doğrudur).\n• E) V (Ege / Aydın-Denizli): Jeotermal sıcak su kaynaklarıyla seraların ısıtıldığı modern örtü altı tarım gelişmiştir (Doğrudur).\n\n💡 KPSS HAFIZA KARTI:\nKış Ilıklığı İsteyen Tarım Ürünleri:\nTurunçgiller (Portakal, mandalina, limon) | Muz (Anamur-Alanya) | Zeytin | Erken turfanda sebzeler (Antalya seraları).",
     "isMapQuestion": true,
-    "file": "20260905_002117.jpg"
+    "file": "20260905_002117.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_42.jpg"
   },
   {
     "id": "coğrafya-43",
@@ -1004,7 +1011,7 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "markedAnswer": "E",
     "correctAnswer": "E",
     "explanation": "✅ DOĞRU CEVAP: E) II ve IV (Oba ve Yayla)\nAkdeniz Bölgesi'nde, özellikle Batı ve Orta Toroslar ile Teke ve Taşeli platolarında kireçli, engebeli ve karstik yapının hakim olduğu sahalarda:\n• **II. Oba:** Göçebe Yörük aşiretlerinin çadırlarda ve basit barınaklarda keçi (kıl keçisi) otlatmak amacıyla kurduğu geçici köy altı yerleşmesidir.\n• **IV. Yayla:** Yazın sıcaktan kaçmak, serinlemek ve hayvanları otlatmak için Toros dağlarının yükseklerine çıkılan en yaygın geçici yerleşmedir.\nDam (I) ve Ağıl (III) ise sırasıyla Ege/Gökçeada ve İç/Doğu Anadolu'da yaygındır.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• I. Dam: Ege Bölgesi ve Gökçeada'da küçükbaş hayvancılık yapılan geçici yerleşmedir.\n• II. Oba: Toroslar'da Yörüklerin geleneksel çadır yerleşmesidir.\n• III. Ağıl: İç Anadolu ve Doğu Anadolu'da koyun sürülerinin gece kapatıldığı etrafı çitle çevrili yerleşmedir.\n• IV. Yayla: Karadeniz ve Akdeniz'de en yaygın köy altı yerleşmesidir.\n\n💡 KPSS HAFIZA KARTI:\nKöy Altı Yerleşmeleri:\n• **Kalıcı (Sürekli) Yerleşmeler (Tarım ağırlıklı):** Çiftlik, Mahalle, Mezra, Divan (Batı Karadeniz).\n• **Geçici Yerleşmeler (Hayvancılık ağırlıklı):** Yayla, Oba (Toroslar), Ağıl, Kom (Doğu Anadolu), Dam, Dalyan (Balıkçılık).",
-    "isMapQuestion": true,
+    "isMapQuestion": false,
     "file": "20260905_002144.jpg"
   },
   {
@@ -1047,7 +1054,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "C",
     "explanation": "✅ DOĞRU CEVAP: C) III - Yayla turizmi ve madencilik\nIII numaralı alan **Doğu Karadeniz Kıyı Kuşağıdır (Trabzon-Rize-Giresun)**. Bu dar kıyı şeridinde nüfusun aşırı yoğun olmasının temel nedeni; arazinin dağlık olması sebebiyle yerleşimin mecburen kıyıya sıkışması, **ılıman nemli iklim ile çay ve fındık gibi yüksek gelir getiren tarımsal faaliyetlerdir**. Bu kıyı şeridinde madencilik ve yayla turizmi nüfusun kıyıda toplanmasının ana gerekçesi olamaz!\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) I (İstanbul/Çatalca-Kocaeli): Sanayi, ticaret, finans ve ulaşımın merkezidir (Doğrudur).\n• B) II (Bursa/Güney Marmara): Verimli ova tarımı ve otomotiv/tekstil sanayisidir (Doğrudur).\n• D) IV (İzmir/Kıyı Ege): Verimli graben tarımı ve dış ticaret limanıdır (Doğrudur).\n• E) V (Çukurova/Adana): Alüvyal ova, pamuk/tarım ve tarıma dayalı sanayidir (Doğrudur).\n\n💡 KPSS HAFIZA KARTI:\nDoğu Karadeniz Nüfus Dağılışı Özelliği:\n• Kıyı Şeridi = Aşırı yoğun nüfuslu (Toprak verimli, iklim ılıman, balıkçılık ve çay).\n• İç Kesim ve Dağlar = Aşırı seyrek nüfuslu (Engebe, soğuk ve ulaşım zorluğu).\n• Yerleşme Tipi = Dağınık Kır Yerleşmesi (Su bol, arazi engebeli).",
     "isMapQuestion": true,
-    "file": "20260905_002214.jpg"
+    "file": "20260905_002214.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_47.jpg"
   },
   {
     "id": "coğrafya-48",
@@ -1193,7 +1201,7 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "markedAnswer": "D",
     "correctAnswer": "A",
     "explanation": "✅ DOĞRU CEVAP: A) Yalnız I (İklim ve Yer Şekillerinin Elverişliliği)\nTürkiye'de nüfusun iç kesimlere kıyasla kıyı şeridinde yoğunlaşmasında en temel belirleyici faktör; kıyı kuşağında denizelliğin getirdiği **Ilıman iklim şartları, kışların ılık geçmesi, bol yağış ve tarıma elverişli kıyı ovalarının bulunmasıdır** (Yalnız I). Yer altı kaynakları (madenler) genellikle iç ve dağlık kesimlerdedir; yayla turizmi ise kıyıda değil yüksek dağlardadır.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• Kıyıların nüfus çekme nedenleri: İklim elverişliliği, verimli topraklar, ulaşım kolaylığı, sanayi ve turizm olanakları.\n• İç kesimlerin seyrek nüfuslu olma nedenleri: Kuraklık, kış soğukları, don olayları ve su azlığı.\n\n💡 KPSS HAFIZA KARTI:\nKıyıda Olduğu Halde Seyrek Nüfuslu Olan İstisna Alanlar:\n1. **Yıldız Dağları Kıyısı** (Ulaşım yollarından uzak / Dağlık)\n2. **Çanakkale / Biga ve Gelibolu Yarımadası** (Sit alanı / Ulaşım sapa)\n3. **Menteşe Yöresi (Muğla)** (Aşırı dağlık ve engebeli)\n4. **Teke ve Taşeli Platoları** (Karstik arazi ve su tutmayan toprak).",
-    "isMapQuestion": true,
+    "isMapQuestion": false,
     "file": "20260905_002346.jpg"
   },
   {
@@ -1278,7 +1286,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "E",
     "explanation": "✅ DOĞRU CEVAP: E) V (Aras ve Kura Nehirleri Havzası)\nSularını denizlere veya okyanuslara ulaştırabilen akarsu havzalarına \"Açık Havza\", sularını denize ulaştıramayıp bir iç göle boşaltan veya kuraklıkta kuruyan akarsulara \"Kapalı Havza\" denir.\n• I (Kızılırmak), II (Yeşilırmak) -> Karadeniz'e dökülür (Açık Havza).\n• III (Seyhan-Ceyhan) -> Akdeniz'e dökülür (Açık Havza).\n• IV (Gediz-Büyük Menderes) -> Ege Denizi'ne dökülür (Açık Havza).\n• **V (Aras ve Kura):** Türkiye'den doğup dünyanın en büyük kapalı gölü olan **Hazar Denizi'ne (Gölüne)** döküldükleri için **KAPALI HAVZA**dır!\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• Türkiye'nin Başlıca Kapalı Havzaları:\n  1. **Tuz Gölü Kapalı Havzası** (En büyüğü)\n  2. **Konya Kapalı Havzası**\n  3. **Van Gölü Kapalı Havzası** (Sodalı)\n  4. **Göller Yöresi Kapalı Havzası** (Burdur, Acıgöl)\n  5. **Hazar Kapalı Havzası (Aras ve Kura)**.\n\n💡 KPSS HAFIZA KARTI:\nAçık vs. Kapalı Havza:\nAkarsuyun gideğeni açık denize ulaşıyorsa suyu tatlıdır (Açık havza).\nKapalı göllere dökülüyorsa sular acı, sodalı veya tuzlu olur (Kapalı havza).",
     "isMapQuestion": true,
-    "file": "20260905_001516.jpg"
+    "file": "20260905_001516.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_58.jpg"
   },
   {
     "id": "coğrafya-59",
@@ -1508,7 +1517,7 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "markedAnswer": "B",
     "correctAnswer": "B",
     "explanation": "✅ DOĞRU CEVAP: B) Edremit Körfezi\nTürkiye kıyılarında tsunami riski; Afrika levhasının Anadolu levhasının altına daldığı aktif **Helenik - Kıbrıs Yayı** dalma-batma zonuna, derin deniz hendeklerine (Girit, Rodos çukurları) ve aktif denizaltı normal faylarına yakınlıkla doğrudan ilişkilidir. Fethiye, Güllük, İzmir ve İskenderun körfezleri bu derin fay hatlarına ve tarihsel tsunami kayıtlarına çok yakınken; Edremit Körfezi Kuzey Ege sığ havzasında olup derin batma zonlarından uzaktır ve tsunami öncelik riski diğerlerine göre belirgin şekilde daha düşüktür.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) İzmir Körfezi: Ege graben sistemi ve Sakız fayı üzerinde yer alır (1688 ve 2020 Seferihisar tsunamileri kıyıları basmıştır).\n• C) Fethiye Körfezi: Rodos-Fethiye denizaltı fayı ve Helenik Yay nedeniyle Türkiye'nin en yüksek tsunami risk alanlarındandır.\n• D) İskenderun Körfezi: Doğu Anadolu ve Ölü Deniz fayının Akdeniz açıklarıyla kesiştiği çöküntü havzasıdır.\n• E) Güllük Körfezi (Muğla): Güney Ege dalma-batma zonu üzerinde yer alır (2017 Bodrum-Kos tsunamisi yaşanmıştır).\n\n💡 KPSS HAFIZA KARTI:\nTürkiye'de Tsunami Tehlikesi:\n• Türkiye iç denizlerinde de tsunami yaşanır (depremler ve tetiklenen denizaltı heyelanları).\n• En Yüksek Risk Bölgesi: **Güney Ege Kıyıları (Muğla, Bodrum, Fethiye) ve Doğu Akdeniz (Antalya, İskenderun)**.",
-    "isMapQuestion": true,
+    "isMapQuestion": false,
     "file": "20260905_002251.jpg"
   },
   {
@@ -1803,7 +1812,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "A",
     "explanation": "✅ DOĞRU CEVAP: A) Tersiyer sektörlerde çalışanların oranının daha yüksek olması\nEkonomik faaliyet sektörleri üçe ayrılır: Birincil (Primer: Tarım, hayvancılık), İkincil (Sekonder: Sanayi, inşaat) ve Üçüncül (Tersiyer: Hizmet - ticaret, ulaşım, bankacılık, turizm, eğitim, sağlık, yönetim). Haritada gösterilen İstanbul, Ankara, İzmir, Antalya ve Gaziantep devasa metropoller olup çalışan nüfuslarının %60-80'i **TERSİYER (HİZMET)** sektöründe istihdam edilmektedir.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• B) Mevsimlik göç alma: İstanbul ve Ankara mevsimlik değil daimi göç alır; mevsimlik tarım göçü Ordu, Adana gibi yerlerdedir.\n• C) Kırsal nüfus oranları: Bu metropollerde kırsal nüfus oranı Türkiye ortalamasının çok altındadır (%1-5).\n• D) Aritmetik nüfus yoğunluğu: Türkiye'nin kilometrekareye en çok insan düşen illeridir (İstanbul 3000+ kişi/km²).\n• E) Nüfusu en fazla ilk beş il tuzağı: Türkiye'nin nüfusu en çok 5 ili: **İstanbul, Ankara, İzmir, Bursa ve Antalya**'dır! Gaziantep 9. sıradadır; Bursa haritada verilmemiştir.\n\n💡 KPSS HAFIZA KARTI:\nEkonomik Faaliyet Kolları:\n• **Primer (Birincil):** Tarım, ormancılık, madencilik (Gelişmemiş yerde oranı yüksek).\n• **Sekonder (İkincil):** Sanayi, imalat, inşaat.\n• **Tersiyer (Üçüncül):** Hizmet (Gelişmiş illerde en yüksek: İstanbul, Ankara, İzmir).\n• **Kuaterner (Dördüncül):** Bilişim, yazılım, veri analitiği.\n• **Kinaryer (Beşincil):** Üst düzey karar vericiler (CEO, bakan vb.).",
     "isMapQuestion": true,
-    "file": "20260905_002112.jpg"
+    "file": "20260905_002112.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_83.jpg"
   },
   {
     "id": "coğrafya-84",
@@ -1929,7 +1939,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "D",
     "explanation": "✅ DOĞRU CEVAP: D) IV (Hakkari Yöresi)\nHaritada verilen maden ve merkez eşleştirmeleri:\n• **I. Kastamonu - Küre:** BAKIR madeni havzasıdır (Küre yer altı bakır ocakları).\n• **II. Marmara Adası (Balıkesir):** Türkiye'nin adını mermerden alan en zengin ve beyaz MERMER ocaklarıdır.\n• **III. Seydişehir (Konya) - Akseki (Antalya):** Alüminyumun hammaddesi olan BOKSİT madeni merkezidir.\n• **V. Beypazarı (Ankara):** Türkiye'nin ve dünyanın en büyük TRONA (Doğal Soda Külü) yataklarıdır.\n• **IV. Hakkari Yöresi:** Bölgede zengin ÇİNKO ve KURŞUN yatakları yer alır; soruda verilen listedeki 4 maden arasında yer almadığı için IV dışarıda kalır.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• I. Küre (Kastamonu): Bakır rezervi ile eşleşir.\n• II. Marmara Adası: Mermer yatakları ile eşleşir.\n• III. Akseki / Seydişehir: Boksit (Alüminyum) yatakları ile eşleşir.\n• IV. Hakkari: Çinko-kurşun bulunur, verilen 4 maden içinde yoktur.\n• V. Beypazarı: Trona (Doğal soda külü) ile eşleşir.\n\n💡 KPSS HAFIZA KARTI:\nÖnemli Maden Şifreleri:\n• Bakır Merkezleri = **KADER** (**K**üre, **A**rtvin-Murgul, **D**iyarbakır-Ergani, **E**lazığ-Maden, **R**ize-Çayeli).\n• Boksit = **Antalya (Akseki) ve Konya (Seydişehir)**.\n• Trona = **Ankara (Beypazarı ve Kazan)**.\n• Kurşun - Çinko = **Hakkari, Elazığ (Keban), Kayseri (Yahyalı)**.",
     "isMapQuestion": true,
-    "file": "20260905_002119.jpg"
+    "file": "20260905_002119.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_89.jpg"
   },
   {
     "id": "coğrafya-90",
@@ -1971,7 +1982,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "D",
     "explanation": "✅ DOĞRU CEVAP: D) Aspendos (Antalya)\nAntalya'nın Serik ilçesinde bulunan, Roma döneminin en iyi korunmuş antik tiyatrosuna ev sahipliği yapan **Aspendos Antik Kenti**, UNESCO Dünya Mirası **\"GEÇİCİ LİSTESİ\"**nde yer almaktadır; henüz KALICI LİSTEYE dahil edilmemiştir.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) Truva (Çanakkale): Homeros'un İlyada destanına konu olan antik kent 1998 yılında Kalıcı Liste'ye girmiştir.\n• B) Efes (İzmir): Artemis Tapınağı, Celsus Kütüphanesi ve Meryem Ana Evi ile 2015 yılında Kalıcı Liste'ye girmiştir.\n• C) Gordion (Ankara - Polatlı): Frigya Krallığı'nın başkenti ve Kral Midas'ın tümülüsü ile **2023 YILINDA TÜRKİYE'NİN 20. KALICI MİRASI** olarak tescillenmiştir.\n• E) Ani Arkeolojik Alanı (Kars): \"Binbir Kiliseli Kent\" olarak bilinen tarihi İpek Yolu merkezi 2016 yılında Kalıcı Liste'ye girmiştir.\n\n💡 KPSS HAFIZA KARTI:\nUNESCO Dünya Mirası Kalıcı Listesi Güncel Bilgiler:\n• Toplam Varlık Sayımız: **21**\n• 20. Varlığımız: **Gordion Antik Kenti (Ankara - 2023)**\n• 21. Varlığımız: **Anadolu'nun Ortaçağ Dönemi Ahşap Hipostil Camiileri (2023 - Konya Eşrefoğlu, Kastamonu Mahmut Bey, Sivrihisar Ulu, Afyonkarahisar Ulu, Ankara Arslanhane Camiileri)**\n• Hem Doğal Hem Kültürel (Karma) Miraslarımız: **Pamukkale-Hierapolis (Denizli) ve Göreme Millî Parkı-Kapadokya (Nevşehir)**.",
     "isMapQuestion": true,
-    "file": "20260905_002317.jpg"
+    "file": "20260905_002317.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_91.jpg"
   },
   {
     "id": "coğrafya-92",
@@ -2118,7 +2130,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "A",
     "explanation": "✅ DOĞRU CEVAP: A) I\nI numara Uludağ'dır (2543 m). Günümüzde aktif buzulu bulunmaz; ancak Kuaterner (Pleistosen) buzul devrinde buzullaşmaya uğramış olup zirvesinde Aynalıgöl, Karagöl, Kilimli Göl gibi sirk gölleri ve moren setleri mevcuttur.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• B) Batı Karadeniz Küre dağları buzul şekilleri barındırmaz.\n• C) İç Anadolu platosu yükseltisi ve yapısı gereği Kuaterner buzul topoğrafyasına sahip değildir.\n• D) IV numaralı Aladağlar / Bolkarlar kuşağında güncel aktif buzullar mevcuttur.\n• E) V numaralı Hakkari Cilo-Sat Dağları kuşağında Türkiye'nin en büyük aktif vadi ve takke buzulları yer alır.",
     "isMapQuestion": true,
-    "file": "20260914_223052.jpg"
+    "file": "20260914_223052.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_98.jpg"
   },
   {
     "id": "coğrafya-99",
@@ -2139,7 +2152,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "B",
     "explanation": "✅ DOĞRU CEVAP: B) 2. doğrultuda yükselti arttığı için açık hava basıncı artar.\n2. doğrultuda batıdan doğuya gidildikçe yükselti artar; ancak yükseldikçe hava moleküllerinin yoğunluğu ve yerçekimi etkisi azaldığı için açık hava basıncı ARTMAZ, AZALIR (yanlış önerme).\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) Ekvatordan kutba doğru gidildikçe Dünya'nın küresel şekli nedeniyle çizgisel hız ve Güneş ışınlarının geliş açısı azaldığından sıcaklık düşer (doğru).\n• C) Kuzeye doğru sıcaklık ortalamaları azaldığı için tarım ürünlerinin olgunlaşma süresi uzar (hasat gecikir) (doğru).\n• D) Batı-doğu yönünde enlem neredeyse aynı kalırken sıcaklığın belirgin düşmesinin ana nedeni yükseltinin ve karasallığın artmasıdır (doğru).\n• E) Doğuya gidildikçe kış sıcaklıkları sıfırın altına indiğinden karın yerde kalma süresi belirgin biçimde uzar (doğru).",
     "isMapQuestion": true,
-    "file": "20260914_223054.jpg"
+    "file": "20260914_223054.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_99.jpg"
   },
   {
     "id": "coğrafya-100",
@@ -2160,7 +2174,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "B",
     "explanation": "✅ DOĞRU CEVAP: B) I ve IV\nI (Ergene) ve IV (Kıyı Ege grabeni / Büyük Menderes) akarsuları yatak eğimi çok az, tabanlı ve menderesler çizen vadilerde aktığından suyun akış hızı ve hidroelektrik potansiyeli çok düşüktür; buralar baraj yapımına elverişli değildir.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) II (Doğu Karadeniz vadileri) yüksek eğim ve debiye sahip olduğundan baraj yapımına son derece elverişlidir.\n• C) II ve III dağlık sahalarda yer alır, hidroelektrik potansiyelleri yüksektir.\n• D) III ve V (Çoruh) Türkiye'nin en yüksek hidroelektrik potansiyeline sahip sahalarıdır.\n• E) V (Çoruh Havzası) Deriner, Yusufeli gibi dev barajların yer aldığı en verimli baraj sahasıdır.",
     "isMapQuestion": true,
-    "file": "20260914_223015.jpg"
+    "file": "20260914_223015.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_100.jpg"
   },
   {
     "id": "coğrafya-101",
@@ -2370,7 +2385,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "B",
     "explanation": "✅ DOĞRU CEVAP: B) I ve III\nI (Bursa-Bilecik çevresi) ipek böcekçiliğinin ve ipekli dokumanın geleneksel merkezidir; III (Diyarbakır'ın Kulp ilçesi) ise günümüzde Türkiye yaş ipek kozası üretiminin tek başına yarıdan fazlasını (%50+) karşılayan 1. sıradaki merkezdir (I ve III).\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) Çukurova pamuk, mısır ve narenciye merkezidir; yaş ipek kozası üretimi yapılmaz.\n• C) II (Çukurova) koza üretimi yapılan bir bölge değildir.\n• D) II (Çukurova) ve IV (İç Anadolu) ipek böcekçiliğinde pay sahibi değildir.\n• E) IV (İç Anadolu) yaş koza üretiminde öne çıkmaz; step ikliminde dut yaprağı üretimi ve ipek böceği yetiştiriciliği yaygın değildir.",
     "isMapQuestion": true,
-    "file": "20260914_223003.jpg"
+    "file": "20260914_223003.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_110.jpg"
   },
   {
     "id": "coğrafya-111",
@@ -2454,7 +2470,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "E",
     "explanation": "✅ DOĞRU CEVAP: E) V\nV numaralı koridor (Kocaeli-Sakarya hattı); hem TEM ve Kuzey Marmara otoyollarını hem de Ankara-İstanbul Yüksek Hızlı Tren (YHT) hattını birlikte barındıran en işlek ulaşım koridorudur.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) I numaralı İzmir-Aydın güzergahında otoyol vardır fakat henüz faal bir YHT hattı bulunmamaktadır.\n• B) II numaralı Adana-Mersin arasında otoyol vardır ancak Mersin-Adana-Gaziantep hızlı tren hattı inşaat halindedir, faal değildir.\n• C) III numara İç Anadolu konvansiyonel hat geçişidir, gelişmiş otoyol koridoru barındırmaz.\n• D) IV numaralı Batı Karadeniz'de YHT ve otoyol bağlantısı bulunmaz.",
     "isMapQuestion": true,
-    "file": "20260914_223005.jpg"
+    "file": "20260914_223005.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_114.jpg"
   },
   {
     "id": "coğrafya-115",
@@ -2538,7 +2555,8 @@ export const ALL_QUESTIONS_DATA: QuestionItem[] = [
     "correctAnswer": "C",
     "explanation": "✅ DOĞRU CEVAP: C) III\nIII (Kayseri) İç Anadolu'nun yüksek ve sert karasal ikliminde yer alır; kışların çok soğuk olması ve yaz sıcaklıklarının pamuk için yetersiz kalması nedeniyle pamuk tarımı yapılamaz. Kayseri'deki pamuklu dokuma tesisleri hammaddeye yakınlıkla değil, pazar, ulaşım ve sermaye faktörleriyle açıklanır.\n\n🔍 ÇELDİRİCİLERİN ANALİZİ (1 Soru 5 Bilgi):\n• A) I (Manisa / Gediz Havzası) Ege'de pamuk tarımının yoğun yapıldığı verimli bir sahadır.\n• B) II (Antalya) Akdeniz iklimi kuşağında olup pamuk tarımına uygundur.\n• D) IV (Adana / Çukurova) Türkiye'de pamuk tarımı ve dokuma sanayisinin geleneksel merkezidir.\n• E) V (Şanlıurfa) GAP sulaması sayesinde Türkiye pamuk üretiminin yaklaşık yarısını tek başına karşılar.",
     "isMapQuestion": true,
-    "file": "20260914_223148.jpg"
+    "file": "20260914_223148.jpg",
+    "imageUrl": "/images/haritalar/cografya_harita_118.jpg"
   },
   {
     "id": "coğrafya-119",
